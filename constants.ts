@@ -1,0 +1,87 @@
+﻿import { NavItem, Translation } from './types';
+import {
+  LayoutDashboard,
+  MessageSquare,
+  Users,
+  UserPlus,
+  ShoppingCart,
+  CreditCard,
+  Truck,
+  Bot,
+  Settings,
+  Package,
+} from 'lucide-react';
+
+export const TRANSLATIONS: Translation = {
+  nav_dashboard: { en: 'Dashboard', ru: 'Панель управления', uz: 'Bosh sahifa' },
+  nav_conversations: { en: 'Conversations', ru: 'Диалоги', uz: 'Suhbatlar' },
+  nav_clients: { en: 'Clients', ru: 'Клиенты', uz: 'Mijozlar' },
+  nav_leads: { en: 'Leads', ru: 'Лиды', uz: 'Lidlar' },
+  nav_orders: { en: 'Orders', ru: 'Заказы', uz: 'Buyurtmalar' },
+  nav_products: { en: 'Products', ru: 'Товары', uz: 'Mahsulotlar' },
+  nav_payments: { en: 'Payments', ru: 'Платежи', uz: "To'lovlar" },
+  nav_couriers: { en: 'Couriers', ru: 'Курьеры', uz: 'Kuryerlar' },
+  nav_users: { en: 'Users', ru: 'Пользователи', uz: 'Foydalanuvchilar' },
+  nav_ai_settings: { en: 'AI Settings', ru: 'Настройки ИИ', uz: 'AI Sozlamalari' },
+  nav_ai_credentials: { en: 'AI Credentials', ru: 'Данные доступа ИИ', uz: 'AI Credentiallar' },
+  nav_settings: { en: 'Settings', ru: 'Настройки', uz: 'Sozlamalar' },
+
+  create: { en: 'Create', ru: 'Создать', uz: 'Yaratish' },
+  edit: { en: 'Edit', ru: 'Редактировать', uz: 'Tahrirlash' },
+  delete: { en: 'Delete', ru: 'Удалить', uz: "O'chirish" },
+  save: { en: 'Save', ru: 'Сохранить', uz: 'Saqlash' },
+  cancel: { en: 'Cancel', ru: 'Отмена', uz: 'Bekor qilish' },
+  search: { en: 'Search', ru: 'Поиск', uz: 'Qidirish' },
+  filter: { en: 'Filter', ru: 'Фильтр', uz: 'Filtr' },
+  status: { en: 'Status', ru: 'Статус', uz: 'Holat' },
+  view_details: { en: 'View details', ru: 'Подробнее', uz: 'Batafsil' },
+  apply: { en: 'Apply', ru: 'Применить', uz: "Qo'llash" },
+  reset: { en: 'Reset', ru: 'Сбросить', uz: 'Tozalash' },
+  send: { en: 'Send', ru: 'Отправить', uz: 'Yuborish' },
+  actions: { en: 'Actions', ru: 'Действия', uz: 'Amallar' },
+
+  product_name: { en: 'Product Name', ru: 'Название товара', uz: 'Mahsulot nomi' },
+  price: { en: 'Price', ru: 'Цена', uz: 'Narx' },
+  stock: { en: 'Stock', ru: 'Склад', uz: 'Ombor' },
+  category: { en: 'Category', ru: 'Категория', uz: 'Kategoriya' },
+
+  total_orders: { en: 'Total Orders', ru: 'Всего заказов', uz: 'Jami buyurtmalar' },
+  revenue_today: { en: 'Revenue Weekly', ru: 'Недельная выручка', uz: 'Haftalik tushum' },
+  pending_payments: { en: 'Pending Payments', ru: 'Ожидающие платежи', uz: "To'lov kutilmoqda" },
+  in_delivery: { en: 'In Delivery', ru: 'В доставке', uz: 'Yetkazib berishda' },
+
+  recent_activity: { en: 'Recent Activity', ru: 'Последняя активность', uz: 'Oxirgi faoliyat' },
+  orders_trend: { en: 'Orders Trend', ru: 'Динамика заказов', uz: 'Buyurtmalar trandi' },
+
+  profile: { en: 'Profile', ru: 'Профиль', uz: 'Profil' },
+  ai_config: { en: 'AI Configuration', ru: 'Конфигурация ИИ', uz: 'AI Sozlamalari' },
+  notifications: { en: 'Notifications', ru: 'Уведомления', uz: 'Bildirishnomalar' },
+  bot_tone: { en: 'Bot Tone', ru: 'Тон бота', uz: 'Bot ohangi' },
+  formal: { en: 'Formal', ru: 'Формальный', uz: 'Rasmiy' },
+  friendly: { en: 'Friendly', ru: 'Дружелюбный', uz: "Do'stona" },
+  auto_reply: { en: 'Auto Reply', ru: 'Автоответ', uz: 'Avto-javob' },
+
+  ai_playground: { en: 'AI Playground', ru: 'Тестовая площадка ИИ', uz: 'AI Sinov Maydoni' },
+  model_settings: { en: 'Model Settings', ru: 'Настройки модели', uz: 'Model sozlamalari' },
+  system_prompt: { en: 'System Prompt', ru: 'Системная инструкция', uz: "Tizim ko'rsatmasi" },
+  knowledge_base: { en: 'Knowledge Base', ru: 'База знаний', uz: 'Bilimlar bazasi' },
+  temperature: { en: 'Temperature', ru: 'Температура', uz: 'Harorat' },
+  test_bot_hint: { en: 'Test your bot settings here...', ru: 'Протестируйте настройки бота здесь...', uz: "Botni shu yerda sinab ko'ring..." },
+
+  date_range: { en: 'Date Range', ru: 'Диапазон дат', uz: "Sana oralig'i" },
+  payment_method: { en: 'Payment Method', ru: 'Способ оплаты', uz: "To'lov turi" },
+};
+
+export const NAV_ITEMS: NavItem[] = [
+  { id: 'dashboard', icon: LayoutDashboard, path: '/', labelKey: 'nav_dashboard' },
+  { id: 'conversations', icon: MessageSquare, path: '/conversations', labelKey: 'nav_conversations' },
+  { id: 'clients', icon: Users, path: '/clients', labelKey: 'nav_clients' },
+  { id: 'leads', icon: UserPlus, path: '/leads', labelKey: 'nav_leads' },
+  { id: 'orders', icon: ShoppingCart, path: '/orders', labelKey: 'nav_orders' },
+  { id: 'products', icon: Package, path: '/products', labelKey: 'nav_products' },
+  { id: 'payments', icon: CreditCard, path: '/payments', labelKey: 'nav_payments' },
+  { id: 'couriers', icon: Truck, path: '/couriers', labelKey: 'nav_couriers' },
+  { id: 'users', icon: Users, path: '/users', labelKey: 'nav_users' },
+  { id: 'ai_settings', icon: Bot, path: '/ai-settings', labelKey: 'nav_ai_settings' },
+  { id: 'settings', icon: Settings, path: '/settings', labelKey: 'nav_settings' },
+];

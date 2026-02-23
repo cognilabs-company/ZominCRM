@@ -1,0 +1,619 @@
+﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
+import { Card } from '../components/ui/Card';
+import { useToast } from '../context/ToastContext';
+import { ShoppingBag, DollarSign, Clock, Truck, Download, RefreshCw, Calendar } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from 'recharts';
+import { ENDPOINTS, apiRequest, getHeaders } from '../services/api';
+
+interface DashboardStatsResponse {
+  date_from?: string;
+  date_to?: string;
+  days?: number;
+  total_orders?: number;
+  revenue_period?: number;
+  revenue_today?: number;
+  revenue_today_actual?: number;
+  pending_payments?: number;
+  pending_payments_amount?: number;
+  pending_payments_snapshot?: number;
+  pending_payments_amount_snapshot?: number;
+  in_delivery?: number;
+  in_delivery_snapshot?: number;
+  orders_trend?: unknown;
+  revenue_trend?: unknown;
+}
+
+type DashboardFilterMode = 'weekly' | 'monthly' | 'date' | 'range';
+
+type TrendPoint = {
+  name: string;
+  value: number;
+};
+
+const toText = (value: unknown): string => {
+  if (value === null || value === undefined) return '';
+  return String(value);
+};
+
+const toNumber = (value: unknown): number => {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+  if (typeof value === 'string') {
+    const cleaned = value.replace(/[\s,]/g, '').replace(/[^0-9.-]/g, '');
+    if (!cleaned) return 0;
+    const parsed = Number(cleaned);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  return 0;
+};
+
+const isLikelyDateString = (value: string): boolean => /^\d{4}-\d{2}-\d{2}/.test(value.trim());
+
+const extractNumeric = (value: unknown): number | null => {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+
+  if (typeof value === 'string') {
+    if (isLikelyDateString(value)) return null;
+    const cleaned = value.replace(/[\s,]/g, '').replace(/[^0-9.-]/g, '');
+    if (!cleaned) return null;
+    const parsed = Number(cleaned);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const candidate = extractNumeric(item);
+      if (candidate !== null) return candidate;
+    }
+    return null;
+  }
+
+  if (value && typeof value === 'object') {
+    const row = value as Record<string, unknown>;
+    const preferred = ['value', 'count', 'amount', 'amount_uzs', 'orders', 'revenue', 'revenue_uzs', 'total', 'y'];
+
+    for (const key of preferred) {
+      if (row[key] === undefined) continue;
+      const candidate = extractNumeric(row[key]);
+      if (candidate !== null) return candidate;
+    }
+
+    for (const [key, item] of Object.entries(row)) {
+      if (['name', 'label', 'date', 'day', 'period', 'x', 'created_at', 'updated_at'].includes(key)) continue;
+      const candidate = extractNumeric(item);
+      if (candidate !== null) return candidate;
+    }
+  }
+
+  return null;
+};
+
+const toTrendRows = (source: unknown): unknown[] => {
+  if (Array.isArray(source)) return source;
+  if (!source || typeof source !== 'object') return [];
+
+  const obj = source as Record<string, unknown>;
+  if (Array.isArray(obj.results)) return obj.results;
+  if (Array.isArray(obj.data)) return obj.data;
+  if (Array.isArray(obj.items)) return obj.items;
+  if (Array.isArray(obj.trend)) return obj.trend;
+
+  if (Array.isArray(obj.labels)) {
+    const labels = obj.labels;
+    let values: unknown[] = [];
+
+    if (Array.isArray(obj.values)) {
+      values = obj.values;
+    } else if (Array.isArray(obj.series)) {
+      const firstSeries = obj.series[0];
+      if (Array.isArray(firstSeries)) {
+        values = firstSeries;
+      } else if (firstSeries && typeof firstSeries === 'object') {
+        const seriesObj = firstSeries as Record<string, unknown>;
+        if (Array.isArray(seriesObj.data)) values = seriesObj.data;
+        else if (Array.isArray(seriesObj.values)) values = seriesObj.values;
+      }
+    }
+
+    return labels.map((label, idx) => ({ label, value: values[idx] }));
+  }
+
+  for (const value of Object.values(obj)) {
+    if (Array.isArray(value)) return value;
+  }
+
+  return Object.entries(obj).map(([label, value]) => ({ label, value }));
+};
+
+const normalizeLabel = (raw: unknown, index: number): string => {
+  const text = toText(raw).trim();
+  if (!text) return `#${index + 1}`;
+
+  const dt = new Date(text);
+  if (!Number.isNaN(dt.getTime()) && text.includes('-')) {
+    const mm = String(dt.getMonth() + 1).padStart(2, '0');
+    const dd = String(dt.getDate()).padStart(2, '0');
+    return `${mm}-${dd}`;
+  }
+
+  return text;
+};
+
+const normalizeTrend = (source: unknown, preferredKeys: string[]): TrendPoint[] => {
+  const rows = toTrendRows(source);
+
+  return rows
+    .map((entry, index) => {
+      if (entry === null || entry === undefined) return null;
+
+      if (typeof entry === 'number' || typeof entry === 'string') {
+        return { name: `#${index + 1}`, value: toNumber(entry) };
+      }
+
+      if (Array.isArray(entry)) {
+        const label = entry[0];
+        const value = entry.length > 1 ? extractNumeric(entry[1]) : extractNumeric(entry);
+        return {
+          name: normalizeLabel(label, index),
+          value: value ?? 0,
+        };
+      }
+
+      if (typeof entry !== 'object') return null;
+
+      const row = entry as Record<string, unknown>;
+      const key = preferredKeys.find((k) => row[k] !== undefined);
+      const primaryValue = key ? extractNumeric(row[key]) : null;
+      const fallbackValue = primaryValue !== null ? primaryValue : extractNumeric(row);
+
+      return {
+        name: normalizeLabel(
+          row.name ?? row.label ?? row.date ?? row.day ?? row.period ?? row.x ?? row.created_at ?? row.updated_at,
+          index
+        ),
+        value: fallbackValue ?? 0,
+      };
+    })
+    .filter((point): point is TrendPoint => Boolean(point));
+};
+
+const Dashboard: React.FC = () => {
+  const { t, language } = useLanguage();
+  const toast = useToast();
+  const navigate = useNavigate();
+  const tr = useCallback(
+    (en: string, ru: string, uz: string) => (language === 'ru' ? ru : language === 'uz' ? uz : en),
+    [language]
+  );
+
+  const todayIso = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const hasInitialLoadRef = useRef(false);
+
+  const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [stats, setStats] = useState<DashboardStatsResponse>({});
+
+  const [filterMode, setFilterMode] = useState<DashboardFilterMode>('date');
+  const [singleDate, setSingleDate] = useState(todayIso);
+  const [dateFrom, setDateFrom] = useState(todayIso);
+  const [dateTo, setDateTo] = useState(todayIso);
+
+  const validateFilters = useCallback(() => {
+    if (filterMode === 'date' && !singleDate) {
+      toast.warning(tr('Please select a date.', 'Vyberite datu.', 'Sanani tanlang.'));
+      return false;
+    }
+
+    if (filterMode === 'range') {
+      if (!dateFrom || !dateTo) {
+        toast.warning(tr('Please select date range.', 'Vyberite diapazon dat.', 'Sana oraligini tanlang.'));
+        return false;
+      }
+      if (dateFrom > dateTo) {
+        toast.warning(
+          tr(
+            'Start date cannot be later than end date.',
+            'Data nachala ne mozhet byt pozhe daty okonchaniya.',
+            'Boshlanish sanasi tugash sanasidan keyin bolmasligi kerak.'
+          )
+        );
+        return false;
+      }
+    }
+
+    return true;
+  }, [dateFrom, dateTo, filterMode, singleDate, toast, tr]);
+
+  const buildQuery = useCallback(() => {
+    const params = new URLSearchParams();
+
+    if (filterMode === 'weekly') params.set('days', '7');
+    if (filterMode === 'monthly') params.set('days', '30');
+    if (filterMode === 'date') params.set('date', singleDate);
+    if (filterMode === 'range') {
+      params.set('date_from', dateFrom);
+      params.set('date_to', dateTo);
+    }
+
+    return params.toString();
+  }, [dateFrom, dateTo, filterMode, singleDate]);
+
+  const withQuery = useCallback(
+    (base: string) => {
+      const query = buildQuery();
+      return query ? `${base}?${query}` : base;
+    },
+    [buildQuery]
+  );
+
+  const loadStats = useCallback(async () => {
+    if (!validateFilters()) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await apiRequest<DashboardStatsResponse>(withQuery(ENDPOINTS.DASHBOARD.STATS));
+      setStats(data || {});
+    } catch (e) {
+      const message = e instanceof Error ? e.message : tr('Failed to load dashboard', 'Ne udalos zagruzit panel', 'Bosh sahifani yuklab bolmadi');
+      setError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  }, [toast, tr, validateFilters, withQuery]);
+
+  const downloadStats = useCallback(async () => {
+    if (!validateFilters()) return;
+
+    try {
+      setDownloading(true);
+      const response = await fetch(withQuery(ENDPOINTS.DASHBOARD.STATS_EXPORT), {
+        method: 'GET',
+        headers: {
+          ...getHeaders(true),
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || `Export failed (${response.status})`);
+      }
+
+      const blob = await response.blob();
+      const disposition = response.headers.get('content-disposition') || '';
+      const match = disposition.match(/filename=\"?([^\";]+)\"?/i);
+      const filename = match?.[1] || `dashboard_stats_${todayIso}.xls`;
+
+      const objectUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(objectUrl);
+
+      toast.success(tr('Dashboard export downloaded.', 'Otchet zagruzhen.', 'Dashboard hisoboti yuklab olindi.'));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : tr('Failed to download export.', 'Ne udalos skachat otchet.', 'Eksportni yuklab bolmadi.'));
+    } finally {
+      setDownloading(false);
+    }
+  }, [todayIso, toast, tr, validateFilters, withQuery]);
+
+  useEffect(() => {
+    if (hasInitialLoadRef.current) return;
+    hasInitialLoadRef.current = true;
+    loadStats();
+  }, [loadStats]);
+
+  // Auto-reload when the filter mode changes (after initial load)
+  const filterModeRef = useRef(filterMode);
+  useEffect(() => {
+    if (!hasInitialLoadRef.current) return; // skip before first load
+    if (filterMode === filterModeRef.current) return;
+    filterModeRef.current = filterMode;
+    // Auto-load for weekly/monthly and date mode (date input already has a value)
+    // Range mode still waits for explicit Load because users usually change two fields.
+    if (filterMode === 'weekly' || filterMode === 'monthly' || filterMode === 'date') {
+      loadStats();
+    }
+  }, [filterMode, loadStats]);
+
+  const orderTrendRaw = useMemo(
+    () => normalizeTrend(stats.orders_trend, ['orders', 'count', 'value', 'total_orders', 'y']),
+    [stats.orders_trend]
+  );
+
+  const revenueTrendRaw = useMemo(
+    () => normalizeTrend(stats.revenue_trend, ['revenue', 'amount', 'amount_uzs', 'value', 'total', 'revenue_uzs', 'y']),
+    [stats.revenue_trend]
+  );
+
+  const orderTrend = useMemo(() => {
+    if (orderTrendRaw.length === 1) {
+      const p = orderTrendRaw[0];
+      return [p, { ...p, name: `${p.name} ` }];
+    }
+    return orderTrendRaw;
+  }, [orderTrendRaw]);
+
+  const revenueTrend = useMemo(() => {
+    if (revenueTrendRaw.length === 1) {
+      const p = revenueTrendRaw[0];
+      return [p, { ...p, name: `${p.name} ` }];
+    }
+    return revenueTrendRaw;
+  }, [revenueTrendRaw]);
+
+  const revenueDomain = useMemo<[number, number]>(() => {
+    if (revenueTrend.length === 0) return [0, 1];
+    const values = revenueTrend.map((p) => p.value);
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+
+    if (min === max) {
+      const pad = Math.max(Math.abs(min) * 0.1, 1);
+      return [Math.max(0, min - pad), max + pad];
+    }
+
+    const spreadPad = Math.max((max - min) * 0.1, 1);
+    return [Math.max(0, min - spreadPad), max + spreadPad];
+  }, [revenueTrend]);
+
+  const loadedRange = useMemo(() => {
+    if (stats.date_from || stats.date_to) return `${stats.date_from || '-'} - ${stats.date_to || '-'}`;
+    if (filterMode === 'weekly') return tr('Last 7 days', 'Poslednie 7 dney', 'Oxirgi 7 kun');
+    if (filterMode === 'monthly') return tr('Last 30 days', 'Poslednie 30 dney', 'Oxirgi 30 kun');
+    if (filterMode === 'date') return singleDate;
+    return `${dateFrom} - ${dateTo}`;
+  }, [dateFrom, dateTo, filterMode, singleDate, stats.date_from, stats.date_to, tr]);
+
+  // Dynamic chart titles based on filter mode
+  const ordersTrendTitle = useMemo(() => {
+    if (filterMode === 'weekly') return tr('Orders Trend (Weekly)', 'Buyurtmalar trendi (Haftalik)', 'Buyurtmalar trendi (Haftalik)');
+    if (filterMode === 'monthly') return tr('Orders Trend (Monthly)', 'Buyurtmalar trendi (Oylik)', 'Buyurtmalar trendi (Oylik)');
+    if (filterMode === 'date') return tr('Orders Trend (Today)', 'Buyurtmalar trendi (Bugun)', 'Buyurtmalar trendi (Bugun)');
+    return tr('Orders Trend', 'Buyurtmalar trendi', 'Buyurtmalar trendi');
+  }, [filterMode, tr]);
+
+  const revenueTrendTitle = useMemo(() => {
+    if (filterMode === 'weekly') return tr('Weekly Revenue', 'Haftalik tushum', 'Haftalik tushum');
+    if (filterMode === 'monthly') return tr('Monthly Revenue', 'Oylik tushum', 'Oylik tushum');
+    if (filterMode === 'date') return tr('Today\'s Revenue', 'Bugungi tushum', 'Bugungi tushum');
+    return tr('Revenue Trend', 'Tushum trendi', 'Tushum trendi');
+  }, [filterMode, tr]);
+
+  const showCharts = true;
+  const revenuePeriodValue = stats.revenue_period ?? stats.revenue_today ?? 0;
+
+  const kpiCards = [
+    {
+      title: t('total_orders'),
+      value: String(stats.total_orders ?? 0),
+      sub: tr('Orders in selected period', 'Zakazy v vybrannom periode', 'Tanlangan davrdagi buyurtmalar'),
+      icon: ShoppingBag,
+      color: 'text-blue-500',
+    },
+    {
+      title: tr('Revenue', 'Выручка', 'Tushum'),
+      value: `${revenuePeriodValue.toLocaleString()} UZS`,
+      sub: tr('Revenue in selected period', 'Vyruchka v vybrannom periode', 'Tanlangan davrdagi tushum'),
+      icon: DollarSign,
+      color: 'text-green-500',
+    },
+    {
+      title: tr('Pending Amount', 'Summa v ozhidanii', "Kutilayotgan to'lov summasi"),
+      value: `${(stats.pending_payments_amount ?? 0).toLocaleString()} UZS`,
+      sub: tr(
+        `${stats.pending_payments ?? 0} pending payment orders (tap to open)`,
+        `${stats.pending_payments ?? 0} zakazov s ozhidayushchey oplatoy (otkryt)`,
+        `${stats.pending_payments ?? 0} ta kutilayotgan to'lov buyurtmasi (ochish)`
+      ),
+      icon: Clock,
+      color: 'text-orange-500',
+      onClick: () => navigate('/orders?status=PAYMENT_PENDING'),
+    },
+    {
+      title: t('in_delivery'),
+      value: String(stats.in_delivery ?? 0),
+      sub: tr('Orders currently in delivery', 'Zakazy v processe dostavki', 'Yetkazib berilayotgan buyurtmalar'),
+      icon: Truck,
+      color: 'text-purple-500',
+    },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-light-text dark:text-white">{t('nav_dashboard')}</h1>
+      </div>
+
+      <Card className="!p-0 overflow-hidden">
+        <div className="p-4 md:p-5 flex flex-col gap-4">
+          <div className="flex flex-wrap gap-2">
+            {([
+              ['date', tr('Today / Date', 'Segodnya / Data', 'Bugun / Sana')],
+              ['weekly', tr('Weekly', 'Nedelya', 'Haftalik')],
+              ['monthly', tr('Monthly', 'Mesyac', 'Oylik')],
+              ['range', tr('Custom Range', 'Svoy period', 'Maxsus davr')],
+            ] as Array<[DashboardFilterMode, string]>).map(([mode, label]) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => setFilterMode(mode)}
+                className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${filterMode === mode
+                  ? 'border-primary-blue bg-primary-blue text-white'
+                  : 'border-light-border bg-white text-gray-700 hover:bg-gray-50 dark:border-navy-600 dark:bg-navy-900 dark:text-gray-200 dark:hover:bg-navy-700'
+                  }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex flex-col md:flex-row gap-4 items-start md:items-end justify-between border-t border-light-border dark:border-navy-700 pt-4 mt-4">
+            <div className="flex flex-wrap gap-3 w-full md:w-auto">
+              {filterMode === 'date' && (
+                <div className="flex-1 md:flex-none">
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">{tr('Date', 'Data', 'Sana')}</label>
+                  <input
+                    type="date"
+                    value={singleDate}
+                    onChange={(e) => setSingleDate(e.target.value)}
+                    className="w-full md:w-auto rounded-lg border border-light-border dark:border-navy-600 bg-gray-50 dark:bg-navy-900/50 px-3 py-2 text-sm text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-primary-blue/20 outline-none transition-all shadow-sm"
+                  />
+                </div>
+              )}
+
+              {filterMode === 'range' && (
+                <>
+                  <div className="flex-1 md:flex-none">
+                    <label className="block text-xs font-medium text-gray-500 mb-1.5">{tr('From', 'Ot', 'Dan')}</label>
+                    <input
+                      type="date"
+                      value={dateFrom}
+                      onChange={(e) => setDateFrom(e.target.value)}
+                      className="w-full md:w-auto rounded-lg border border-light-border dark:border-navy-600 bg-gray-50 dark:bg-navy-900/50 px-3 py-2 text-sm text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-primary-blue/20 outline-none transition-all shadow-sm"
+                    />
+                  </div>
+                  <div className="flex-1 md:flex-none">
+                    <label className="block text-xs font-medium text-gray-500 mb-1.5">{tr('To', 'Do', 'Gacha')}</label>
+                    <input
+                      type="date"
+                      value={dateTo}
+                      onChange={(e) => setDateTo(e.target.value)}
+                      className="w-full md:w-auto rounded-lg border border-light-border dark:border-navy-600 bg-gray-50 dark:bg-navy-900/50 px-3 py-2 text-sm text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-primary-blue/20 outline-none transition-all shadow-sm"
+                    />
+                  </div>
+                </>
+              )}
+
+              {(filterMode === 'weekly' || filterMode === 'monthly') && (
+                <div className="flex items-center gap-2 rounded-lg bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 px-4 py-2 text-sm text-blue-700 dark:text-blue-400">
+                  <Calendar size={16} />
+                  <span>
+                    {filterMode === 'weekly'
+                      ? tr('Rolling 7-day period', 'Skruglyayushchiysya period 7 dney', 'Sirganuvchi 7 kunlik davr')
+                      : tr('Rolling 30-day period', 'Skruglyayushchiysya period 30 dney', 'Sirganuvchi 30 kunlik davr')}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+              <div className="hidden md:flex items-center gap-2 mr-2 px-3 py-1.5 rounded-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-700 shadow-sm">
+                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-300">{loadedRange}</span>
+              </div>
+              <button
+                type="button"
+                onClick={loadStats}
+                disabled={loading}
+                className="flex-1 md:flex-none inline-flex justify-center items-center gap-2 rounded-lg bg-white dark:bg-navy-800 border border-light-border dark:border-navy-600 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-navy-700 hover:text-primary-blue transition-all shadow-sm disabled:opacity-50"
+              >
+                <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
+                {tr('Refresh', 'Obnovit', 'Yangilash')}
+              </button>
+              <button
+                type="button"
+                onClick={downloadStats}
+                disabled={downloading}
+                className="flex-1 md:flex-none inline-flex justify-center items-center gap-2 rounded-lg bg-primary-blue px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-all shadow-sm disabled:opacity-60 relative overflow-hidden group"
+              >
+                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                <Download size={15} className="relative z-10" />
+                <span className="relative z-10">{downloading ? tr('Exporting...', 'Eksport...', 'Yuklanmoqda...') : tr('Export XLS', 'Eksport XLS', 'XLS Yuklash')}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {error && <div className="rounded-lg border border-red-200 bg-red-50 text-red-700 px-4 py-3 text-sm">{error}</div>}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {kpiCards.map((kpi, idx) => (
+          <Card key={idx} className={`relative overflow-hidden ${kpi.onClick ? 'cursor-pointer hover:shadow-md' : ''}`}>
+            <div className="flex justify-between items-start" onClick={kpi.onClick}>
+              <div>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{kpi.title}</p>
+                <h3 className="text-2xl font-bold text-light-text dark:text-white mt-2">{loading ? '...' : kpi.value}</h3>
+              </div>
+              <div className={`p-3 rounded-lg bg-gray-50 dark:bg-navy-700 ${kpi.color}`}>
+                <kpi.icon size={24} />
+              </div>
+            </div>
+            <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">{kpi.sub}</div>
+          </Card>
+        ))}
+      </div>
+
+      {showCharts && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card title={ordersTrendTitle} className="min-h-[350px]">
+            {orderTrend.length === 0 ? (
+              <p className="text-sm text-gray-500">{tr('No trend data.', 'Net trend dannyh.', 'Trend malumotlari yoq.')}</p>
+            ) : (
+              <div className="h-[300px] w-full mt-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={orderTrend}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#DDE3EA" vertical={false} />
+                    <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis
+                      stroke="#888888"
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                      allowDecimals={false}
+                      domain={[0, (dataMax: number) => Math.max(1, Math.ceil(dataMax * 1.2))]}
+                    />
+                    <Tooltip
+                      cursor={{ fill: 'transparent' }}
+                      formatter={(value) => [toNumber(value), tr('Orders', 'Zakazy', 'Buyurtmalar')]}
+                      contentStyle={{ backgroundColor: '#101B2D', borderColor: '#1A2C45', color: '#fff' }}
+                    />
+                    <Bar dataKey="value" fill="#E53935" radius={[4, 4, 0, 0]} minPointSize={2} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </Card>
+
+          <Card title={revenueTrendTitle} className="min-h-[350px]">
+            {revenueTrend.length === 0 ? (
+              <p className="text-sm text-gray-500">{tr('No trend data.', 'Net trend dannyh.', 'Trend malumotlari yoq.')}</p>
+            ) : (
+              <div className="h-[300px] w-full mt-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={revenueTrend}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#DDE3EA" vertical={false} />
+                    <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis
+                      stroke="#888888"
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                      domain={revenueDomain}
+                      tickFormatter={(value) => `${Math.round(Number(value) / 1000)}k`}
+                    />
+                    <Tooltip
+                      formatter={(value) => [`${toNumber(value).toLocaleString()} UZS`, tr('Revenue', 'Vyruchka', 'Tushum')]}
+                      contentStyle={{ backgroundColor: '#101B2D', borderColor: '#1A2C45', color: '#fff' }}
+                    />
+                    <Line type="monotone" dataKey="value" stroke="#2F6BFF" strokeWidth={3} dot={{ r: 3 }} connectNulls />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Dashboard;
