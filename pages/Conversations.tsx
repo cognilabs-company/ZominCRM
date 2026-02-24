@@ -101,19 +101,28 @@ interface AdminSendResponse {
   available_delivery_channels?: string[];
 }
 
-interface ConversationAutomationSettingsResponse {
-  settings?: {
-    do_not_respond_when_interrupted: boolean;
-    resume_by_timer: boolean;
-    resume_after_minutes: number;
-    state: {
-      is_interrupted: boolean;
-      interrupt_until?: string | null;
-    };
+interface BotRuntimeState {
+  conversation_id: string;
+  is_paused: boolean;
+  pause_until: string | null;
+  paused_by_user_id?: string;
+  paused_at?: string | null;
+  last_resumed_at?: string | null;
+  last_resume_reason?: string | null;
+  trigger_effect?: {
+    action: 'activate' | 'deactivate' | null;
+    until?: string | null;
+    remaining_customer_messages?: number;
+    rule_id?: string | null;
+    rule_name?: string | null;
   };
 }
 
-const ADMIN_TAKEOVER_MESSAGE = "Operator suhbatga ulandi. Bot vaqtincha to'xtatildi.";
+interface BotRuntimeResponse {
+  ok?: boolean;
+  state?: BotRuntimeState;
+}
+
 const FALLBACK_CLIENT_PREFIX = 'Mijoz ';
 
 const buildFallbackClientName = (seed?: string | null) => {
@@ -166,9 +175,9 @@ const Conversations: React.FC = () => {
   const [listWsConnected, setListWsConnected] = useState(false);
   const [detailWsConnected, setDetailWsConnected] = useState(false);
   const [mobilePane, setMobilePane] = useState<'list' | 'chat'>('list');
-  const [chatAutomation, setChatAutomation] = useState<ConversationAutomationSettingsResponse['settings'] | null>(null);
-  const [chatAutomationLoading, setChatAutomationLoading] = useState(false);
-  const [chatAutomationSaving, setChatAutomationSaving] = useState(false);
+  const [botRuntimeState, setBotRuntimeState] = useState<BotRuntimeState | null>(null);
+  const [botRuntimeLoading, setBotRuntimeLoading] = useState(false);
+  const [botRuntimeSaving, setBotRuntimeSaving] = useState(false);
   const [clearingConversationId, setClearingConversationId] = useState<string | null>(null);
 
   const messageAreaRef = useRef<HTMLDivElement | null>(null);
@@ -542,24 +551,83 @@ const Conversations: React.FC = () => {
     }
   }, [normalizeMessage, scrollToBottom, toast, tr]);
 
-  const loadConversationAutomation = useCallback(async (conversationId: string) => {
-    if (!isAdmin || !conversationId) {
-      setChatAutomation(null);
+  const loadConversationBotState = useCallback(async (conversationId: string) => {
+    if (!conversationId) {
+      setBotRuntimeState(null);
       return;
     }
     try {
-      setChatAutomationLoading(true);
-      const data = await apiRequest<ConversationAutomationSettingsResponse>(
-        ENDPOINTS.CONVERSATIONS.AUTOMATION_SETTINGS(conversationId)
-      );
-      setChatAutomation(data.settings || null);
+      setBotRuntimeLoading(true);
+      const data = await apiRequest<BotRuntimeResponse>(ENDPOINTS.CONVERSATIONS.BOT_RESUME(conversationId), {
+        method: 'GET',
+      });
+      setBotRuntimeState(data.state || null);
     } catch (e) {
-      toast.warning(e instanceof Error ? e.message : tr('Failed to load chat automation state', 'Suhbat avtomatika holatini yuklab bo‘lmadi', 'Suhbat avtomatika holatini yuklab bo‘lmadi'));
-      setChatAutomation(null);
+      setBotRuntimeState(null);
+      toast.warning(
+        e instanceof Error
+          ? e.message
+          : tr('Failed to load bot state', 'Bot holatini yuklab bo‘lmadi', 'Bot holatini yuklab bo‘lmadi')
+      );
     } finally {
-      setChatAutomationLoading(false);
+      setBotRuntimeLoading(false);
     }
-  }, [isAdmin, toast, tr]);
+  }, [toast, tr]);
+
+  const pauseBotForConversation = useCallback(async (conversationId: string) => {
+    try {
+      setBotRuntimeSaving(true);
+      const input = window.prompt(
+        tr(
+          'Pause bot for how many minutes? Leave empty or 0 for manual resume only.',
+          'Botni necha daqiqaga to‘xtatish? Bo‘sh qoldiring yoki 0 = faqat qo‘lda resume.',
+          'Botni necha daqiqaga to‘xtatish? Bo‘sh qoldiring yoki 0 = faqat qo‘lda resume.'
+        ),
+        '10'
+      );
+      if (input === null) return;
+      const parsed = Number(String(input).trim() || '0');
+      const pause_for_minutes = Number.isFinite(parsed) && parsed >= 0 ? Math.min(parsed, 10080) : 0;
+      const data = await apiRequest<BotRuntimeResponse & { paused?: boolean }>(ENDPOINTS.CONVERSATIONS.BOT_PAUSE(conversationId), {
+        method: 'POST',
+        body: JSON.stringify({
+          pause_for_minutes,
+          reason: 'manual_admin_pause',
+        }),
+      });
+      setBotRuntimeState(data.state || null);
+      toast.success(tr('Bot paused for this chat', 'Bu chat uchun bot to‘xtatildi', 'Bu chat uchun bot to‘xtatildi'));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : tr('Failed to pause bot', 'Botni to‘xtatib bo‘lmadi', 'Botni to‘xtatib bo‘lmadi'));
+    } finally {
+      setBotRuntimeSaving(false);
+    }
+  }, [toast, tr]);
+
+  const resumeBotForConversation = useCallback(async (conversationId: string) => {
+    try {
+      setBotRuntimeSaving(true);
+      const data = await apiRequest<BotRuntimeResponse & { resumed?: boolean }>(ENDPOINTS.CONVERSATIONS.BOT_RESUME(conversationId), {
+        method: 'POST',
+        body: JSON.stringify({}),
+      });
+      setBotRuntimeState(data.state || null);
+      toast.success(tr('Bot resumed for this chat', 'Bu chat uchun bot yoqildi', 'Bu chat uchun bot yoqildi'));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : tr('Failed to resume bot', 'Botni yoqib bo‘lmadi', 'Botni yoqib bo‘lmadi'));
+    } finally {
+      setBotRuntimeSaving(false);
+    }
+  }, [toast, tr]);
+
+  const toggleBotForConversation = useCallback(async () => {
+    if (!selectedChatId) return;
+    if (botRuntimeState?.is_paused) {
+      await resumeBotForConversation(selectedChatId);
+      return;
+    }
+    await pauseBotForConversation(selectedChatId);
+  }, [botRuntimeState?.is_paused, pauseBotForConversation, resumeBotForConversation, selectedChatId]);
 
   const closeListSocket = useCallback(() => {
     clearTimer(listRetryRef);
@@ -691,16 +759,16 @@ const Conversations: React.FC = () => {
       activeConversationRef.current = selectedChatId;
       shouldStickToBottomRef.current = true;
       loadMessages(selectedChatId);
-      loadConversationAutomation(selectedChatId);
+      loadConversationBotState(selectedChatId);
       openDetailSocket(selectedChatId);
       markConversationRead(selectedChatId);
       return;
     }
     activeConversationRef.current = null;
-    setChatAutomation(null);
+    setBotRuntimeState(null);
     setMessages([]);
     closeDetailSocket();
-  }, [closeDetailSocket, loadConversationAutomation, loadMessages, markConversationRead, openDetailSocket, selectedChatId]);
+  }, [closeDetailSocket, loadConversationBotState, loadMessages, markConversationRead, openDetailSocket, selectedChatId]);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -710,13 +778,11 @@ const Conversations: React.FC = () => {
       }
       if (selectedChatId && !detailWsConnected) {
         loadMessages(selectedChatId);
-        if (isAdmin) {
-          loadConversationAutomation(selectedChatId);
-        }
+        loadConversationBotState(selectedChatId);
       }
     }, 15000);
     return () => window.clearInterval(timer);
-  }, [detailWsConnected, isAdmin, listWsConnected, loadConversationAutomation, loadConversations, loadMessages, selectedChatId]);
+  }, [detailWsConnected, listWsConnected, loadConversationBotState, loadConversations, loadMessages, selectedChatId]);
 
   const handleSend = async () => {
     if (!selectedChatId || !input.trim()) return;
@@ -729,10 +795,8 @@ const Conversations: React.FC = () => {
         body: JSON.stringify({ text }),
       });
       appendAdminMessageFromSendResponse(selectedChatId, response);
-      const fullResponse = response as AdminSendResponse;
-      if (fullResponse.interruption?.interrupted && !fullResponse.interruption?.resumed) {
-        toast.info(tr('Automation interrupted by employee message.', 'Xodim xabari sababli avtomatika to‘xtadi.', 'Xodim xabari sababli avtomatika to‘xtadi.'));
-        await loadConversationAutomation(selectedChatId);
+      const fullResponse = response as AdminSendResponse;      if (fullResponse.interruption?.interrupted && !fullResponse.interruption?.resumed) {
+        loadConversationBotState(selectedChatId);
       }
       if ((fullResponse.available_delivery_channels || []).length === 0) {
         toast.warning(tr('No active delivery channel available for this conversation.', 'Bu suhbat uchun faol yetkazish kanali yo‘q.', 'Bu suhbat uchun faol yetkazish kanali yo‘q.'));
@@ -745,53 +809,6 @@ const Conversations: React.FC = () => {
       setInput(text);
     } finally {
       setSending(false);
-    }
-  };
-
-  const isBotStoppedForSelectedChat = Boolean(
-    chatAutomation?.do_not_respond_when_interrupted && chatAutomation?.state?.is_interrupted
-  );
-
-  const toggleBotForSelectedChat = async () => {
-    if (!selectedChatId || !isAdmin || chatAutomationSaving) return;
-    try {
-      setChatAutomationSaving(true);
-
-      if (isBotStoppedForSelectedChat) {
-        const resumeData = await apiRequest<ConversationAutomationSettingsResponse>(
-          ENDPOINTS.CONVERSATIONS.AUTOMATION_RESUME(selectedChatId),
-          { method: 'POST', body: JSON.stringify({}) }
-        );
-        setChatAutomation(resumeData.settings || null);
-        toast.success(tr('Bot resumed for this chat.', 'Bu chatda bot qayta yoqildi.', 'Bu chatda bot qayta yoqildi.'));
-        return;
-      }
-
-      await apiRequest<ConversationAutomationSettingsResponse>(
-        ENDPOINTS.CONVERSATIONS.AUTOMATION_SETTINGS(selectedChatId),
-        {
-          method: 'PUT',
-          body: JSON.stringify({
-            do_not_respond_when_interrupted: true,
-            resume_by_timer: false,
-          }),
-        }
-      );
-
-      const sendResponse = await apiRequest<AdminSendResponse | ApiMessage>(
-        ENDPOINTS.CONVERSATIONS.ADMIN_SEND(selectedChatId),
-        {
-          method: 'POST',
-          body: JSON.stringify({ text: ADMIN_TAKEOVER_MESSAGE }),
-        }
-      );
-      appendAdminMessageFromSendResponse(selectedChatId, sendResponse);
-      await loadConversationAutomation(selectedChatId);
-      toast.success(tr('Bot stopped for this chat.', 'Bu chatda bot to‘xtatildi.', 'Bu chatda bot to‘xtatildi.'));
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : tr('Failed to update bot state for this chat', 'Bu chat uchun bot holatini yangilab bo‘lmadi', 'Bu chat uchun bot holatini yangilab bo‘lmadi'));
-    } finally {
-      setChatAutomationSaving(false);
     }
   };
 
@@ -819,7 +836,6 @@ const Conversations: React.FC = () => {
           setSelectedChatId(nextSelected);
           if (!nextSelected) {
             setMessages([]);
-            setChatAutomation(null);
           }
         }
         return next;
@@ -853,7 +869,7 @@ const Conversations: React.FC = () => {
                 loadConversations({ silent: true });
                 if (selectedChatId) {
                   loadMessages(selectedChatId);
-                  loadConversationAutomation(selectedChatId);
+                  loadConversationBotState(selectedChatId);
                 }
               }}
               className="text-xs bg-white dark:bg-navy-800 border border-light-border dark:border-navy-700 rounded-md px-2 py-1 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-navy-700"
@@ -953,6 +969,21 @@ const Conversations: React.FC = () => {
                     : tr('Instagram page missing', 'Instagram sahifa ID yoq', "Instagram sahifa ID yo'q")}
                 </span>
               )}
+              {selectedConversation && botRuntimeState?.is_paused && (
+                <span className="text-xs px-2 py-0.5 rounded-full border bg-red-50 border-red-200 text-red-700">
+                  {tr('Paused by operator', 'Operator tomonidan to‘xtatilgan', 'Operator tomonidan to‘xtatilgan')}
+                </span>
+              )}
+              {selectedConversation && botRuntimeState?.trigger_effect?.action === 'deactivate' && (
+                <span className="text-xs px-2 py-0.5 rounded-full border bg-amber-50 border-amber-200 text-amber-700">
+                  {tr('Trigger-deactivated', 'Trigger bilan o‘chirilgan', 'Trigger bilan o‘chirilgan')}
+                </span>
+              )}
+              {selectedConversation && botRuntimeState?.pause_until && (
+                <span className="text-xs px-2 py-0.5 rounded-full border bg-gray-100 border-gray-200 text-gray-700 dark:bg-navy-700 dark:border-navy-600 dark:text-gray-300">
+                  {tr('Until', 'Gacha', 'Gacha')}: {new Date(botRuntimeState.pause_until).toLocaleTimeString()}
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-2 sm:gap-3 text-xs text-gray-500 flex-wrap">
               {selectedConversation && (
@@ -968,25 +999,25 @@ const Conversations: React.FC = () => {
                     : tr('Clear Chat', 'Chatni tozalash', 'Chatni tozalash')}
                 </button>
               )}
-              {isAdmin && selectedConversation && (
+              {selectedConversation && (
                 <button
-                  onClick={toggleBotForSelectedChat}
-                  disabled={chatAutomationLoading || chatAutomationSaving}
+                  onClick={toggleBotForConversation}
+                  disabled={botRuntimeSaving || botRuntimeLoading}
                   className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 border transition-colors disabled:opacity-60 ${
-                    isBotStoppedForSelectedChat
-                      ? 'bg-red-50 border-red-200 text-red-700'
-                      : 'bg-green-50 border-green-200 text-green-700'
+                    botRuntimeState?.is_paused
+                      ? 'bg-green-50 border-green-200 text-green-700'
+                      : 'bg-red-50 border-red-200 text-red-700'
                   }`}
-                  title={isBotStoppedForSelectedChat ? tr('Resume bot for this chat', 'Bu chat uchun botni qayta yoqish', 'Bu chat uchun botni qayta yoqish') : tr('Stop bot for this chat', 'Bu chat uchun botni to‘xtatish', 'Bu chat uchun botni to‘xtatish')}
+                  title={botRuntimeState?.is_paused ? tr('Resume bot', 'Botni yoqish', 'Botni yoqish') : tr('Pause bot', 'Botni to‘xtatish', 'Botni to‘xtatish')}
                 >
-                  <span className={`inline-block h-2.5 w-2.5 rounded-full ${isBotStoppedForSelectedChat ? 'bg-red-500' : 'bg-green-500'}`} />
-                  {chatAutomationSaving
+                  <span className={`inline-block h-2.5 w-2.5 rounded-full ${botRuntimeState?.is_paused ? 'bg-green-500' : 'bg-red-500'}`} />
+                  {botRuntimeSaving
                     ? tr('Updating...', 'Yangilanmoqda...', 'Yangilanmoqda...')
-                    : chatAutomationLoading
+                    : botRuntimeLoading
                       ? tr('Loading...', 'Yuklanmoqda...', 'Yuklanmoqda...')
-                      : isBotStoppedForSelectedChat
-                        ? tr('Bot Stopped', 'Bot to‘xtagan', 'Bot to‘xtagan')
-                        : tr('Bot Active', 'Bot faol', 'Bot faol')}
+                      : botRuntimeState?.is_paused
+                        ? tr('Resume Bot', 'Botni yoqish', 'Botni yoqish')
+                        : tr('Pause Bot', 'Botni to‘xtatish', 'Botni to‘xtatish')}
                 </button>
               )}
               <RefreshCw size={13} />
@@ -1133,3 +1164,8 @@ const Conversations: React.FC = () => {
 };
 
 export default Conversations;
+
+
+
+
+
