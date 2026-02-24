@@ -79,13 +79,6 @@ const Clients: React.FC = () => {
     return '-';
   };
 
-  const languageBadgeVariant = (lang?: ClientRow['preferred_language']) => {
-    if (lang === 'uz') return 'success' as const;
-    if (lang === 'ru') return 'info' as const;
-    if (lang === 'en') return 'purple' as const;
-    return 'default' as const;
-  };
-
   const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
@@ -188,7 +181,7 @@ const Clients: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 text-sm">
                       {c.preferred_language ? (
-                        <Badge variant={languageBadgeVariant(c.preferred_language)}>{languageLabel(c.preferred_language)}</Badge>
+                        <Badge variant="default">{languageLabel(c.preferred_language)}</Badge>
                       ) : (
                         <span className="text-gray-400">-</span>
                       )}

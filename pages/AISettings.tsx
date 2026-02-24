@@ -1,577 +1,395 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '../components/ui/Card';
-import { Modal } from '../components/ui/Modal';
 import { Switch } from '../components/ui/Switch';
 import { useToast } from '../context/ToastContext';
-import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { ApiError, ENDPOINTS, apiRequest } from '../services/api';
-import { Edit2, Plus, RefreshCw, Settings2, Trash2, Play, KeyRound, PlayCircle } from 'lucide-react';
+import { Bot, KeyRound, PlayCircle, Settings2, MessageSquare, Power, RefreshCw } from 'lucide-react';
 
-type TriggerSource = 'client' | 'admin';
-type TriggerMatchMode = 'exact' | 'contains';
-type TriggerAction = 'activate' | 'deactivate';
-type FollowUpMode = 'MANUAL' | 'AI';
+interface ConversationRow {
+  id: string;
+  channel: 'telegram' | 'instagram';
+  client_name?: string | null;
+  external_thread_id?: string;
+}
 
-interface GlobalSettings {
+interface GlobalAutomationSettings {
   id: string;
   singleton_key: string;
   is_bot_paused: boolean;
   pause_until: string | null;
+  paused_by_user_id: string;
   pause_reason: string;
   followups_enabled: boolean;
-  operator_interrupt_enabled: boolean;
-  operator_resume_after_minutes: number;
+  created_at?: string;
   updated_at?: string;
 }
 
-interface TriggerRule {
-  id: string;
-  name: string;
-  is_active: boolean;
-  order: number;
-  source: TriggerSource;
-  phrase: string;
-  match_mode: TriggerMatchMode;
-  case_sensitive: boolean;
-  action: TriggerAction;
-  duration_minutes: number;
-  customer_message_count: number;
+interface GlobalFormState {
+  is_bot_paused: boolean;
+  followups_enabled: boolean;
+  pause_for_minutes: number;
+  pause_reason: string;
 }
-
-interface FollowUpRule {
-  id: string;
-  name: string;
-  is_active: boolean;
-  order: number;
-  delay_minutes: number;
-  message_mode: FollowUpMode;
-  manual_text: string;
-  ai_instruction: string;
-  context_message_limit: number;
-}
-
-type TriggerForm = Omit<TriggerRule, 'id'>;
-type FollowUpForm = Omit<FollowUpRule, 'id'>;
-
-const defaultTriggerForm: TriggerForm = {
-  name: '',
-  is_active: true,
-  order: 0,
-  source: 'client',
-  phrase: '',
-  match_mode: 'contains',
-  case_sensitive: false,
-  action: 'deactivate',
-  duration_minutes: 10,
-  customer_message_count: 0,
-};
-
-const defaultFollowUpForm: FollowUpForm = {
-  name: '',
-  is_active: true,
-  order: 1,
-  delay_minutes: 5,
-  message_mode: 'MANUAL',
-  manual_text: '',
-  ai_instruction: '',
-  context_message_limit: 10,
-};
 
 const AISettings: React.FC = () => {
   const navigate = useNavigate();
   const toast = useToast();
   const { language } = useLanguage();
   const { isAdmin } = useAuth();
-  const tr = useCallback((en: string, ru: string, uz: string) => (language === 'ru' ? ru : language === 'uz' ? uz : en), [language]);
+  const tr = useCallback(
+    (en: string, ru: string, uz: string) => (language === 'ru' ? ru : language === 'uz' ? uz : en),
+    [language]
+  );
 
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [savingGlobal, setSavingGlobal] = useState(false);
-  const [resumingGlobal, setResumingGlobal] = useState(false);
-  const [runningFollowUps, setRunningFollowUps] = useState(false);
+  const [conversations, setConversations] = useState<ConversationRow[]>([]);
+  const [selectedConversationId, setSelectedConversationId] = useState('');
+  const [loadingConversations, setLoadingConversations] = useState(true);
 
-  const [globalSettings, setGlobalSettings] = useState<GlobalSettings | null>(null);
-  const [globalForm, setGlobalForm] = useState({
+  const [globalLoading, setGlobalLoading] = useState(true);
+  const [globalSaving, setGlobalSaving] = useState(false);
+  const [globalResuming, setGlobalResuming] = useState(false);
+  const [globalSettings, setGlobalSettings] = useState<GlobalAutomationSettings | null>(null);
+  const [globalForm, setGlobalForm] = useState<GlobalFormState>({
     is_bot_paused: false,
+    followups_enabled: true,
     pause_for_minutes: 10,
     pause_reason: '',
-    followups_enabled: true,
-    operator_interrupt_enabled: true,
-    operator_resume_after_minutes: 2,
   });
 
-  const [triggers, setTriggers] = useState<TriggerRule[]>([]);
-  const [triggersIncludeInactive, setTriggersIncludeInactive] = useState(false);
-  const [triggersLoading, setTriggersLoading] = useState(false);
-  const [triggerModalOpen, setTriggerModalOpen] = useState(false);
-  const [triggerSaving, setTriggerSaving] = useState(false);
-  const [editingTrigger, setEditingTrigger] = useState<TriggerRule | null>(null);
-  const [triggerForm, setTriggerForm] = useState<TriggerForm>(defaultTriggerForm);
-
-  const [followUps, setFollowUps] = useState<FollowUpRule[]>([]);
-  const [followUpsIncludeInactive, setFollowUpsIncludeInactive] = useState(false);
-  const [followUpsLoading, setFollowUpsLoading] = useState(false);
-  const [followUpModalOpen, setFollowUpModalOpen] = useState(false);
-  const [followUpSaving, setFollowUpSaving] = useState(false);
-  const [editingFollowUp, setEditingFollowUp] = useState<FollowUpRule | null>(null);
-  const [followUpForm, setFollowUpForm] = useState<FollowUpForm>(defaultFollowUpForm);
-
   const handleAuthFailure = useCallback((e: unknown) => {
-    if (e instanceof ApiError && e.status === 401) { navigate('/login', { replace: true }); return true; }
-    if (e instanceof ApiError && e.status === 403) { navigate('/403', { replace: true }); return true; }
+    if (e instanceof ApiError && e.status === 401) {
+      navigate('/login', { replace: true });
+      return true;
+    }
+    if (e instanceof ApiError && e.status === 403) {
+      navigate('/403', { replace: true });
+      return true;
+    }
     return false;
   }, [navigate]);
 
-  const loadGlobal = useCallback(async () => {
-    const res = await apiRequest<{ settings?: GlobalSettings }>(ENDPOINTS.AUTOMATION.SETTINGS);
-    const s = res.settings || null;
-    setGlobalSettings(s);
-    if (s) {
-      setGlobalForm((p) => ({
-        ...p,
-        is_bot_paused: s.is_bot_paused,
-        pause_reason: s.pause_reason || '',
-        followups_enabled: s.followups_enabled,
-        operator_interrupt_enabled: s.operator_interrupt_enabled,
-        operator_resume_after_minutes: s.operator_resume_after_minutes ?? p.operator_resume_after_minutes,
-      }));
-    }
-  }, []);
-
-  const loadTriggers = useCallback(async () => {
-    setTriggersLoading(true);
+  const loadGlobalSettings = useCallback(async () => {
     try {
-      const qs = triggersIncludeInactive ? '?include_inactive=1' : '';
-      const res = await apiRequest<{ results?: TriggerRule[] }>(`${ENDPOINTS.AUTOMATION.TRIGGERS}${qs}`);
-      setTriggers(res.results || []);
-    } finally {
-      setTriggersLoading(false);
-    }
-  }, [triggersIncludeInactive]);
-
-  const loadFollowUps = useCallback(async () => {
-    setFollowUpsLoading(true);
-    try {
-      const qs = followUpsIncludeInactive ? '?include_inactive=1' : '';
-      const res = await apiRequest<{ results?: FollowUpRule[] }>(`${ENDPOINTS.AUTOMATION.FOLLOW_UPS}${qs}`);
-      setFollowUps(res.results || []);
-    } finally {
-      setFollowUpsLoading(false);
-    }
-  }, [followUpsIncludeInactive]);
-
-  const refreshAll = useCallback(async (initial = false) => {
-    try {
-      initial ? setLoading(true) : setRefreshing(true);
-      await Promise.all([loadGlobal(), loadTriggers(), loadFollowUps()]);
+      setGlobalLoading(true);
+      const response = await apiRequest<{ settings?: GlobalAutomationSettings }>(ENDPOINTS.AUTOMATION.SETTINGS);
+      const settings = response.settings || null;
+      setGlobalSettings(settings);
+      if (settings) {
+        setGlobalForm((prev) => ({
+          ...prev,
+          is_bot_paused: settings.is_bot_paused,
+          followups_enabled: settings.followups_enabled,
+          pause_reason: settings.pause_reason || '',
+        }));
+      }
     } catch (e) {
-      if (!handleAuthFailure(e)) toast.error(e instanceof Error ? e.message : tr('Failed to load AI settings', 'Ne udalos zagruzit nastroiki AI', 'AI sozlamalarini yuklab bo‘lmadi'));
+      if (handleAuthFailure(e)) return;
+      toast.error(e instanceof Error ? e.message : tr('Failed to load global automation settings', 'Global automation sozlamalarini yuklab bolmadi', 'Global automation sozlamalarini yuklab bolmadi'));
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      setGlobalLoading(false);
     }
-  }, [handleAuthFailure, loadFollowUps, loadGlobal, loadTriggers, toast, tr]);
+  }, [handleAuthFailure, toast, tr]);
 
-  useEffect(() => { refreshAll(true); }, [refreshAll]);
-  useEffect(() => { loadTriggers().catch(() => {}); }, [loadTriggers]);
-  useEffect(() => { loadFollowUps().catch(() => {}); }, [loadFollowUps]);
-
-  const saveGlobal = async () => {
+  const loadConversations = useCallback(async () => {
     try {
-      setSavingGlobal(true);
-      const res = await apiRequest<{ settings?: GlobalSettings }>(ENDPOINTS.AUTOMATION.SETTINGS, {
+      setLoadingConversations(true);
+      const data = await apiRequest<{ results?: ConversationRow[] } | ConversationRow[]>(ENDPOINTS.CONVERSATIONS.LIST);
+      const list = Array.isArray(data) ? data : (data.results || []);
+      setConversations(list);
+      if (list.length && !selectedConversationId) {
+        setSelectedConversationId(list[0].id);
+      }
+    } catch (e) {
+      if (handleAuthFailure(e)) return;
+      toast.error(e instanceof Error ? e.message : tr('Failed to load conversations', 'Suhbatlarni yuklab bolmadi', 'Suhbatlarni yuklab bolmadi'));
+    } finally {
+      setLoadingConversations(false);
+    }
+  }, [handleAuthFailure, selectedConversationId, toast, tr]);
+
+  useEffect(() => {
+    loadGlobalSettings();
+    loadConversations();
+  }, [loadConversations, loadGlobalSettings]);
+
+  const saveGlobalSettings = async () => {
+    try {
+      setGlobalSaving(true);
+      const payload = {
+        is_bot_paused: globalForm.is_bot_paused,
+        pause_for_minutes: globalForm.pause_for_minutes,
+        pause_reason: globalForm.pause_reason,
+        followups_enabled: globalForm.followups_enabled,
+      };
+      const data = await apiRequest<{ settings?: GlobalAutomationSettings }>(ENDPOINTS.AUTOMATION.SETTINGS, {
         method: 'PUT',
-        body: JSON.stringify(globalForm),
+        body: JSON.stringify(payload),
       });
-      if (res.settings) setGlobalSettings(res.settings);
-      toast.success(tr('Global settings saved', 'Global nastroiki sohraneny', 'Global sozlamalar saqlandi'));
-    } catch (e) {
-      if (!handleAuthFailure(e)) toast.error(e instanceof Error ? e.message : tr('Failed to save global settings', 'Ne udalos sohranit nastroiki', 'Global sozlamalarni saqlab bo‘lmadi'));
-    } finally {
-      setSavingGlobal(false);
-    }
-  };
-
-  const resumeGlobal = async () => {
-    try {
-      setResumingGlobal(true);
-      const res = await apiRequest<{ settings?: GlobalSettings }>(ENDPOINTS.AUTOMATION.RESUME, { method: 'POST', body: JSON.stringify({}) });
-      if (res.settings) {
-        setGlobalSettings(res.settings);
-        setGlobalForm((p) => ({ ...p, is_bot_paused: false, pause_reason: res.settings?.pause_reason || '' }));
+      if (data.settings) {
+        setGlobalSettings(data.settings);
+        setGlobalForm((prev) => ({
+          ...prev,
+          is_bot_paused: data.settings?.is_bot_paused ?? prev.is_bot_paused,
+          followups_enabled: data.settings?.followups_enabled ?? prev.followups_enabled,
+          pause_reason: data.settings?.pause_reason || '',
+        }));
       }
-      toast.success(tr('Bot resumed globally', 'Bot vozobnovlen globalno', 'Bot global qayta yoqildi'));
+      toast.success(tr('Global settings saved', 'Global sozlamalar saqlandi', 'Global sozlamalar saqlandi'));
     } catch (e) {
-      if (!handleAuthFailure(e)) toast.error(e instanceof Error ? e.message : tr('Failed to resume bot', 'Ne udalos vozobnovit bota', 'Botni qayta yoqib bo‘lmadi'));
+      if (handleAuthFailure(e)) return;
+      toast.error(e instanceof Error ? e.message : tr('Failed to save global settings', 'Global sozlamalarni saqlab bolmadi', 'Global sozlamalarni saqlab bolmadi'));
     } finally {
-      setResumingGlobal(false);
+      setGlobalSaving(false);
     }
   };
 
-  const openTriggerCreate = () => { setEditingTrigger(null); setTriggerForm({ ...defaultTriggerForm }); setTriggerModalOpen(true); };
-  const openTriggerEdit = (r: TriggerRule) => { setEditingTrigger(r); const { id: _id, ...rest } = r; setTriggerForm(rest); setTriggerModalOpen(true); };
-  const openFollowUpCreate = () => { setEditingFollowUp(null); setFollowUpForm({ ...defaultFollowUpForm }); setFollowUpModalOpen(true); };
-  const openFollowUpEdit = (r: FollowUpRule) => { setEditingFollowUp(r); const { id: _id, ...rest } = r; setFollowUpForm(rest); setFollowUpModalOpen(true); };
-
-  const saveTrigger = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!triggerForm.phrase.trim()) return toast.warning(tr('Phrase is required', 'Nuzhna fraza', 'Ibora kerak'));
-    if ((triggerForm.duration_minutes || 0) <= 0 && (triggerForm.customer_message_count || 0) <= 0) {
-      return toast.warning(tr('Set duration or message count', 'Ukazhite dlitelnost ili schetchik', 'Davomiylik yoki xabar soni kiriting'));
-    }
+  const resumeGlobalNow = async () => {
     try {
-      setTriggerSaving(true);
-      const payload = { ...triggerForm, name: triggerForm.name.trim() || triggerForm.phrase.trim() };
-      if (editingTrigger) {
-        await apiRequest(ENDPOINTS.AUTOMATION.TRIGGER_DETAIL(editingTrigger.id), { method: 'PATCH', body: JSON.stringify(payload) });
-      } else {
-        await apiRequest(ENDPOINTS.AUTOMATION.TRIGGERS, { method: 'POST', body: JSON.stringify(payload) });
-      }
-      setTriggerModalOpen(false);
-      await loadTriggers();
-      toast.success(tr('Trigger saved', 'Trigger sohranen', 'Trigger saqlandi'));
-    } catch (e) {
-      if (!handleAuthFailure(e)) toast.error(e instanceof Error ? e.message : tr('Failed to save trigger', 'Ne udalos sohranit trigger', 'Triggerni saqlab bo‘lmadi'));
-    } finally {
-      setTriggerSaving(false);
-    }
-  };
-
-  const deleteTrigger = async (id: string) => {
-    if (!window.confirm(tr('Delete trigger rule?', 'Udalit trigger?', 'Trigger qoidasini o‘chirish kerakmi?'))) return;
-    try {
-      await apiRequest(ENDPOINTS.AUTOMATION.TRIGGER_DETAIL(id), { method: 'DELETE' });
-      await loadTriggers();
-      toast.success(tr('Trigger deleted', 'Trigger udalen', 'Trigger o‘chirildi'));
-    } catch (e) {
-      if (!handleAuthFailure(e)) toast.error(e instanceof Error ? e.message : tr('Failed to delete trigger', 'Ne udalos udalit trigger', 'Triggerni o‘chirib bo‘lmadi'));
-    }
-  };
-
-  const saveFollowUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!followUpForm.name.trim()) return toast.warning(tr('Rule name is required', 'Nuzhno imya pravila', 'Qoida nomi kerak'));
-    if (followUpForm.message_mode === 'MANUAL' && !followUpForm.manual_text.trim()) return toast.warning(tr('Manual text is required', 'Nuzhen tekst', 'Manual matn kerak'));
-    if (followUpForm.message_mode === 'AI' && !followUpForm.ai_instruction.trim()) return toast.warning(tr('AI instruction is required', 'Nuzhna instrukciya AI', 'AI instruktsiya kerak'));
-    try {
-      setFollowUpSaving(true);
-      if (editingFollowUp) {
-        await apiRequest(ENDPOINTS.AUTOMATION.FOLLOW_UP_DETAIL(editingFollowUp.id), { method: 'PATCH', body: JSON.stringify(followUpForm) });
-      } else {
-        await apiRequest(ENDPOINTS.AUTOMATION.FOLLOW_UPS, { method: 'POST', body: JSON.stringify(followUpForm) });
-      }
-      setFollowUpModalOpen(false);
-      await loadFollowUps();
-      toast.success(tr('Follow-up saved', 'Follow-up sohranen', 'Follow-up saqlandi'));
-    } catch (e) {
-      if (!handleAuthFailure(e)) toast.error(e instanceof Error ? e.message : tr('Failed to save follow-up', 'Ne udalos sohranit follow-up', 'Follow-upni saqlab bo‘lmadi'));
-    } finally {
-      setFollowUpSaving(false);
-    }
-  };
-
-  const deleteFollowUp = async (id: string) => {
-    if (!window.confirm(tr('Delete follow-up rule?', 'Udalit follow-up?', 'Follow-up qoidasini o‘chirish kerakmi?'))) return;
-    try {
-      await apiRequest(ENDPOINTS.AUTOMATION.FOLLOW_UP_DETAIL(id), { method: 'DELETE' });
-      await loadFollowUps();
-      toast.success(tr('Follow-up deleted', 'Follow-up udalen', 'Follow-up o‘chirildi'));
-    } catch (e) {
-      if (!handleAuthFailure(e)) toast.error(e instanceof Error ? e.message : tr('Failed to delete follow-up', 'Ne udalos udalit follow-up', 'Follow-upni o‘chirib bo‘lmadi'));
-    }
-  };
-
-  const runFollowUpsNow = async () => {
-    try {
-      setRunningFollowUps(true);
-      const res = await apiRequest<{ summary?: { processed?: number; sent?: number; skipped?: number } }>(ENDPOINTS.AUTOMATION.FOLLOW_UPS_RUN, {
+      setGlobalResuming(true);
+      const data = await apiRequest<{ settings?: GlobalAutomationSettings }>(ENDPOINTS.AUTOMATION.RESUME, {
         method: 'POST',
-        body: JSON.stringify({ limit: 100, provider: 'openai' }),
+        body: JSON.stringify({}),
       });
-      const s = res.summary || {};
-      toast.success(`${tr('Run complete', 'Zapusk zakonchen', 'Ish tugadi')}: ${tr('sent', 'otpravleno', 'yuborildi')} ${s.sent || 0}, ${tr('skipped', 'propusheno', 'o‘tkazildi')} ${s.skipped || 0}`);
+      if (data.settings) {
+        setGlobalSettings(data.settings);
+        setGlobalForm((prev) => ({
+          ...prev,
+          is_bot_paused: false,
+          pause_reason: data.settings?.pause_reason || '',
+        }));
+      }
+      toast.success(tr('Bot resumed globally', 'Bot global qayta yoqildi', 'Bot global qayta yoqildi'));
     } catch (e) {
-      if (!handleAuthFailure(e)) toast.error(e instanceof Error ? e.message : tr('Failed to run follow-ups', 'Ne udalos zapustit follow-up', 'Follow-up ishga tushmadi'));
+      if (handleAuthFailure(e)) return;
+      toast.error(e instanceof Error ? e.message : tr('Failed to resume bot', 'Botni qayta yoqib bolmadi', 'Botni qayta yoqib bolmadi'));
     } finally {
-      setRunningFollowUps(false);
+      setGlobalResuming(false);
     }
   };
 
-  const globalMeta = useMemo(() => ({
-    updated: globalSettings?.updated_at ? new Date(globalSettings.updated_at).toLocaleString() : '-',
-    pauseUntil: globalSettings?.pause_until || '-',
-  }), [globalSettings]);
+  const globalStatus = useMemo(() => {
+    if (!globalSettings) return null;
+    return {
+      bot: globalSettings.is_bot_paused ? tr('Paused', 'Toxtagan', 'Toxtagan') : tr('Active', 'Faol', 'Faol'),
+      followups: globalSettings.followups_enabled ? tr('Enabled', 'Yoqilgan', 'Yoqilgan') : tr('Disabled', 'Ochiq emas', 'Ochiq emas'),
+      pauseUntil: globalSettings.pause_until || '-',
+      updatedAt: globalSettings.updated_at ? new Date(globalSettings.updated_at).toLocaleString() : '-',
+    };
+  }, [globalSettings, tr]);
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+      <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-light-text dark:text-white inline-flex items-center gap-2">
             <Settings2 size={24} className="text-primary-blue" />
-            {tr('AI Settings', 'AI nastroiki', 'AI sozlamalari')}
+            {tr('AI Configuration Center', 'AI konfiguratsiya markazi', 'AI konfiguratsiya markazi')}
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            {tr('Global automation settings, trigger rules and follow-up rules.', 'Globalnye nastroiki, trigerry i follow-up pravila.', 'Global sozlamalar, trigger va follow-up qoidalari.')}
+            {tr(
+              'Manage bot behavior globally and per conversation.',
+              'Botni global va har bir suhbat boyicha boshqaring.',
+              'Botni global va har bir suhbat boyicha boshqaring.'
+            )}
           </p>
         </div>
-        <button onClick={() => refreshAll(false)} disabled={refreshing || loading} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-light-border dark:border-navy-700 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-navy-800 disabled:opacity-50">
-          <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
-          {tr('Refresh', 'Obnovit', 'Yangilash')}
+        <button
+          onClick={() => {
+            loadGlobalSettings();
+            loadConversations();
+          }}
+          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-light-border dark:border-navy-700 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-navy-800"
+        >
+          <RefreshCw size={16} />
+          {tr('Refresh', 'Yangilash', 'Yangilash')}
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-        <Card title={tr('Playground', 'Playground', 'Playground')}>
-          <button onClick={() => navigate('/ai-tools')} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-primary-blue text-white text-sm">
-            <PlayCircle size={15} /> {tr('Open', 'Otkryt', 'Ochish')}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card title={tr('AI Playground', 'AI sinov maydoni', 'AI sinov maydoni')}>
+          <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+            {tr(
+              'Test prompts, responses, tools and trace output.',
+              'Prompt, javob, tool va trace natijalarini sinang.',
+              'Prompt, javob, tool va trace natijalarini sinang.'
+            )}
+          </p>
+          <button
+            onClick={() => navigate('/ai-tools')}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-blue text-white hover:bg-blue-600 text-sm"
+          >
+            <PlayCircle size={16} />
+            {tr('Open Playground', 'Sinov maydonini ochish', 'Sinov maydonini ochish')}
           </button>
         </Card>
-        <Card title={tr('Credentials', 'Credentialy', 'Credentiallar')}>
-          <button onClick={() => navigate('/ai-credentials')} disabled={!isAdmin} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-primary-blue text-white text-sm disabled:opacity-50">
-            <KeyRound size={15} /> {isAdmin ? tr('Open', 'Otkryt', 'Ochish') : tr('Admin only', 'Tolko admin', 'Faqat admin')}
+
+        <Card title={tr('AI Credentials', 'AI credentiallar', 'AI credentiallar')}>
+          <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+            {tr(
+              'Manage API key and prompts used by AI.',
+              'AI ishlatadigan kalit va promptlarni boshqaring.',
+              'AI ishlatadigan kalit va promptlarni boshqaring.'
+            )}
+          </p>
+          <button
+            onClick={() => navigate('/ai-credentials')}
+            disabled={!isAdmin}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-blue text-white hover:bg-blue-600 text-sm disabled:opacity-50"
+          >
+            <KeyRound size={16} />
+            {isAdmin
+              ? tr('Open Credentials', 'Credentiallarni ochish', 'Credentiallarni ochish')
+              : tr('Admin only', 'Faqat admin', 'Faqat admin')}
           </button>
         </Card>
-        <Card title={tr('Updated', 'Obnovleno', 'Yangilangan')}><p className="text-sm text-gray-600 dark:text-gray-300">{globalMeta.updated}</p></Card>
-        <Card title={tr('Pause Until', 'Pauza do', 'Pauza gacha')}><p className="text-sm text-gray-600 dark:text-gray-300">{globalMeta.pauseUntil}</p></Card>
+
+        <Card title={tr('Conversation Automation', 'Suhbat avtomatikasi', 'Suhbat avtomatikasi')}>
+          <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+            {tr(
+              'Configure interruption/resume rules for a specific chat.',
+              'Aniq chat uchun toxtatish/davom ettirish qoidalarini sozlang.',
+              'Aniq chat uchun toxtatish/davom ettirish qoidalarini sozlang.'
+            )}
+          </p>
+          {loadingConversations ? (
+            <p className="text-sm text-gray-500">{tr('Loading conversations...', 'Suhbatlar yuklanmoqda...', 'Suhbatlar yuklanmoqda...')}</p>
+          ) : conversations.length === 0 ? (
+            <p className="text-sm text-gray-500">{tr('No conversations found', 'Suhbatlar topilmadi', 'Suhbatlar topilmadi')}</p>
+          ) : (
+            <div className="space-y-3">
+              <select
+                value={selectedConversationId}
+                onChange={(e) => setSelectedConversationId(e.target.value)}
+                className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm text-gray-800 dark:text-gray-200"
+              >
+                {conversations.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {(c.client_name || c.external_thread_id || c.id.slice(0, 8))} ({c.channel})
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={() => navigate(`/ai-settings/automation/${selectedConversationId}`)}
+                disabled={!selectedConversationId}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-blue text-white hover:bg-blue-600 text-sm disabled:opacity-50"
+              >
+                <MessageSquare size={16} />
+                {tr('Open Conversation Settings', 'Suhbat sozlamalarini ochish', 'Suhbat sozlamalarini ochish')}
+              </button>
+            </div>
+          )}
+        </Card>
       </div>
 
-      <Card title={tr('Global Automation Settings', 'Global avtomatika sozlamalari', 'Global avtomatika sozlamalari')}>
-        {loading ? <p className="text-sm text-gray-500">{tr('Loading...', 'Zagruzka...', 'Yuklanmoqda...')}</p> : (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <Switch checked={globalForm.is_bot_paused} onChange={(v) => setGlobalForm((p) => ({ ...p, is_bot_paused: v }))} label={tr('Global bot pause', 'Global pauza bota', 'Global bot pauzasi')} />
-              <Switch checked={globalForm.followups_enabled} onChange={(v) => setGlobalForm((p) => ({ ...p, followups_enabled: v }))} label={tr('Follow-ups enabled', 'Follow-up vklyucheny', 'Follow-up yoqilgan')} />
-              <Switch checked={globalForm.operator_interrupt_enabled} onChange={(v) => setGlobalForm((p) => ({ ...p, operator_interrupt_enabled: v }))} label={tr('Operator interruption enabled', 'Preryvanie operatorom vklyucheno', 'Operator interruption yoqilgan')} />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">{tr('Pause minutes', 'Minuty pauzy', 'Pauza daqiqasi')}</label>
-                <input type="number" min={0} value={globalForm.pause_for_minutes} onChange={(e) => setGlobalForm((p) => ({ ...p, pause_for_minutes: Number(e.target.value || 0) }))} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm dark:text-white" />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">{tr('Operator resume (min)', 'Avto-vozvrat operatora (min)', 'Operator resume (daq)')}</label>
-                <input type="number" min={0} value={globalForm.operator_resume_after_minutes} onChange={(e) => setGlobalForm((p) => ({ ...p, operator_resume_after_minutes: Number(e.target.value || 0) }))} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm dark:text-white" />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">{tr('Pause reason', 'Prichina pauzy', 'Pauza sababi')}</label>
-                <input value={globalForm.pause_reason} onChange={(e) => setGlobalForm((p) => ({ ...p, pause_reason: e.target.value }))} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm dark:text-white" />
-              </div>
-            </div>
-            <div className="flex flex-wrap justify-end gap-2">
-              <button onClick={resumeGlobal} disabled={resumingGlobal} className="px-4 py-2 rounded-lg border border-light-border dark:border-navy-600 text-sm dark:text-white disabled:opacity-50">{resumingGlobal ? tr('Resuming...', 'Vozobnovlenie...', 'Qayta yoqilmoqda...') : tr('Resume now', 'Vozobnovit seychas', 'Hozir yoqish')}</button>
-              <button onClick={saveGlobal} disabled={savingGlobal} className="px-4 py-2 rounded-lg bg-primary-blue text-white text-sm disabled:opacity-50">{savingGlobal ? tr('Saving...', 'Sohranenie...', 'Saqlanmoqda...') : tr('Save', 'Sohranit', 'Saqlash')}</button>
-            </div>
-          </div>
-        )}
-      </Card>
-
       <Card
-        title={tr('Trigger Rules', 'Trigger qoidalari', 'Trigger qoidalari')}
-        action={
-          <div className="flex items-center gap-2">
-            <label className="inline-flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
-              <input type="checkbox" checked={triggersIncludeInactive} onChange={(e) => setTriggersIncludeInactive(e.target.checked)} />
-              {tr('Include inactive', 'Nofaollar', 'Nofaollar')}
-            </label>
-            <button onClick={openTriggerCreate} className="px-3 py-1.5 rounded-lg bg-primary-blue text-white text-sm inline-flex items-center gap-2">
-              <Plus size={14} /> {tr('Add', 'Qo‘shish', 'Qo‘shish')}
-            </button>
+        title={tr('Global Automation Controls', 'Global avtomatika boshqaruvi', 'Global avtomatika boshqaruvi')}
+        action={(
+          <div className="inline-flex items-center gap-2 text-xs">
+            <span className={`px-2 py-1 rounded-full border ${globalForm.is_bot_paused ? 'bg-red-50 border-red-200 text-red-700' : 'bg-green-50 border-green-200 text-green-700'}`}>
+              <Power size={12} className="inline-block mr-1" />
+              {globalForm.is_bot_paused ? tr('Bot paused', 'Bot toxtagan', 'Bot toxtagan') : tr('Bot active', 'Bot faol', 'Bot faol')}
+            </span>
           </div>
-        }
+        )}
       >
-        {triggersLoading && !triggers.length ? (
-          <p className="text-sm text-gray-500">{tr('Loading triggers...', 'Triggerlar yuklanmoqda...', 'Triggerlar yuklanmoqda...')}</p>
-        ) : triggers.length === 0 ? (
-          <p className="text-sm text-gray-500">{tr('No trigger rules', 'Trigger qoidalari yo‘q', 'Trigger qoidalari yo‘q')}</p>
+        {globalLoading ? (
+          <p className="text-sm text-gray-500">{tr('Loading global settings...', 'Global sozlamalar yuklanmoqda...', 'Global sozlamalar yuklanmoqda...')}</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="text-xs uppercase text-gray-500 border-b border-light-border dark:border-navy-700">
-                  <th className="py-2 pr-3">{tr('Name', 'Nomi', 'Nomi')}</th>
-                  <th className="py-2 pr-3">{tr('Phrase', 'Ibora', 'Ibora')}</th>
-                  <th className="py-2 pr-3">{tr('Source', 'Manba', 'Manba')}</th>
-                  <th className="py-2 pr-3">{tr('Action', 'Amal', 'Amal')}</th>
-                  <th className="py-2 pr-3">{tr('Duration/Count', 'Davomiylik/Sanoq', 'Davomiylik/Sanoq')}</th>
-                  <th className="py-2 pr-3">{tr('Status', 'Holat', 'Holat')}</th>
-                  <th className="py-2 text-right">{tr('Actions', 'Amallar', 'Amallar')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-light-border dark:divide-navy-700">
-                {triggers.map((r) => (
-                  <tr key={r.id}>
-                    <td className="py-3 pr-3 text-sm text-gray-900 dark:text-white">{r.name}</td>
-                    <td className="py-3 pr-3 text-sm text-gray-700 dark:text-gray-300">
-                      <div className="flex flex-col">
-                        <span>{r.phrase}</span>
-                        <span className="text-xs text-gray-500">{r.match_mode}{r.case_sensitive ? ' / case' : ''}</span>
-                      </div>
-                    </td>
-                    <td className="py-3 pr-3 text-sm text-gray-700 dark:text-gray-300">{r.source}</td>
-                    <td className="py-3 pr-3 text-sm">
-                      <span className={`px-2 py-1 rounded text-xs ${r.action === 'deactivate' ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>{r.action}</span>
-                    </td>
-                    <td className="py-3 pr-3 text-sm text-gray-700 dark:text-gray-300">{r.duration_minutes || 0} / {r.customer_message_count || 0}</td>
-                    <td className="py-3 pr-3 text-sm">
-                      <span className={`px-2 py-1 rounded text-xs ${r.is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-600'}`}>{r.is_active ? tr('Active', 'Faol', 'Faol') : tr('Inactive', 'Nofaol', 'Nofaol')}</span>
-                    </td>
-                    <td className="py-3 text-right">
-                      <div className="inline-flex items-center gap-2">
-                        <button onClick={() => openTriggerEdit(r)} className="p-1.5 text-gray-500 hover:text-primary-blue"><Edit2 size={15} /></button>
-                        <button onClick={() => deleteTrigger(r.id)} className="p-1.5 text-gray-500 hover:text-red-600"><Trash2 size={15} /></button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Switch
+                checked={globalForm.is_bot_paused}
+                onChange={(value) => setGlobalForm((prev) => ({ ...prev, is_bot_paused: value }))}
+                label={tr('Pause bot globally', 'Botni global toxtatish', 'Botni global toxtatish')}
+              />
+              <Switch
+                checked={globalForm.followups_enabled}
+                onChange={(value) => setGlobalForm((prev) => ({ ...prev, followups_enabled: value }))}
+                label={tr('Enable follow-ups globally', 'Follow-uplarni global yoqish', 'Follow-uplarni global yoqish')}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+                  {tr('Pause for minutes', 'Necha daqiqaga toxtatish', 'Necha daqiqaga toxtatish')}
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  value={globalForm.pause_for_minutes}
+                  onChange={(e) => setGlobalForm((prev) => ({ ...prev, pause_for_minutes: Number(e.target.value || 1) }))}
+                  className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm text-gray-800 dark:text-gray-200"
+                />
+                <p className="text-[11px] text-gray-500 mt-1">
+                  {tr(
+                    'Used when pause is ON (auto resume timer).',
+                    'Pause yoqilganda ishlatiladi (avto resume timer).',
+                    'Pause yoqilganda ishlatiladi (avto resume timer).'
+                  )}
+                </p>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+                  {tr('Pause reason', 'Toxtatish sababi', 'Toxtatish sababi')}
+                </label>
+                <input
+                  value={globalForm.pause_reason}
+                  onChange={(e) => setGlobalForm((prev) => ({ ...prev, pause_reason: e.target.value }))}
+                  className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm text-gray-800 dark:text-gray-200"
+                  placeholder={tr('maintenance', 'servis ishlari', 'servis ishlari')}
+                />
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-light-border dark:border-navy-700 bg-gray-50 dark:bg-navy-900/40 p-3 text-xs text-gray-700 dark:text-gray-300 space-y-1">
+              <p>
+                {tr('Bot status', 'Bot holati', 'Bot holati')}: <span className="font-semibold">{globalStatus?.bot || '-'}</span>
+              </p>
+              <p>
+                {tr('Follow-up status', 'Follow-up holati', 'Follow-up holati')}: <span className="font-semibold">{globalStatus?.followups || '-'}</span>
+              </p>
+              <p>
+                {tr('Pause until', 'Toxtash muddati', 'Toxtash muddati')}: <span className="font-semibold">{globalStatus?.pauseUntil || '-'}</span>
+              </p>
+              <p>
+                {tr('Last updated', 'Oxirgi yangilanish', 'Oxirgi yangilanish')}: <span className="font-semibold">{globalStatus?.updatedAt || '-'}</span>
+              </p>
+              <p className="text-[11px] text-gray-500 pt-1">
+                {tr(
+                  'Backend note: setting is_bot_paused=false will unpause even if pause_for_minutes is stale.',
+                  'Backend izohi: is_bot_paused=false yuborilsa pause_for_minutes eski bolsa ham bot yoqiladi.',
+                  'Backend izohi: is_bot_paused=false yuborilsa pause_for_minutes eski bolsa ham bot yoqiladi.'
+                )}
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-2">
+              <button
+                onClick={resumeGlobalNow}
+                disabled={globalResuming}
+                className="px-4 py-2 rounded-lg border border-light-border dark:border-navy-600 text-sm text-gray-700 dark:text-gray-200 disabled:opacity-50"
+              >
+                {globalResuming
+                  ? tr('Resuming...', 'Qayta yoqilmoqda...', 'Qayta yoqilmoqda...')
+                  : tr('Resume all now', 'Hammasini hozir yoqish', 'Hammasini hozir yoqish')}
+              </button>
+              <button
+                onClick={saveGlobalSettings}
+                disabled={globalSaving}
+                className="px-4 py-2 rounded-lg bg-primary-blue text-white hover:bg-blue-600 text-sm disabled:opacity-50"
+              >
+                {globalSaving
+                  ? tr('Saving...', 'Saqlanmoqda...', 'Saqlanmoqda...')
+                  : tr('Save global settings', 'Global sozlamalarni saqlash', 'Global sozlamalarni saqlash')}
+              </button>
+            </div>
           </div>
         )}
       </Card>
-
-      <Card
-        title={tr('Follow-up Rules', 'Follow-up qoidalari', 'Follow-up qoidalari')}
-        action={
-          <div className="flex flex-wrap items-center gap-2">
-            <label className="inline-flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
-              <input type="checkbox" checked={followUpsIncludeInactive} onChange={(e) => setFollowUpsIncludeInactive(e.target.checked)} />
-              {tr('Include inactive', 'Nofaollar', 'Nofaollar')}
-            </label>
-            <button onClick={runFollowUpsNow} disabled={runningFollowUps} className="px-3 py-1.5 rounded-lg border border-light-border dark:border-navy-600 text-sm inline-flex items-center gap-2 disabled:opacity-50">
-              <Play size={14} /> {runningFollowUps ? tr('Running...', 'Ishlamoqda...', 'Ishlamoqda...') : tr('Run now', 'Hozir ishga tushirish', 'Hozir ishga tushirish')}
-            </button>
-            <button onClick={openFollowUpCreate} className="px-3 py-1.5 rounded-lg bg-primary-blue text-white text-sm inline-flex items-center gap-2">
-              <Plus size={14} /> {tr('Add', 'Qo‘shish', 'Qo‘shish')}
-            </button>
-          </div>
-        }
-      >
-        {followUpsLoading && !followUps.length ? (
-          <p className="text-sm text-gray-500">{tr('Loading follow-ups...', 'Follow-uplar yuklanmoqda...', 'Follow-uplar yuklanmoqda...')}</p>
-        ) : followUps.length === 0 ? (
-          <p className="text-sm text-gray-500">{tr('No follow-up rules', 'Follow-up qoidalari yo‘q', 'Follow-up qoidalari yo‘q')}</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="text-xs uppercase text-gray-500 border-b border-light-border dark:border-navy-700">
-                  <th className="py-2 pr-3">{tr('Name', 'Nomi', 'Nomi')}</th>
-                  <th className="py-2 pr-3">{tr('Delay', 'Kechikish', 'Kechikish')}</th>
-                  <th className="py-2 pr-3">{tr('Mode', 'Rejim', 'Rejim')}</th>
-                  <th className="py-2 pr-3">{tr('Context', 'Kontekst', 'Kontekst')}</th>
-                  <th className="py-2 pr-3">{tr('Status', 'Holat', 'Holat')}</th>
-                  <th className="py-2 text-right">{tr('Actions', 'Amallar', 'Amallar')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-light-border dark:divide-navy-700">
-                {followUps.map((r) => (
-                  <tr key={r.id}>
-                    <td className="py-3 pr-3 text-sm text-gray-900 dark:text-white">
-                      <div className="flex flex-col">
-                        <span>{r.name}</span>
-                        <span className="text-xs text-gray-500 truncate max-w-[320px]">{r.message_mode === 'MANUAL' ? (r.manual_text || '-') : (r.ai_instruction || '-')}</span>
-                      </div>
-                    </td>
-                    <td className="py-3 pr-3 text-sm text-gray-700 dark:text-gray-300">{r.delay_minutes}</td>
-                    <td className="py-3 pr-3 text-sm"><span className={`px-2 py-1 rounded text-xs ${r.message_mode === 'AI' ? 'bg-blue-50 text-blue-700' : 'bg-amber-50 text-amber-700'}`}>{r.message_mode}</span></td>
-                    <td className="py-3 pr-3 text-sm text-gray-700 dark:text-gray-300">{r.context_message_limit}</td>
-                    <td className="py-3 pr-3 text-sm"><span className={`px-2 py-1 rounded text-xs ${r.is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-600'}`}>{r.is_active ? tr('Active', 'Faol', 'Faol') : tr('Inactive', 'Nofaol', 'Nofaol')}</span></td>
-                    <td className="py-3 text-right">
-                      <div className="inline-flex items-center gap-2">
-                        <button onClick={() => openFollowUpEdit(r)} className="p-1.5 text-gray-500 hover:text-primary-blue"><Edit2 size={15} /></button>
-                        <button onClick={() => deleteFollowUp(r.id)} className="p-1.5 text-gray-500 hover:text-red-600"><Trash2 size={15} /></button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Card>
-
-      <Modal isOpen={triggerModalOpen} onClose={() => { setTriggerModalOpen(false); setEditingTrigger(null); }} title={editingTrigger ? tr('Edit Trigger', 'Triggerni tahrirlash', 'Triggerni tahrirlash') : tr('Add Trigger', 'Trigger qo‘shish', 'Trigger qo‘shish')} footer={null}>
-        <form onSubmit={saveTrigger} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">{tr('Name', 'Nomi', 'Nomi')}</label>
-              <input value={triggerForm.name} onChange={(e) => setTriggerForm((p) => ({ ...p, name: e.target.value }))} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm dark:text-white" />
-            </div>
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">{tr('Phrase', 'Ibora', 'Ibora')}</label>
-              <input required value={triggerForm.phrase} onChange={(e) => setTriggerForm((p) => ({ ...p, phrase: e.target.value }))} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm dark:text-white" />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <select value={triggerForm.source} onChange={(e) => setTriggerForm((p) => ({ ...p, source: e.target.value as TriggerSource }))} className="bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm dark:text-white"><option value="client">client</option><option value="admin">admin</option></select>
-            <select value={triggerForm.match_mode} onChange={(e) => setTriggerForm((p) => ({ ...p, match_mode: e.target.value as TriggerMatchMode }))} className="bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm dark:text-white"><option value="contains">contains</option><option value="exact">exact</option></select>
-            <select value={triggerForm.action} onChange={(e) => setTriggerForm((p) => ({ ...p, action: e.target.value as TriggerAction }))} className="bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm dark:text-white"><option value="deactivate">deactivate</option><option value="activate">activate</option></select>
-            <input type="number" min={0} value={triggerForm.order} onChange={(e) => setTriggerForm((p) => ({ ...p, order: Number(e.target.value || 0) }))} className="bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm dark:text-white" placeholder={tr('Order', 'Tartib', 'Tartib')} />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <input type="number" min={0} value={triggerForm.duration_minutes} onChange={(e) => setTriggerForm((p) => ({ ...p, duration_minutes: Number(e.target.value || 0) }))} className="bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm dark:text-white" placeholder={tr('Duration minutes', 'Daqiqa', 'Daqiqa')} />
-            <input type="number" min={0} value={triggerForm.customer_message_count} onChange={(e) => setTriggerForm((p) => ({ ...p, customer_message_count: Number(e.target.value || 0) }))} className="bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm dark:text-white" placeholder={tr('Client messages count', 'Xabar soni', 'Xabar soni')} />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <Switch checked={triggerForm.is_active} onChange={(v) => setTriggerForm((p) => ({ ...p, is_active: v }))} label={tr('Active', 'Faol', 'Faol')} />
-            <Switch checked={triggerForm.case_sensitive} onChange={(v) => setTriggerForm((p) => ({ ...p, case_sensitive: v }))} label={tr('Case sensitive', 'Registr sezgir', 'Registr sezgir')} />
-          </div>
-          <div className="flex justify-end gap-2">
-            <button type="button" onClick={() => { setTriggerModalOpen(false); setEditingTrigger(null); }} className="px-3 py-2 rounded-lg border border-light-border dark:border-navy-600 text-sm">{tr('Cancel', 'Bekor', 'Bekor')}</button>
-            <button type="submit" disabled={triggerSaving} className="px-3 py-2 rounded-lg bg-primary-blue text-white text-sm disabled:opacity-50">{triggerSaving ? tr('Saving...', 'Saqlanmoqda...', 'Saqlanmoqda...') : tr('Save', 'Saqlash', 'Saqlash')}</button>
-          </div>
-        </form>
-      </Modal>
-
-      <Modal isOpen={followUpModalOpen} onClose={() => { setFollowUpModalOpen(false); setEditingFollowUp(null); }} title={editingFollowUp ? tr('Edit Follow-up', 'Follow-up tahrirlash', 'Follow-up tahrirlash') : tr('Add Follow-up', 'Follow-up qo‘shish', 'Follow-up qo‘shish')} footer={null}>
-        <form onSubmit={saveFollowUp} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">{tr('Name', 'Nomi', 'Nomi')}</label>
-              <input required value={followUpForm.name} onChange={(e) => setFollowUpForm((p) => ({ ...p, name: e.target.value }))} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm dark:text-white" />
-            </div>
-            <div className="mt-5"><Switch checked={followUpForm.is_active} onChange={(v) => setFollowUpForm((p) => ({ ...p, is_active: v }))} label={tr('Active', 'Faol', 'Faol')} /></div>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <input type="number" min={0} value={followUpForm.order} onChange={(e) => setFollowUpForm((p) => ({ ...p, order: Number(e.target.value || 0) }))} className="bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm dark:text-white" placeholder={tr('Order', 'Tartib', 'Tartib')} />
-            <input type="number" min={1} value={followUpForm.delay_minutes} onChange={(e) => setFollowUpForm((p) => ({ ...p, delay_minutes: Number(e.target.value || 1) }))} className="bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm dark:text-white" placeholder={tr('Delay min', 'Kechikish', 'Kechikish')} />
-            <select value={followUpForm.message_mode} onChange={(e) => setFollowUpForm((p) => ({ ...p, message_mode: e.target.value as FollowUpMode }))} className="bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm dark:text-white"><option value="MANUAL">MANUAL</option><option value="AI">AI</option></select>
-            <input type="number" min={1} value={followUpForm.context_message_limit} onChange={(e) => setFollowUpForm((p) => ({ ...p, context_message_limit: Number(e.target.value || 10) }))} className="bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm dark:text-white" placeholder={tr('Context', 'Kontekst', 'Kontekst')} />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">{tr('Manual text', 'Manual matn', 'Manual matn')}</label>
-            <textarea
-              value={followUpForm.manual_text}
-              onChange={(e) => setFollowUpForm((p) => ({ ...p, manual_text: e.target.value }))}
-              disabled={followUpForm.message_mode !== 'MANUAL'}
-              className={`w-full h-20 border rounded-lg px-3 py-2 text-sm ${
-                followUpForm.message_mode !== 'MANUAL'
-                  ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed dark:bg-navy-900/40 dark:text-gray-500 dark:border-navy-700'
-                  : 'bg-gray-50 dark:bg-navy-900 border-light-border dark:border-navy-600 dark:text-white'
-              }`}
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">{tr('AI instruction', 'AI instruktsiya', 'AI instruktsiya')}</label>
-            <textarea
-              value={followUpForm.ai_instruction}
-              onChange={(e) => setFollowUpForm((p) => ({ ...p, ai_instruction: e.target.value }))}
-              disabled={followUpForm.message_mode !== 'AI'}
-              className={`w-full h-24 border rounded-lg px-3 py-2 text-sm ${
-                followUpForm.message_mode !== 'AI'
-                  ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed dark:bg-navy-900/40 dark:text-gray-500 dark:border-navy-700'
-                  : 'bg-gray-50 dark:bg-navy-900 border-light-border dark:border-navy-600 dark:text-white'
-              }`}
-            />
-          </div>
-          <div className="flex justify-end gap-2">
-            <button type="button" onClick={() => { setFollowUpModalOpen(false); setEditingFollowUp(null); }} className="px-3 py-2 rounded-lg border border-light-border dark:border-navy-600 text-sm">{tr('Cancel', 'Bekor', 'Bekor')}</button>
-            <button type="submit" disabled={followUpSaving} className="px-3 py-2 rounded-lg bg-primary-blue text-white text-sm disabled:opacity-50">{followUpSaving ? tr('Saving...', 'Saqlanmoqda...', 'Saqlanmoqda...') : tr('Save', 'Saqlash', 'Saqlash')}</button>
-          </div>
-        </form>
-      </Modal>
     </div>
   );
 };

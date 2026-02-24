@@ -16,6 +16,7 @@ import Clients from './pages/Clients';
 import Leads from './pages/Leads';
 import Users from './pages/Users';
 import AICredentials from './pages/AICredentials';
+import ConversationAutomation from './pages/ConversationAutomation';
 import AISettings from './pages/AISettings';
 import Login from './pages/auth/Login';
 import Forbidden from './pages/auth/Forbidden';
@@ -142,7 +143,7 @@ const App: React.FC = () => {
                   <Route path="/ai-tools" element={<RequirePermission permission="ai.access"><AITools /></RequirePermission>} />
                   <Route path="/ai-credentials" element={<RequireAdmin><AICredentials /></RequireAdmin>} />
                   <Route path="/ai-settings" element={<RequirePermission permission="ai.access"><AISettings /></RequirePermission>} />
-                  <Route path="/ai-settings/automation/:conversationId" element={<Navigate to="/ai-settings" replace />} />
+                  <Route path="/ai-settings/automation/:conversationId" element={<RequirePermission permission="ai.access"><ConversationAutomation /></RequirePermission>} />
                   <Route path="/instagram-pages" element={<RequireAdmin><InstagramPages /></RequireAdmin>} />
                   <Route path="/settings" element={<Settings />} />
                 </Route>
