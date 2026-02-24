@@ -1,4 +1,4 @@
-import { NavItem, Translation } from './types';
+﻿import { NavItem, Translation } from './types';
 import {
   LayoutDashboard,
   MessageSquare,

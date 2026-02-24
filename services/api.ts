@@ -27,7 +27,7 @@ export const ENDPOINTS = {
   },
   DASHBOARD: {
     STATS: `${API_BASE_URL}/dashboard/stats/`,
-    STATS_EXPORT: `${API_BASE_URL}/dashboard/stats/export/`,
+    STATS_EXPORT: `${API_BASE_URL}/dashboard/stats/export.xlsx`,
     USERS: `${API_BASE_URL}/dashboard/users/`,
     USER_DETAIL: (id: string) => `${API_BASE_URL}/dashboard/users/${id}/`,
   },
@@ -61,6 +61,8 @@ export const ENDPOINTS = {
     MESSAGES: (id: string) => `${API_BASE_URL}/conversations/${id}/messages/`,
     ADMIN_SEND: (id: string) => `${API_BASE_URL}/conversations/${id}/admin-send/`,
     CLEAR: (id: string) => `${API_BASE_URL}/conversations/${id}/clear/`,
+    BOT_PAUSE: (id: string) => `${API_BASE_URL}/conversations/${id}/bot/pause/`,
+    BOT_RESUME: (id: string) => `${API_BASE_URL}/conversations/${id}/bot/resume/`,
     AUTOMATION_SETTINGS: (id: string) => `${API_BASE_URL}/conversations/${id}/automation/settings/`,
     AUTOMATION_RESUME: (id: string) => `${API_BASE_URL}/conversations/${id}/automation/resume/`,
     AUTOMATION_FOLLOW_UPS: (id: string) => `${API_BASE_URL}/conversations/${id}/automation/follow-ups/`,
@@ -72,6 +74,10 @@ export const ENDPOINTS = {
   AUTOMATION: {
     SETTINGS: `${API_BASE_URL}/automation/settings/`,
     RESUME: `${API_BASE_URL}/automation/resume/`,
+    TRIGGERS: `${API_BASE_URL}/automation/triggers/`,
+    TRIGGER_DETAIL: (id: string) => `${API_BASE_URL}/automation/triggers/${id}/`,
+    FOLLOW_UPS: `${API_BASE_URL}/automation/follow-ups/`,
+    FOLLOW_UP_DETAIL: (id: string) => `${API_BASE_URL}/automation/follow-ups/${id}/`,
     FOLLOW_UPS_RUN: `${API_BASE_URL}/automation/follow-ups/run/`,
   },
   AI: {
