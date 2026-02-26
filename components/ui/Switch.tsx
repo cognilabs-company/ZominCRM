@@ -45,7 +45,7 @@ export const Switch: React.FC<SwitchProps> = ({ checked, onChange, label, descri
       >
         {/* Thumb */}
         <span
-          className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-md transition-all duration-200 ${checked ? 'translate-x-5' : 'translate-x-0.5'
+          className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-md transition-all duration-200 ${checked ? 'translate-x-6' : 'translate-x-0.5'
             }`}
           style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.25)' }}
         />

@@ -138,11 +138,32 @@ interface ApiEnvelope<T = unknown> {
 
 export class ApiError extends Error {
   status: number;
-  constructor(message: string, status: number) {
+  code?: string;
+  constructor(message: string, status: number, code?: string) {
     super(message);
     this.status = status;
+    this.code = code;
   }
 }
+
+const extractApiErrorCode = (payload: unknown): string | undefined => {
+  if (!payload || typeof payload !== 'object') return undefined;
+  const obj = payload as Record<string, unknown>;
+
+  if (typeof obj.code === 'string' && obj.code.trim()) {
+    return obj.code;
+  }
+
+  const nestedError = obj.error;
+  if (nestedError && typeof nestedError === 'object') {
+    const nestedCode = (nestedError as Record<string, unknown>).code;
+    if (typeof nestedCode === 'string' && nestedCode.trim()) {
+      return nestedCode;
+    }
+  }
+
+  return undefined;
+};
 
 const extractApiErrorMessage = (payload: unknown, fallback: string): string => {
   if (!payload || typeof payload !== 'object') return fallback;
@@ -189,7 +210,7 @@ export async function apiRequest<T = unknown>(url: string, init?: RequestInit): 
 
   if (!res.ok) {
     const message = extractApiErrorMessage(payload, `Request failed with status ${res.status}`);
-    throw new ApiError(message, res.status);
+    throw new ApiError(message, res.status, extractApiErrorCode(payload));
   }
 
   if (!payload) {

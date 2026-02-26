@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useToast } from '../context/ToastContext';
-import { Send, Paperclip, Bot, Instagram, MessageCircle, RefreshCw, ArchiveX, ChevronLeft } from 'lucide-react';
+import { Send, Paperclip, Bot, Instagram, MessageCircle, RefreshCw, ArchiveX, ChevronLeft, ChevronDown, Search, Check, CheckCheck, AlertCircle, X } from 'lucide-react';
 import { Conversation } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { API_BASE_URL, ENDPOINTS, apiRequest } from '../services/api';
@@ -154,10 +154,23 @@ const normalizeAttachmentList = (message: ApiMessage) => {
   return [];
 };
 
-const stripAttachmentMarkers = (text?: string | null) =>
-  String(text || '')
-    .replace(/\[ATTACHMENT:[^\]]+\]\s*/gi, '')
-    .trim();
+const getDisplayMessageText = (message: ApiMessage, attachments: Array<{ type: string; url: string }>) => {
+  const raw = String(message.text || '').trim();
+  if (!raw) return '';
+  if (!attachments.length) return raw;
+
+  // Backend keeps text as fallback/debug for attachments. Hide markers/URLs in normal UI.
+  let cleaned = raw.replace(/\[ATTACHMENT:[^\]]+\]\s*/gi, '').trim();
+  attachments.forEach((att) => {
+    if (!att?.url) return;
+    cleaned = cleaned.split(att.url).join('').trim();
+  });
+  cleaned = cleaned.replace(/\s{2,}/g, ' ').trim();
+
+  if (!cleaned) return '';
+  if (/^https?:\/\/\S+$/i.test(cleaned)) return '';
+  return cleaned;
+};
 
 const formatClockTime = (value?: string | null) => {
   if (!value) return '';
@@ -180,6 +193,26 @@ const formatChatListTime = (value?: string | null) => {
   if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
 
   return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+};
+
+const isSameCalendarDay = (a?: string | null, b?: string | null) => {
+  if (!a || !b) return false;
+  const da = new Date(a);
+  const db = new Date(b);
+  if (Number.isNaN(da.getTime()) || Number.isNaN(db.getTime())) return false;
+  return da.toDateString() === db.toDateString();
+};
+
+const formatMessageDateLabel = (value?: string | null) => {
+  if (!value) return '';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '';
+  const now = new Date();
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (d.toDateString() === now.toDateString()) return 'Today';
+  if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
+  return d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
 };
 
 const Conversations: React.FC = () => {
@@ -207,6 +240,12 @@ const Conversations: React.FC = () => {
   const [botRuntimeLoading, setBotRuntimeLoading] = useState(false);
   const [botRuntimeSaving, setBotRuntimeSaving] = useState(false);
   const [clearingConversationId, setClearingConversationId] = useState<string | null>(null);
+  const [conversationQuery, setConversationQuery] = useState('');
+  const [channelFilter, setChannelFilter] = useState<'all' | 'telegram' | 'instagram'>('all');
+  const [imageViewerUrl, setImageViewerUrl] = useState<string | null>(null);
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+  const [scrollDateChip, setScrollDateChip] = useState<string>('');
+  const [showScrollDateChip, setShowScrollDateChip] = useState(false);
 
   const messageAreaRef = useRef<HTMLDivElement | null>(null);
   const convInFlightRef = useRef(false);
@@ -228,6 +267,7 @@ const Conversations: React.FC = () => {
   const seenWsMessageIdsRef = useRef<Set<string>>(new Set());
   const audioCtxRef = useRef<AudioContext | null>(null);
   const consumedClientTargetRef = useRef<string | null>(null);
+  const scrollDateHideTimerRef = useRef<number | null>(null);
 
   const requestedClientId = useMemo(
     () => new URLSearchParams(location.search).get('client_id'),
@@ -238,6 +278,22 @@ const Conversations: React.FC = () => {
     () => conversations.find((c) => c.id === selectedChatId) || null,
     [conversations, selectedChatId]
   );
+
+  const filteredConversations = useMemo(() => {
+    const q = conversationQuery.trim().toLowerCase();
+    return conversations.filter((c) => {
+      if (channelFilter !== 'all' && c.channel !== channelFilter) return false;
+      if (!q) return true;
+      const haystack = [
+        c.clientName,
+        c.id,
+        c.client_id,
+        c.channel,
+        c.channel_account_id,
+      ].filter(Boolean).join(' ').toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [channelFilter, conversationQuery, conversations]);
 
   useEffect(() => {
     if (!selectedChatId) {
@@ -278,12 +334,40 @@ const Conversations: React.FC = () => {
     const area = messageAreaRef.current;
     if (!area) return;
     const distanceToBottom = area.scrollHeight - area.scrollTop - area.clientHeight;
-    shouldStickToBottomRef.current = distanceToBottom < 72;
-  }, []);
+    const isNearBottom = distanceToBottom < 72;
+    shouldStickToBottomRef.current = isNearBottom;
+    setShowScrollToBottom(!isNearBottom && messages.length > 0);
+
+    const containerRect = area.getBoundingClientRect();
+    const rows = area.querySelectorAll<HTMLElement>('[data-chat-message-row="1"]');
+    let activeDate = '';
+    for (const row of rows) {
+      const rect = row.getBoundingClientRect();
+      if (rect.bottom > containerRect.top + 28) {
+        activeDate = row.dataset.messageDate || '';
+        break;
+      }
+    }
+    if (!activeDate && rows.length > 0) {
+      activeDate = rows[rows.length - 1].dataset.messageDate || '';
+    }
+    if (activeDate) {
+      const nextLabel = formatMessageDateLabel(activeDate);
+      setScrollDateChip((prev) => (prev === nextLabel ? prev : nextLabel));
+      setShowScrollDateChip(true);
+      if (scrollDateHideTimerRef.current !== null) {
+        window.clearTimeout(scrollDateHideTimerRef.current);
+      }
+      scrollDateHideTimerRef.current = window.setTimeout(() => {
+        setShowScrollDateChip(false);
+      }, 900);
+    }
+  }, [messages.length]);
 
   useEffect(() => {
     if (!shouldStickToBottomRef.current) return;
     scrollToBottom('auto');
+    setShowScrollToBottom(false);
   }, [messages.length, scrollToBottom]);
 
   const playNotificationSound = useCallback(() => {
@@ -428,10 +512,13 @@ const Conversations: React.FC = () => {
     if (fullResponse.delivery?.external_message_id) {
       optimistic.external_message_id = fullResponse.delivery.external_message_id;
     }
+    const shouldAutoScroll = shouldStickToBottomRef.current;
     setMessages((prev) => prev.some((m) => m.id === optimistic.id) ? prev : [...prev, optimistic]);
     upsertConversationPreview(conversationId, sentMessage);
-    if (shouldStickToBottomRef.current) {
+    if (shouldAutoScroll) {
       window.setTimeout(() => scrollToBottom('smooth'), 60);
+    } else {
+      setShowScrollToBottom(true);
     }
   }, [normalizeMessage, scrollToBottom, upsertConversationPreview]);
 
@@ -451,12 +538,15 @@ const Conversations: React.FC = () => {
       const nextMessage = normalizeMessage(event.message);
       upsertConversationPreview(event.conversation_id, event.message, event.conversation);
       if (selectedChatId === event.conversation_id) {
+        const shouldAutoScroll = shouldStickToBottomRef.current;
         setMessages((prev) => {
           if (prev.some((m) => m.id === nextMessage.id)) return prev;
           return [...prev, nextMessage];
         });
-        if (shouldStickToBottomRef.current) {
+        if (shouldAutoScroll) {
           window.setTimeout(() => scrollToBottom('smooth'), 60);
+        } else {
+          setShowScrollToBottom(true);
         }
       } else if (event.message.role === 'client') {
         incrementUnread(event.conversation_id);
@@ -782,6 +872,13 @@ const Conversations: React.FC = () => {
     };
   }, [closeDetailSocket, closeListSocket, loadConversations, openListSocket]);
 
+  useEffect(() => () => {
+    if (scrollDateHideTimerRef.current !== null) {
+      window.clearTimeout(scrollDateHideTimerRef.current);
+      scrollDateHideTimerRef.current = null;
+    }
+  }, []);
+
   useEffect(() => {
     if (selectedChatId) {
       activeConversationRef.current = selectedChatId;
@@ -884,13 +981,13 @@ const Conversations: React.FC = () => {
   };
 
   return (
-    <div className="h-[calc(100dvh-6rem)] md:h-[calc(100vh-8rem)] flex flex-col lg:flex-row gap-4 lg:gap-6 min-h-[560px]">
+    <div className="h-[calc(100dvh-6rem)] md:h-[calc(100vh-8rem)] flex flex-col lg:flex-row gap-4 lg:gap-5 min-h-[560px]">
       <div className={`${mobilePane === 'list' ? 'flex' : 'hidden'} lg:flex w-full lg:w-1/3 flex-col gap-4 min-h-0`}>
         <div className="flex justify-between items-center gap-3">
           <div className="min-w-0">
             <h1 className="text-2xl font-bold text-light-text dark:text-white">{tr('Conversations', 'Suhbatlar', 'Suhbatlar')}</h1>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              {tr('Ordered as backend returns', 'Backend qaytargan tartibda', 'Backend qaytargan tartibda')} • {conversations.length}
+              {tr('Ordered as backend returns', 'Backend qaytargan tartibda', 'Backend qaytargan tartibda')} | {filteredConversations.length}/{conversations.length}
             </p>
           </div>
           <button
@@ -907,110 +1004,95 @@ const Conversations: React.FC = () => {
             {tr('Refresh', 'Yangilash', 'Yangilash')}
           </button>
         </div>
-        <div className="flex-1 overflow-hidden flex flex-col bg-white dark:bg-navy-800 border border-light-border dark:border-navy-700 rounded-2xl shadow-sm transition-colors duration-300">
-          <div className="px-4 py-3 border-b border-light-border dark:border-navy-700 bg-gray-50/70 dark:bg-navy-900/40 text-xs text-gray-500 dark:text-gray-400">
+        <div className="rounded-2xl border border-light-border dark:border-navy-700 bg-white dark:bg-navy-800 p-2 shadow-sm shadow-slate-200/40 dark:shadow-none">
+          <label className="relative block">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              value={conversationQuery}
+              onChange={(e) => setConversationQuery(e.target.value)}
+              placeholder={tr('Search name / ID', 'Poisk imeni / ID', 'Ism / ID qidirish')}
+              className="w-full h-9 pl-9 pr-3 rounded-xl border border-light-border dark:border-navy-700 bg-gray-50 dark:bg-navy-900/40 text-sm text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-primary-blue"
+            />
+          </label>
+          <div className="mt-2 flex gap-1">
+            {(['all', 'telegram', 'instagram'] as const).map((value) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setChannelFilter(value)}
+                className={`flex-1 rounded-lg px-2 py-1.5 text-xs border transition-colors ${
+                  channelFilter === value
+                    ? 'bg-primary-blue text-white border-primary-blue'
+                    : 'bg-white dark:bg-navy-800 text-gray-600 dark:text-gray-300 border-light-border dark:border-navy-700 hover:bg-gray-50 dark:hover:bg-navy-700'
+                }`}
+              >
+                {value === 'all' ? tr('All', 'Vse', 'Barchasi') : value === 'telegram' ? 'Telegram' : 'Instagram'}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="flex-1 overflow-hidden flex flex-col bg-white dark:bg-navy-800 border border-light-border dark:border-navy-700 rounded-2xl shadow-sm shadow-slate-200/50 dark:shadow-none transition-colors duration-300">
+          <div className="px-4 py-3 border-b border-light-border dark:border-navy-700 bg-gradient-to-r from-gray-50/90 to-white dark:from-navy-900/50 dark:to-navy-800 text-xs text-gray-500 dark:text-gray-400">
             {tr('Live conversation list', 'Jonli suhbatlar ro‘yxati', 'Jonli suhbatlar ro‘yxati')}
           </div>
-          <div className="overflow-y-auto flex-1 p-2 space-y-1.5">
+          <div className="overflow-y-auto flex-1 p-1.5">
             {loadingConversations && <p className="px-3 py-6 text-sm text-gray-500">{tr('Loading conversations...', 'Suhbatlar yuklanmoqda...', 'Suhbatlar yuklanmoqda...')}</p>}
-            {!loadingConversations && conversations.length === 0 && (
+            {!loadingConversations && filteredConversations.length === 0 && (
               <p className="px-3 py-6 text-sm text-gray-500">{tr('No conversations found.', 'Suhbatlar topilmadi.', 'Suhbatlar topilmadi.')}</p>
             )}
-            {conversations.map((chat) => {
+            {filteredConversations.map((chat) => {
               const unread = chat.unreadCount || 0;
               const isSelected = selectedChatId === chat.id;
               const displayName = chat.clientName || buildFallbackClientName(chat.client_id || chat.id);
-              const previewRaw = stripAttachmentMarkers(chat.last_message_preview);
-              const preview = previewRaw || tr('No message preview yet', 'Xabar preview hali yo‘q', 'Xabar preview hali yo‘q');
               return (
                 <button
                   key={chat.id}
                   type="button"
                   onClick={() => selectConversation(chat.id)}
-                  className={`w-full text-left rounded-xl border px-3 py-3 transition-all ${
+                  className={`group w-full text-left rounded-xl px-3 py-2.5 transition-colors ${
                     isSelected
-                      ? 'border-blue-300 bg-blue-50 shadow-sm ring-1 ring-blue-100 dark:bg-navy-700/90 dark:border-blue-500/50 dark:ring-blue-500/20'
-                      : 'border-transparent hover:border-light-border hover:bg-gray-50 dark:hover:bg-navy-700/70 dark:hover:border-navy-600'
+                      ? 'bg-blue-500 text-white'
+                      : 'hover:bg-gray-50 dark:hover:bg-navy-700/70 text-gray-900 dark:text-white'
                   }`}
                 >
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-center gap-3">
                     <div className="relative shrink-0">
-                      <div className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-sm ${
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm ${
                         isSelected
-                          ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300'
-                          : 'bg-gray-200 text-gray-700 dark:bg-navy-600 dark:text-gray-300'
+                          ? 'bg-white/20 text-white'
+                          : 'bg-gray-100 dark:bg-navy-700 text-gray-700 dark:text-gray-200'
                       }`}>
                         {displayName.substring(0, 1).toUpperCase()}
                       </div>
-                      <div className="absolute -bottom-1 -right-1 bg-white dark:bg-navy-800 rounded-full p-0.5 border border-light-border dark:border-navy-700">
+                      <div className={`absolute -bottom-0.5 -right-0.5 rounded-full p-0.5 ${isSelected ? 'bg-blue-500' : 'bg-white dark:bg-navy-800'}`}>
                         {chat.channel === 'instagram'
-                          ? <Instagram size={13} className="text-pink-500" />
-                          : <MessageCircle size={13} className="text-sky-500" />}
+                          ? <Instagram size={12} className={isSelected ? 'text-pink-200' : 'text-pink-500'} />
+                          : <MessageCircle size={12} className={isSelected ? 'text-blue-100' : 'text-sky-500'} />}
                       </div>
                     </div>
 
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <div className={`text-sm font-semibold truncate ${isSelected ? 'text-blue-900 dark:text-white' : 'text-light-text dark:text-white'}`}>
-                            {displayName}
-                          </div>
-                          <div className="text-[11px] text-gray-500 dark:text-gray-400 truncate font-mono">
-                            {chat.id}
-                          </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className={`min-w-0 text-sm font-semibold truncate ${isSelected ? 'text-white' : 'text-light-text dark:text-white'}`}>
+                          {displayName}
                         </div>
-                        <div className="flex flex-col items-end gap-1 shrink-0">
-                          <span className="text-[11px] text-gray-400 dark:text-gray-500">
-                            {formatChatListTime(chat.updated_at)}
-                          </span>
-                          {unread > 0 ? (
-                            <span className="text-[10px] min-w-5 px-1.5 py-0.5 rounded-full bg-primary-blue text-white text-center font-semibold">
-                              {unread}
-                            </span>
-                          ) : (
-                            <span className="h-4" />
-                          )}
+                        <div className={`text-[11px] shrink-0 ${isSelected ? 'text-blue-100' : 'text-gray-400 dark:text-gray-500'}`}>
+                          {formatChatListTime(chat.updated_at)}
                         </div>
                       </div>
-
-                      <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
-                        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] border ${
-                          chat.channel === 'instagram'
-                            ? 'bg-pink-50 border-pink-200 text-pink-700 dark:bg-pink-500/10 dark:border-pink-500/30 dark:text-pink-300'
-                            : 'bg-sky-50 border-sky-200 text-sky-700 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-300'
-                        }`}>
-                          {chat.channel}
-                        </span>
-                        {chat.channel === 'instagram' && chat.channel_account_id && (
-                          <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] border border-light-border dark:border-navy-600 text-gray-600 dark:text-gray-300 font-mono max-w-[10rem] truncate">
-                            {chat.channel_account_id}
+                      <div className="mt-0.5 flex items-center justify-between gap-2">
+                        <div className={`text-[11px] font-mono truncate ${isSelected ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}>
+                          {chat.id}
+                        </div>
+                        {unread > 0 ? (
+                          <span className={`min-w-5 h-5 px-1.5 inline-flex items-center justify-center rounded-full text-[10px] font-semibold ${
+                            isSelected ? 'bg-white text-blue-600' : 'bg-primary-blue text-white'
+                          }`}>
+                            {unread}
                           </span>
+                        ) : (
+                          <span className="w-5 h-5" />
                         )}
-                      </div>
-
-                      <div className={`mt-2 text-xs leading-5 break-words [overflow-wrap:anywhere] ${
-                        unread > 0
-                          ? 'text-gray-800 dark:text-gray-100 font-medium'
-                          : 'text-gray-500 dark:text-gray-400'
-                      }`}>
-                        {preview}
-                      </div>
-
-                      <div className="mt-2 flex justify-end">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleClearConversation(chat.id);
-                          }}
-                          disabled={clearingConversationId === chat.id}
-                          className="text-[10px] px-2 py-0.5 rounded-full border border-light-border dark:border-navy-600 text-gray-500 dark:text-gray-300 hover:text-red-600 hover:border-red-300 dark:hover:text-red-300 disabled:opacity-50"
-                          title={tr('Clear chat', "Chatni tozalash", "Chatni tozalash")}
-                        >
-                          {clearingConversationId === chat.id
-                            ? tr('Clearing...', 'Tozalanmoqda...', 'Tozalanmoqda...')
-                            : tr('Clear', 'Tozalash', 'Tozalash')}
-                        </button>
                       </div>
                     </div>
                   </div>
@@ -1022,8 +1104,8 @@ const Conversations: React.FC = () => {
       </div>
 
       <div className={`${mobilePane === 'chat' ? 'flex' : 'hidden'} lg:flex w-full lg:w-2/3 flex-col h-full min-h-0`}>
-        <div className="flex-1 flex flex-col overflow-hidden bg-white dark:bg-navy-800 border border-light-border dark:border-navy-700 rounded-xl shadow-sm transition-colors duration-300">
-          <div className="p-3 sm:p-4 border-b border-light-border dark:border-navy-700 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 bg-white dark:bg-navy-800">
+        <div className="flex-1 flex flex-col overflow-hidden bg-white dark:bg-navy-800 border border-light-border dark:border-navy-700 rounded-2xl shadow-sm shadow-slate-200/50 dark:shadow-none transition-colors duration-300">
+          <div className="p-3 sm:p-4 border-b border-light-border dark:border-navy-700 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 bg-gradient-to-r from-white to-gray-50/80 dark:from-navy-800 dark:to-navy-900/30">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-wrap">
               <button
                 type="button"
@@ -1033,12 +1115,19 @@ const Conversations: React.FC = () => {
               >
                 <ChevronLeft size={16} />
               </button>
-              <h3 className="font-bold text-light-text dark:text-white">{selectedConversation?.clientName || tr('Select conversation', 'Suhbatni tanlang', 'Suhbatni tanlang')}</h3>
               {selectedConversation && (
-                <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-navy-700 text-gray-600 dark:text-gray-300">
-                  {selectedConversation.channel}
-                </span>
+                <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-navy-700 flex items-center justify-center text-sm font-semibold text-gray-700 dark:text-gray-200 shrink-0">
+                  {(selectedConversation.clientName || 'U').slice(0, 1).toUpperCase()}
+                </div>
               )}
+              <div className="min-w-0">
+                <h3 className="font-bold text-light-text dark:text-white truncate">{selectedConversation?.clientName || tr('Select conversation', 'Suhbatni tanlang', 'Suhbatni tanlang')}</h3>
+                {selectedConversation && (
+                  <div className="text-[11px] text-gray-500 dark:text-gray-400 truncate">
+                    {selectedConversation.channel} | {selectedConversation.id.slice(0, 12)}
+                  </div>
+                )}
+              </div>
               {selectedConversation?.channel === 'instagram' && (
                 <span
                   className={`text-xs px-2 py-0.5 rounded-full border ${
@@ -1068,18 +1157,20 @@ const Conversations: React.FC = () => {
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-2 sm:gap-3 text-xs text-gray-500 flex-wrap">
+            <div className="flex items-center gap-2 text-xs text-gray-500 flex-wrap">
               {selectedConversation && (
                 <button
                   onClick={() => handleClearConversation(selectedConversation.id)}
                   disabled={clearingConversationId === selectedConversation.id}
-                  className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 border border-light-border dark:border-navy-600 text-gray-600 dark:text-gray-300 hover:text-red-600 hover:border-red-300 disabled:opacity-50"
+                  className="inline-flex items-center gap-1 rounded-full px-2.5 py-1.5 border border-light-border dark:border-navy-600 text-gray-600 dark:text-gray-300 hover:text-red-600 hover:border-red-300 disabled:opacity-50"
                   title={tr('Clear chat', "Chatni tozalash", "Chatni tozalash")}
                 >
                   <ArchiveX size={12} />
-                  {clearingConversationId === selectedConversation.id
-                    ? tr('Clearing...', 'Tozalanmoqda...', 'Tozalanmoqda...')
-                    : tr('Clear Chat', 'Chatni tozalash', 'Chatni tozalash')}
+                  <span className="hidden sm:inline">
+                    {clearingConversationId === selectedConversation.id
+                      ? tr('Clearing...', 'Tozalanmoqda...', 'Tozalanmoqda...')
+                      : tr('Clear Chat', 'Chatni tozalash', 'Chatni tozalash')}
+                  </span>
                 </button>
               )}
               {selectedConversation && (
@@ -1103,26 +1194,41 @@ const Conversations: React.FC = () => {
                         : tr('Pause Bot', 'Botni to‘xtatish', 'Botni to‘xtatish')}
                 </button>
               )}
-              <RefreshCw size={13} />
-              {lastSyncAt ? `${tr('Synced', 'Sinxronlangan', 'Sinxronlangan')} ${lastSyncAt.toLocaleTimeString()}` : tr('Not synced', 'Sinxronlanmagan', 'Sinxronlanmagan')}
+              <button
+                type="button"
+                onClick={() => {
+                  if (!selectedChatId) return;
+                  loadConversations({ silent: true });
+                  loadMessages(selectedChatId);
+                  loadConversationBotState(selectedChatId);
+                }}
+                className="inline-flex items-center justify-center h-8 w-8 rounded-full border border-light-border dark:border-navy-600 text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-navy-700"
+                title={lastSyncAt ? `${tr('Synced', 'Sinxronlangan', 'Sinxronlangan')} ${lastSyncAt.toLocaleTimeString()}` : tr('Refresh', 'Yangilash', 'Yangilash')}
+              >
+                <RefreshCw size={13} />
+              </button>
             </div>
           </div>
 
-          <div
-            ref={messageAreaRef}
-            onScroll={handleMessageAreaScroll}
-            className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 bg-gradient-to-b from-gray-50 to-white dark:from-navy-900/60 dark:to-navy-900/20"
-          >
+          <div className="relative flex-1 min-h-0">
+            <div
+              ref={messageAreaRef}
+              onScroll={handleMessageAreaScroll}
+              className="h-full overflow-y-auto p-3 sm:p-4 space-y-3 bg-gradient-to-b from-gray-50 to-white dark:from-navy-900/60 dark:to-navy-900/20"
+            >
             {loadingMessages && <p className="text-sm text-gray-500 px-1">{tr('Loading messages...', 'Xabarlar yuklanmoqda...', 'Xabarlar yuklanmoqda...')}</p>}
             {!loadingMessages && !selectedConversation && <p className="text-sm text-gray-500 px-1">{tr('Pick a conversation to start.', 'Boshlash uchun suhbatni tanlang.', 'Boshlash uchun suhbatni tanlang.')}</p>}
             {!loadingMessages && selectedConversation && messages.length === 0 && <p className="text-sm text-gray-500 px-1">{tr('No messages yet.', 'Hozircha xabarlar yo‘q.', 'Hozircha xabarlar yo‘q.')}</p>}
-            {messages.map((m) => {
+            {messages.map((m, index) => {
               const isClient = m.role === 'client';
               const isAdminMessage = m.role === 'admin';
               const isBotMessage = m.role === 'bot';
               const isSystemMessage = m.role === 'system';
+              const prevMessage = index > 0 ? messages[index - 1] : null;
+              const showDateDivider = !prevMessage || !isSameCalendarDay(prevMessage.created_at, m.created_at);
               const attachments = normalizeAttachmentList(m);
               const hasAttachments = attachments.length > 0;
+              const visibleText = getDisplayMessageText(m, attachments);
               const roleLabel = isClient
                 ? tr('Client', 'Klient', 'Mijoz')
                 : isAdminMessage
@@ -1156,7 +1262,19 @@ const Conversations: React.FC = () => {
                     : 'text-slate-200/90';
 
               return (
-                <div key={m.id} className={`flex ${isClient ? 'justify-start' : 'justify-end'} max-w-full`}>
+                <React.Fragment key={m.id}>
+                  {showDateDivider && (
+                    <div className="flex justify-center py-2">
+                      <span className="px-2.5 py-1 rounded-full border border-light-border dark:border-navy-700 bg-white/95 dark:bg-navy-800/95 text-[11px] text-gray-500 dark:text-gray-300 shadow-sm">
+                        {tr(formatMessageDateLabel(m.created_at), formatMessageDateLabel(m.created_at), formatMessageDateLabel(m.created_at))}
+                      </span>
+                    </div>
+                  )}
+                <div
+                  data-chat-message-row="1"
+                  data-message-date={m.created_at}
+                  className={`flex ${isClient ? 'justify-start' : 'justify-end'} max-w-full`}
+                >
                   <div className={`flex items-end gap-2 max-w-full ${isClient ? '' : 'flex-row-reverse'}`}>
                     <div className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-semibold border ${
                       isClient
@@ -1170,11 +1288,13 @@ const Conversations: React.FC = () => {
                       {isBotMessage ? <Bot size={12} /> : roleLabel.slice(0, 1)}
                     </div>
 
-                    <div className={`${bubbleClass} p-3 rounded-2xl max-w-[88vw] sm:max-w-[75%]`}>
-                      <div className={`flex items-center gap-1.5 mb-1 text-[11px] ${headerTextClass}`}>
-                        {!isClient && isBotMessage && <Bot size={11} />}
-                        <span className="font-medium">{roleLabel}</span>
-                      </div>
+                    <div className={`${bubbleClass} p-3 rounded-2xl max-w-[88vw] sm:max-w-[68%]`}>
+                      {(isBotMessage || isSystemMessage) && (
+                        <div className={`flex items-center gap-1.5 mb-1 text-[11px] ${headerTextClass}`}>
+                          {isBotMessage && <Bot size={11} />}
+                          <span className="font-medium">{roleLabel}</span>
+                        </div>
+                      )}
 
                     {hasAttachments && (
                       <div className="space-y-2 mb-2">
@@ -1187,14 +1307,19 @@ const Conversations: React.FC = () => {
 
                           if (isImage) {
                             return (
-                              <a key={`${m.id}-att-${idx}`} href={url} target="_blank" rel="noreferrer" className="block">
+                              <button
+                                type="button"
+                                key={`${m.id}-att-${idx}`}
+                                onClick={() => setImageViewerUrl(url)}
+                                className="block text-left"
+                              >
                                 <img
                                   src={url}
                                   alt={tr('Attachment image', 'Prikreplenie izobrazhenie', 'Biriktirilgan rasm')}
                                   className="max-h-64 w-auto max-w-full rounded-lg border border-black/5 dark:border-white/10 object-cover bg-white/40"
                                   loading="lazy"
                                 />
-                              </a>
+                              </button>
                             );
                           }
 
@@ -1239,19 +1364,20 @@ const Conversations: React.FC = () => {
                         })}
                       </div>
                     )}
-                    {m.text && (
+                    {visibleText && (
                       <p className={`text-sm whitespace-pre-wrap leading-relaxed break-words [overflow-wrap:anywhere] ${
                         hasAttachments
                           ? (isClient ? 'text-gray-500 dark:text-gray-400 text-xs' : `${headerTextClass} text-xs`)
                           : ''
                       }`}>
-                        {m.text}
+                        {visibleText}
                       </p>
                     )}
                     <div className="flex items-center justify-between gap-2 mt-1.5">
                       <span className={`text-[10px] block ${metaTextClass}`}>{formatClockTime(m.created_at)}</span>
                       {!isClient && m.role === 'admin' && (
-                        <span className={`text-[10px] block ${m.delivery?.sent ? 'text-green-200' : m.delivery?.reason === 'sending' ? 'text-blue-100' : 'text-red-200'}`}>
+                        <span className={`inline-flex items-center gap-1 text-[10px] block ${m.delivery?.sent ? 'text-green-200' : m.delivery?.reason === 'sending' ? 'text-blue-100' : 'text-red-200'}`}>
+                          {m.delivery?.sent ? <CheckCheck size={11} /> : m.delivery?.reason === 'sending' ? <Check size={11} /> : <AlertCircle size={11} />}
                           {m.delivery?.sent ? tr('Sent', 'Yuborildi', 'Yuborildi') : m.delivery?.reason === 'sending' ? tr('Sending...', 'Yuborilmoqda...', 'Yuborilmoqda...') : tr('Failed', 'Xato', 'Xato')}
                         </span>
                       )}
@@ -1259,18 +1385,44 @@ const Conversations: React.FC = () => {
                     </div>
                   </div>
                 </div>
+                </React.Fragment>
               );
             })}
+            </div>
+            {showScrollDateChip && scrollDateChip && (
+              <div className="pointer-events-none absolute top-3 left-1/2 -translate-x-1/2 z-10">
+                <div className="rounded-full px-3 py-1 text-[11px] font-medium border border-black/5 dark:border-white/10 bg-white/95 dark:bg-navy-800/95 text-gray-600 dark:text-gray-200 shadow-lg backdrop-blur-sm">
+                  {tr(scrollDateChip, scrollDateChip, scrollDateChip)}
+                </div>
+              </div>
+            )}
+            {showScrollToBottom && selectedConversation && (
+              <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-10">
+                <button
+                  type="button"
+                  onClick={() => {
+                    shouldStickToBottomRef.current = true;
+                    setShowScrollToBottom(false);
+                    scrollToBottom('smooth');
+                  }}
+                  className="inline-flex items-center gap-2 rounded-full h-11 px-3 bg-white/95 dark:bg-navy-800/95 border border-light-border dark:border-navy-600 text-gray-700 dark:text-gray-100 shadow-lg backdrop-blur-sm hover:bg-white dark:hover:bg-navy-700 transition-colors"
+                  title={tr('Go to bottom', 'Vniz', 'Pastga tushish')}
+                >
+                  <ChevronDown size={16} />
+                  <span className="text-xs font-medium hidden sm:inline">{tr('Bottom', 'Vniz', 'Pastga')}</span>
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="p-3 sm:p-4 bg-white dark:bg-navy-800 border-t border-light-border dark:border-navy-700">
             {error && <p className="text-xs text-red-600 mb-2">{error}</p>}
-            <div className="rounded-2xl border border-light-border dark:border-navy-700 bg-white dark:bg-navy-900/40 p-2 shadow-sm">
+            <div className="rounded-2xl border border-light-border dark:border-navy-700 bg-gray-50 dark:bg-navy-900/40 p-2 shadow-sm">
               <div className="flex gap-2 items-end">
-              <button className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" title={tr('Attachments not implemented', 'Fayl yuborish hali yo‘q', 'Fayl yuborish hali yo‘q')}>
+              <button className="hidden p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" title={tr('Attachments not implemented', 'Fayl yuborish hali yo‘q', 'Fayl yuborish hali yo‘q')}> 
                 <Paperclip size={20} />
               </button>
-              <div className="flex-1 bg-gray-100 dark:bg-navy-900/80 rounded-xl p-2 border border-transparent focus-within:border-blue-300 dark:focus-within:border-blue-500/40">
+              <div className="flex-1 bg-white dark:bg-navy-800 rounded-xl p-2 border border-light-border dark:border-navy-700 focus-within:border-blue-300 dark:focus-within:border-blue-500/40">
                 <textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
@@ -1289,24 +1441,48 @@ const Conversations: React.FC = () => {
               <button
                 onClick={handleSend}
                 disabled={!selectedChatId || !input.trim() || sending}
-                className="inline-flex items-center justify-center gap-2 px-3 py-2.5 bg-primary-blue hover:bg-blue-700 text-white rounded-xl shadow-lg shadow-blue-500/20 transition-all disabled:opacity-50 disabled:shadow-none"
+                className="inline-flex items-center justify-center h-10 w-10 bg-primary-blue hover:bg-blue-700 text-white rounded-full shadow-lg shadow-blue-500/20 transition-all disabled:opacity-50 disabled:shadow-none"
               >
                 <Send size={18} />
-                <span className="hidden sm:inline text-sm font-medium">{tr('Send', 'Yuborish', 'Yuborish')}</span>
+
               </button>
             </div>
-              <div className="mt-2 px-1 text-[11px] text-gray-400 dark:text-gray-500">
-                {tr('Enter to send, Shift+Enter for new line', 'Enter yuboradi, Shift+Enter yangi qator', 'Enter yuboradi, Shift+Enter yangi qator')}
-              </div>
+
+
+
             </div>
           </div>
         </div>
       </div>
+      {imageViewerUrl && (
+        <div
+          className="fixed inset-0 z-[70] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setImageViewerUrl(null)}
+        >
+          <button
+            type="button"
+            className="absolute top-4 right-4 inline-flex items-center justify-center h-10 w-10 rounded-full bg-white/10 text-white hover:bg-white/20"
+            onClick={() => setImageViewerUrl(null)}
+            aria-label="Close image preview"
+          >
+            <X size={20} />
+          </button>
+          <img
+            src={imageViewerUrl}
+            alt="Preview"
+            className="max-h-[88vh] max-w-[92vw] rounded-xl object-contain border border-white/10 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 };
 
 export default Conversations;
+
+
+
 
 
 

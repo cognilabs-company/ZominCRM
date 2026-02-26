@@ -7,7 +7,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useToast } from '../context/ToastContext';
 import { Filter, Plus, X, CreditCard, User, MapPin } from 'lucide-react';
 import { Language, OrderStatus } from '../types';
-import { ENDPOINTS, apiRequest } from '../services/api';
+import { ApiError, ENDPOINTS, apiRequest } from '../services/api';
 
 interface ApiClient {
   id: string;
@@ -257,7 +257,22 @@ const Orders: React.FC = () => {
       }
       await loadOrders(clientsById, statusFilter);
     } catch (e) {
-      const message = e instanceof Error ? e.message : tr('Action failed', 'Amal bajarilmadi', 'Amal bajarilmadi');
+      let message = e instanceof Error ? e.message : tr('Action failed', 'Amal bajarilmadi', 'Amal bajarilmadi');
+      if (e instanceof ApiError) {
+        if (e.code === 'E-ORD-003') {
+          message = action === 'dispatch'
+            ? tr(
+                'This order cannot be dispatched from its current status.',
+                'Этот заказ нельзя отправить курьеру из текущего статуса.',
+                'Bu buyurtmani hozirgi holatidan kuryerga yuborib bo‘lmaydi.'
+              )
+            : tr(
+                'This status change is not allowed.',
+                'Это изменение статуса недоступно.',
+                'Bu status o‘zgarishiga ruxsat berilmagan.'
+              );
+        }
+      }
       setError(message);
       toast.error(message);
     }
