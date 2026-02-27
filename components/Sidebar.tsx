@@ -29,6 +29,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onCloseMob
       case 'users': return isAdmin;
       case 'ai_tools':
       case 'ai_settings': return hasPermission('ai.access');
+      case 'ai_credentials': return isAdmin;
       case 'settings': return true;
       default: return false;
     }
@@ -177,4 +178,3 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onCloseMob
     </>
   );
 };
-

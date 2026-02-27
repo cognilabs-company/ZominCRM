@@ -108,7 +108,7 @@ const Couriers: React.FC = () => {
   const [events, setEvents] = useState<ApiCourierEvent[]>([]);
   const [loadingOps, setLoadingOps] = useState(false);
   const [opsTab, setOpsTab] = useState<OpsTab>('events');
-  const [eventFilter, setEventFilter] = useState<EventFilter>('active');
+  const [eventFilter, setEventFilter] = useState<EventFilter>('all');
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRow, setEditingRow] = useState<CourierStats | null>(null);
@@ -587,9 +587,9 @@ const Couriers: React.FC = () => {
           <div>
             <div className="px-4 py-3 border-b border-light-border dark:border-navy-700 flex flex-wrap items-center gap-2 bg-white dark:bg-navy-800">
               {([
+                ['all', tr('All events', 'Все события', 'Barcha hodisalar')],
                 ['active', tr('Active work', 'Активная работа', 'Faol ish')],
                 ['completed', tr('Completed', 'Завершено', 'Yakunlangan')],
-                ['all', tr('All events', 'Все события', 'Barcha hodisalar')],
               ] as Array<[EventFilter, string]>).map(([key, label]) => (
                 <button
                   key={key}

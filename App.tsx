@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { HashRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
@@ -19,43 +19,8 @@ import AICredentials from './pages/AICredentials';
 import AISettings from './pages/AISettings';
 import Login from './pages/auth/Login';
 import Forbidden from './pages/auth/Forbidden';
-import InstagramPages from './pages/InstagramPages';
 import Payments from './pages/Payments';
 import Couriers from './pages/Couriers';
-
-// Placeholder components for other pages
-const PlaceholderPage = ({ title }: { title: string }) => (
-  <PlaceholderContent title={title} />
-);
-
-const PlaceholderContent: React.FC<{ title: string }> = ({ title }) => {
-  const { language } = useLanguage();
-  const tr = (en: string, ru: string, uz: string) => (language === 'ru' ? ru : language === 'uz' ? uz : en);
-  const resolvedTitle = (() => {
-    if (title === 'Clients') return tr('Clients', 'Mijozlar', 'Mijozlar');
-    if (title === 'Payments') return tr('Payments', "To'lovlar", "To'lovlar");
-    if (title === 'Couriers') return tr('Couriers', 'Kuryerlar', 'Kuryerlar');
-    return title;
-  })();
-  return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center animate-fade-in-up select-none">
-      <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-2"
-        style={{ background: 'linear-gradient(135deg, #1A2C45, #203552)', border: '1px solid rgba(255,255,255,0.08)' }}>
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#E53935" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
-        </svg>
-      </div>
-      <h2 className="text-2xl font-bold text-light-text dark:text-white">{resolvedTitle}</h2>
-      <p className="text-sm text-light-muted dark:text-white/40 max-w-xs">
-        {tr('This page is coming soon. Check back later.', 'Bu sahifa tez orada ishga tushadi.', 'Bu sahifa tez orada ishga tushadi.')}
-      </p>
-      <div className="mt-2 px-4 py-1.5 rounded-full text-xs font-semibold border"
-        style={{ color: '#E53935', borderColor: 'rgba(229,57,53,0.3)', background: 'rgba(229,57,53,0.08)' }}>
-        🚧 {tr('Under Construction', 'Ishlab chiqilmoqda', 'Ishlab chiqilmoqda')}
-      </div>
-    </div>
-  );
-};
 
 const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [mobileSidebarOpen, setMobileSidebarOpen] = React.useState(false);
@@ -143,7 +108,6 @@ const App: React.FC = () => {
                   <Route path="/ai-credentials" element={<RequireAdmin><AICredentials /></RequireAdmin>} />
                   <Route path="/ai-settings" element={<RequirePermission permission="ai.access"><AISettings /></RequirePermission>} />
                   <Route path="/ai-settings/automation/:conversationId" element={<Navigate to="/ai-settings" replace />} />
-                  <Route path="/instagram-pages" element={<RequireAdmin><InstagramPages /></RequireAdmin>} />
                   <Route path="/settings" element={<Settings />} />
                 </Route>
 
@@ -158,3 +122,4 @@ const App: React.FC = () => {
 };
 
 export default App;
+

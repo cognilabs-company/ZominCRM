@@ -28,6 +28,7 @@ export const ENDPOINTS = {
   DASHBOARD: {
     STATS: `${API_BASE_URL}/dashboard/stats/`,
     STATS_EXPORT: `${API_BASE_URL}/dashboard/stats/export.xlsx`,
+    PENDING_PAYMENTS: `${API_BASE_URL}/dashboard/pending-payments/`,
     USERS: `${API_BASE_URL}/dashboard/users/`,
     USER_DETAIL: (id: string) => `${API_BASE_URL}/dashboard/users/${id}/`,
   },
@@ -98,6 +99,12 @@ export const ENDPOINTS = {
     TRANSACTION_INGEST: `${API_BASE_URL}/payments/transactions/ingest/`,
     TRANSACTION_MATCH: (id: string) => `${API_BASE_URL}/payments/transactions/${id}/match/`,
     MANUAL_CONFIRM: `${API_BASE_URL}/payments/manual-confirm/`,
+    REMINDERS_RUN: `${API_BASE_URL}/payments/reminders/run/`,
+    QUEUE_AMBIGUOUS: `${API_BASE_URL}/payments/queue/ambiguous/`,
+    SIGNAL_SOURCES: `${API_BASE_URL}/payments/signal-sources/`,
+    SIGNAL_SOURCE_DETAIL: (id: string) => `${API_BASE_URL}/payments/signal-sources/${id}/`,
+    SIGNAL_SOURCE_SENDERS: (id: string) => `${API_BASE_URL}/payments/signal-sources/${id}/senders/`,
+    SIGNAL_SENDER_DETAIL: (id: string) => `${API_BASE_URL}/payments/signal-senders/${id}/`,
   },
   COURIERS: {
     LIST: `${API_BASE_URL}/couriers/`,

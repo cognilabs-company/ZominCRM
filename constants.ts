@@ -83,5 +83,6 @@ export const NAV_ITEMS: NavItem[] = [
   { id: 'couriers', icon: Truck, path: '/couriers', labelKey: 'nav_couriers' },
   { id: 'users', icon: Users, path: '/users', labelKey: 'nav_users' },
   { id: 'ai_settings', icon: Bot, path: '/ai-settings', labelKey: 'nav_ai_settings' },
+  { id: 'ai_credentials', icon: Bot, path: '/ai-credentials', labelKey: 'nav_ai_credentials' },
   { id: 'settings', icon: Settings, path: '/settings', labelKey: 'nav_settings' },
 ];
