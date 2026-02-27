@@ -493,13 +493,13 @@ const Couriers: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="inline-flex items-center gap-2">
-                      <button onClick={() => openEdit(row)} className="p-1.5 text-gray-500 hover:text-primary-blue dark:hover:text-blue-400 transition-colors" title={tr('Edit', 'Редактировать', 'Tahrirlash')}>
+                      <button onClick={() => openEdit(row)} className="p-1.5 text-gray-500 dark:text-gray-300 hover:text-primary-blue dark:hover:text-blue-400 transition-colors" title={tr('Edit', 'Редактировать', 'Tahrirlash')}>
                         <Edit2 size={16} />
                       </button>
                       <button
                         onClick={() => softDeleteCourier(row)}
                         disabled={deletingId === row.id || row.is_active === false}
-                        className="p-1.5 text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors disabled:opacity-40"
+                        className="p-1.5 text-gray-500 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 transition-colors disabled:opacity-40"
                         title={tr('Remove from active list', 'Убрать из активного списка', 'Faol ro‘yxatdan chiqarish')}
                       >
                         <Trash2 size={16} />
@@ -689,3 +689,4 @@ const Couriers: React.FC = () => {
 };
 
 export default Couriers;
+

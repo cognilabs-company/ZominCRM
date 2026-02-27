@@ -419,8 +419,8 @@ const AISettings: React.FC = () => {
                     </td>
                     <td className="py-3 text-right">
                       <div className="inline-flex items-center gap-2">
-                        <button onClick={() => openTriggerEdit(r)} className="p-1.5 text-gray-500 hover:text-primary-blue"><Edit2 size={15} /></button>
-                        <button onClick={() => deleteTrigger(r.id)} className="p-1.5 text-gray-500 hover:text-red-600"><Trash2 size={15} /></button>
+                        <button onClick={() => openTriggerEdit(r)} className="p-1.5 text-gray-500 dark:text-gray-300 hover:text-primary-blue dark:hover:text-blue-400"><Edit2 size={15} /></button>
+                        <button onClick={() => deleteTrigger(r.id)} className="p-1.5 text-gray-500 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400"><Trash2 size={15} /></button>
                       </div>
                     </td>
                   </tr>
@@ -480,8 +480,8 @@ const AISettings: React.FC = () => {
                     <td className="py-3 pr-3 text-sm"><span className={`px-2 py-1 rounded text-xs ${r.is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-600'}`}>{r.is_active ? tr('Active', 'Faol', 'Faol') : tr('Inactive', 'Nofaol', 'Nofaol')}</span></td>
                     <td className="py-3 text-right">
                       <div className="inline-flex items-center gap-2">
-                        <button onClick={() => openFollowUpEdit(r)} className="p-1.5 text-gray-500 hover:text-primary-blue"><Edit2 size={15} /></button>
-                        <button onClick={() => deleteFollowUp(r.id)} className="p-1.5 text-gray-500 hover:text-red-600"><Trash2 size={15} /></button>
+                        <button onClick={() => openFollowUpEdit(r)} className="p-1.5 text-gray-500 dark:text-gray-300 hover:text-primary-blue dark:hover:text-blue-400"><Edit2 size={15} /></button>
+                        <button onClick={() => deleteFollowUp(r.id)} className="p-1.5 text-gray-500 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400"><Trash2 size={15} /></button>
                       </div>
                     </td>
                   </tr>

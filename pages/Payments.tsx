@@ -347,7 +347,7 @@ const Payments: React.FC = () => {
                                 handleAutoMatch(tx);
                               }}
                               disabled={matchingId === tx.id}
-                              className="inline-flex items-center gap-1 text-primary-blue hover:text-blue-700 text-sm font-medium disabled:opacity-50"
+                              className="inline-flex items-center gap-1 text-primary-blue dark:text-blue-300 hover:text-blue-700 dark:hover:text-blue-200 text-sm font-medium disabled:opacity-50"
                             >
                               <Link2 size={14} />
                               {matchingId === tx.id ? tr('Matching...', 'Svyazka...', 'Boglanmoqda...') : tr('Auto match', 'Avto-svyaz', "Avto boglash")}

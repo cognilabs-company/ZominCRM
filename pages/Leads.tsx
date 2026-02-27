@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
@@ -40,10 +40,10 @@ const Leads: React.FC = () => {
 
   const statusLabel = (status: LeadStatus) => {
     const labels: Record<LeadStatus, Record<'en' | 'ru' | 'uz', string>> = {
-      NEW: { en: 'New', ru: 'Новый', uz: 'Yangi' },
-      QUALIFIED: { en: 'Qualified', ru: 'Квалифицирован', uz: 'Saralangan' },
-      CONVERTED: { en: 'Converted', ru: 'Конвертирован', uz: 'Konvert qilingan' },
-      LOST: { en: 'Lost', ru: 'Потерян', uz: "Yo'qotilgan" },
+      NEW: { en: 'New', ru: 'ÐÐ¾Ð²Ñ‹Ð¹', uz: 'Yangi' },
+      QUALIFIED: { en: 'Qualified', ru: 'ÐšÐ²Ð°Ð»Ð¸Ñ„Ð¸Ñ†Ð¸Ñ€Ð¾Ð²Ð°Ð½', uz: 'Saralangan' },
+      CONVERTED: { en: 'Converted', ru: 'ÐšÐ¾Ð½Ð²ÐµÑ€Ñ‚Ð¸Ñ€Ð¾Ð²Ð°Ð½', uz: 'Konvert qilingan' },
+      LOST: { en: 'Lost', ru: 'ÐŸÐ¾Ñ‚ÐµÑ€ÑÐ½', uz: "Yo'qotilgan" },
     };
     return labels[status][language];
   };
@@ -87,7 +87,7 @@ const Leads: React.FC = () => {
       setLeads(leadsData.results || []);
       setClients(clientsData.results || []);
     } catch (e) {
-      const message = e instanceof Error ? e.message : tr('Failed to load leads', 'Не удалось загрузить лиды', 'Lidlarni yuklab bo‘lmadi');
+      const message = e instanceof Error ? e.message : tr('Failed to load leads', 'ÐÐµ ÑƒÐ´Ð°Ð»Ð¾ÑÑŒ Ð·Ð°Ð³Ñ€ÑƒÐ·Ð¸Ñ‚ÑŒ Ð»Ð¸Ð´Ñ‹', 'Lidlarni yuklab boâ€˜lmadi');
       setError(message);
       toast.error(message);
     } finally {
@@ -125,9 +125,9 @@ const Leads: React.FC = () => {
       setIsModalOpen(false);
       setEditing(null);
       await loadData();
-      toast.success(editing ? tr('Lead updated.', 'Лид обновлён.', 'Lid yangilandi.') : tr('Lead created.', 'Лид создан.', 'Lid yaratildi.'));
+      toast.success(editing ? tr('Lead updated.', 'Ð›Ð¸Ð´ Ð¾Ð±Ð½Ð¾Ð²Ð»Ñ‘Ð½.', 'Lid yangilandi.') : tr('Lead created.', 'Ð›Ð¸Ð´ ÑÐ¾Ð·Ð´Ð°Ð½.', 'Lid yaratildi.'));
     } catch (e) {
-      const message = e instanceof Error ? e.message : tr('Failed to save lead', 'Не удалось сохранить лид', 'Lidni saqlab bo‘lmadi');
+      const message = e instanceof Error ? e.message : tr('Failed to save lead', 'ÐÐµ ÑƒÐ´Ð°Ð»Ð¾ÑÑŒ ÑÐ¾Ñ…Ñ€Ð°Ð½Ð¸Ñ‚ÑŒ Ð»Ð¸Ð´', 'Lidni saqlab boâ€˜lmadi');
       setError(message);
       toast.error(message);
     } finally {
@@ -157,11 +157,11 @@ const Leads: React.FC = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50 dark:bg-navy-900/50 text-xs uppercase text-gray-500 dark:text-gray-400 border-b border-light-border dark:border-navy-700">
-                <th className="px-6 py-4 font-semibold">{tr('Lead ID', 'ID лида', 'Lid ID')}</th>
+                <th className="px-6 py-4 font-semibold">{tr('Lead ID', 'ID Ð»Ð¸Ð´Ð°', 'Lid ID')}</th>
                 <th className="px-6 py-4 font-semibold">{t('nav_clients')}</th>
-                <th className="px-6 py-4 font-semibold">{tr('Source', 'Платформа', 'Platforma')}</th>
+                <th className="px-6 py-4 font-semibold">{tr('Source', 'ÐŸÐ»Ð°Ñ‚Ñ„Ð¾Ñ€Ð¼Ð°', 'Platforma')}</th>
                 <th className="px-6 py-4 font-semibold">{t('status')}</th>
-                <th className="px-6 py-4 font-semibold">{tr('Created', 'Создан', 'Yaratilgan')}</th>
+                <th className="px-6 py-4 font-semibold">{tr('Created', 'Ð¡Ð¾Ð·Ð´Ð°Ð½', 'Yaratilgan')}</th>
                 <th className="px-6 py-4 font-semibold text-right">{t('actions')}</th>
               </tr>
             </thead>
@@ -169,13 +169,13 @@ const Leads: React.FC = () => {
               {loading ? (
                 <tr>
                   <td colSpan={6} className="py-10 text-center text-gray-400">
-                    {tr('Loading leads...', 'Лиды загружаются...', 'Lidlar yuklanmoqda...')}
+                    {tr('Loading leads...', 'Ð›Ð¸Ð´Ñ‹ Ð·Ð°Ð³Ñ€ÑƒÐ¶Ð°ÑŽÑ‚ÑÑ...', 'Lidlar yuklanmoqda...')}
                   </td>
                 </tr>
               ) : leads.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-10 text-center text-gray-400">
-                    {tr('No leads found.', 'Лиды не найдены.', 'Lidlar topilmadi.')}
+                    {tr('No leads found.', 'Ð›Ð¸Ð´Ñ‹ Ð½Ðµ Ð½Ð°Ð¹Ð´ÐµÐ½Ñ‹.', 'Lidlar topilmadi.')}
                   </td>
                 </tr>
               ) : (
@@ -206,7 +206,7 @@ const Leads: React.FC = () => {
                             type="button"
                             onClick={() => navigate(`/conversations?client_id=${encodeURIComponent(lead.client_id)}`)}
                             className="inline-flex items-center gap-1 rounded-md border border-light-border dark:border-navy-600 px-2 py-1 text-xs text-gray-600 hover:text-primary-blue hover:border-blue-300 dark:text-gray-300 dark:hover:text-blue-400 dark:hover:border-blue-700 transition-colors"
-                            title={tr('Go to chat', 'Открыть чат', 'Chatga o‘tish')}
+                            title={tr('Go to chat', 'ÐžÑ‚ÐºÑ€Ñ‹Ñ‚ÑŒ Ñ‡Ð°Ñ‚', 'Chatga oâ€˜tish')}
                           >
                             <MessageCircle size={13} />
                             <span className="hidden sm:inline">{tr('Chat', 'Chat', 'Chat')}</span>
@@ -216,8 +216,8 @@ const Leads: React.FC = () => {
                               setEditing(lead);
                               setIsModalOpen(true);
                             }}
-                            className="p-1.5 text-gray-500 hover:text-primary-blue dark:hover:text-blue-400 transition-colors"
-                            title={tr('Edit lead', 'Редактировать лид', 'Lidni tahrirlash')}
+                            className="p-1.5 text-gray-500 dark:text-gray-300 hover:text-primary-blue dark:hover:text-blue-400 transition-colors"
+                            title={tr('Edit lead', 'Ð ÐµÐ´Ð°ÐºÑ‚Ð¸Ñ€Ð¾Ð²Ð°Ñ‚ÑŒ Ð»Ð¸Ð´', 'Lidni tahrirlash')}
                           >
                             <Edit2 size={16} />
                           </button>
@@ -235,7 +235,7 @@ const Leads: React.FC = () => {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={editing ? tr('Edit Lead', 'Редактировать лид', 'Lidni tahrirlash') : tr('New Lead', 'Новый лид', 'Yangi lid')}
+        title={editing ? tr('Edit Lead', 'Ð ÐµÐ´Ð°ÐºÑ‚Ð¸Ñ€Ð¾Ð²Ð°Ñ‚ÑŒ Ð»Ð¸Ð´', 'Lidni tahrirlash') : tr('New Lead', 'ÐÐ¾Ð²Ñ‹Ð¹ Ð»Ð¸Ð´', 'Yangi lid')}
         footer={null}
       >
         <form onSubmit={handleSave} className="space-y-4">
@@ -247,7 +247,7 @@ const Leads: React.FC = () => {
               defaultValue={editing?.client_id || ''}
               className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white"
             >
-              <option value="">{tr('Select client', 'Выберите клиента', 'Mijozni tanlang')}</option>
+              <option value="">{tr('Select client', 'Ð’Ñ‹Ð±ÐµÑ€Ð¸Ñ‚Ðµ ÐºÐ»Ð¸ÐµÐ½Ñ‚Ð°', 'Mijozni tanlang')}</option>
               {clients.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.full_name || c.phone || c.id}
@@ -256,7 +256,7 @@ const Leads: React.FC = () => {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Source', 'Платформа', 'Platforma')}</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Source', 'ÐŸÐ»Ð°Ñ‚Ñ„Ð¾Ñ€Ð¼Ð°', 'Platforma')}</label>
             <input
               name="source"
               defaultValue={editing?.source || ''}
@@ -278,7 +278,7 @@ const Leads: React.FC = () => {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Notes', 'Заметки', 'Izohlar')}</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Notes', 'Ð—Ð°Ð¼ÐµÑ‚ÐºÐ¸', 'Izohlar')}</label>
             <textarea
               name="notes"
               defaultValue={editing?.notes || ''}
@@ -298,7 +298,7 @@ const Leads: React.FC = () => {
               type="submit"
               className="px-4 py-2 rounded-lg text-sm font-medium bg-primary-blue text-white hover:bg-blue-600 transition-colors disabled:opacity-50"
             >
-              {saving ? tr('Saving...', 'Сохранение...', 'Saqlanmoqda...') : t('save')}
+              {saving ? tr('Saving...', 'Ð¡Ð¾Ñ…Ñ€Ð°Ð½ÐµÐ½Ð¸Ðµ...', 'Saqlanmoqda...') : t('save')}
             </button>
           </div>
         </form>
@@ -308,3 +308,4 @@ const Leads: React.FC = () => {
 };
 
 export default Leads;
+

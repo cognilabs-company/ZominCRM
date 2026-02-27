@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+﻿import React, { useMemo, useState, useEffect } from 'react';
 import { Card } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
 import { Badge } from '../components/ui/Badge';
@@ -73,9 +73,9 @@ const Clients: React.FC = () => {
   );
 
   const languageLabel = (lang?: ClientRow['preferred_language']) => {
-    if (lang === 'ru') return tr('Russian', 'Русский', 'Ruscha');
+    if (lang === 'ru') return tr('Russian', 'Ð ÑƒÑÑÐºÐ¸Ð¹', 'Ruscha');
     if (lang === 'uz') return tr("Uzbek", 'Uzbek', "O'zbek");
-    if (lang === 'en') return tr('English', 'Английский', 'Inglizcha');
+    if (lang === 'en') return tr('English', 'ÐÐ½Ð³Ð»Ð¸Ð¹ÑÐºÐ¸Ð¹', 'Inglizcha');
     return '-';
   };
 
@@ -198,7 +198,7 @@ const Clients: React.FC = () => {
                     <td className="px-6 py-4 text-right">
                       <button
                         onClick={() => { setEditing(c); setIsModalOpen(true); }}
-                        className="p-1.5 text-gray-500 hover:text-primary-blue dark:hover:text-blue-400 transition-colors"
+                        className="p-1.5 text-gray-500 dark:text-gray-300 hover:text-primary-blue dark:hover:text-blue-400 transition-colors"
                         title={tr('Edit client', 'Mijozni tahrirlash', 'Mijozni tahrirlash')}
                       >
                         <Edit2 size={16} />
@@ -249,8 +249,8 @@ const Clients: React.FC = () => {
               >
                 <option value="">{tr('Not set', 'Ne ukazan', 'Belgilanmagan')}</option>
                 <option value="uz">{tr("Uzbek", 'Uzbek', "O'zbek")}</option>
-                <option value="ru">{tr('Russian', 'Русский', 'Ruscha')}</option>
-                <option value="en">{tr('English', 'Английский', 'Inglizcha')}</option>
+                <option value="ru">{tr('Russian', 'Ð ÑƒÑÑÐºÐ¸Ð¹', 'Ruscha')}</option>
+                <option value="en">{tr('English', 'ÐÐ½Ð³Ð»Ð¸Ð¹ÑÐºÐ¸Ð¹', 'Inglizcha')}</option>
               </select>
             </div>
           </div>
@@ -305,3 +305,4 @@ const Clients: React.FC = () => {
 };
 
 export default Clients;
+

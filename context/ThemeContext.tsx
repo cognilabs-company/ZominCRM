@@ -16,7 +16,7 @@ const resolveInitialTheme = (): Theme => {
   } catch {
     // Ignore storage read failures
   }
-  return 'dark';
+  return 'light';
 };
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {

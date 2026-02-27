@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { Card } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
 import { useAuth } from '../context/AuthContext';
@@ -61,7 +61,7 @@ const Users: React.FC = () => {
       const list = Array.isArray(data) ? data : (data.results || []);
       setUsers(list);
     } catch (e) {
-      const message = e instanceof Error ? e.message : tr('Failed to load users', 'Foydalanuvchilarni yuklab bo‘lmadi', 'Foydalanuvchilarni yuklab bo‘lmadi');
+      const message = e instanceof Error ? e.message : tr('Failed to load users', 'Foydalanuvchilarni yuklab boâ€˜lmadi', 'Foydalanuvchilarni yuklab boâ€˜lmadi');
       setError(message);
       toast.error(message);
     } finally {
@@ -79,7 +79,7 @@ const Users: React.FC = () => {
       });
       setPermissions(rows);
     } catch (e) {
-      const message = e instanceof Error ? e.message : tr('Failed to load permissions', 'Ruxsatlarni yuklab bo‘lmadi', 'Ruxsatlarni yuklab bo‘lmadi');
+      const message = e instanceof Error ? e.message : tr('Failed to load permissions', 'Ruxsatlarni yuklab boâ€˜lmadi', 'Ruxsatlarni yuklab boâ€˜lmadi');
       setError(message);
       toast.error(message);
     } finally {
@@ -108,7 +108,7 @@ const Users: React.FC = () => {
       if (e instanceof ApiError && e.status === 405) {
         return;
       }
-      const message = e instanceof Error ? e.message : tr('Failed to load user detail', 'Foydalanuvchi tafsilotlarini yuklab bo‘lmadi', 'Foydalanuvchi tafsilotlarini yuklab bo‘lmadi');
+      const message = e instanceof Error ? e.message : tr('Failed to load user detail', 'Foydalanuvchi tafsilotlarini yuklab boâ€˜lmadi', 'Foydalanuvchi tafsilotlarini yuklab boâ€˜lmadi');
       setError(message);
       toast.error(message);
     } finally {
@@ -140,7 +140,7 @@ const Users: React.FC = () => {
       setSelectedPerms([]);
       await loadUsers();
     } catch (e2) {
-      const message = e2 instanceof Error ? e2.message : tr('Failed to create user', 'Foydalanuvchini yaratib bo‘lmadi', 'Foydalanuvchini yaratib bo‘lmadi');
+      const message = e2 instanceof Error ? e2.message : tr('Failed to create user', 'Foydalanuvchini yaratib boâ€˜lmadi', 'Foydalanuvchini yaratib boâ€˜lmadi');
       setError(message);
       toast.error(message);
     } finally {
@@ -197,7 +197,7 @@ const Users: React.FC = () => {
         toast.error(message);
         return;
       }
-      const message = e instanceof Error ? e.message : tr('Failed to update user', 'Foydalanuvchini yangilab bo‘lmadi', 'Foydalanuvchini yangilab bo‘lmadi');
+      const message = e instanceof Error ? e.message : tr('Failed to update user', 'Foydalanuvchini yangilab boâ€˜lmadi', 'Foydalanuvchini yangilab boâ€˜lmadi');
       setError(message);
       toast.error(message);
     } finally {
@@ -239,7 +239,7 @@ const Users: React.FC = () => {
             <thead>
               <tr className="bg-gray-50 dark:bg-navy-900/50 text-xs uppercase text-gray-500 dark:text-gray-400 border-b border-light-border dark:border-navy-700">
                 <th className="px-6 py-4 font-semibold">{tr('Username', 'Login', 'Login')}</th>
-                <th className="px-6 py-4 font-semibold">{tr('Full Name', 'To‘liq ism', 'To‘liq ism')}</th>
+                <th className="px-6 py-4 font-semibold">{tr('Full Name', 'Toâ€˜liq ism', 'Toâ€˜liq ism')}</th>
                 <th className="px-6 py-4 font-semibold">{tr('Email', 'Email', 'Email')}</th>
                 <th className="px-6 py-4 font-semibold">{tr('Role', 'Rol', 'Rol')}</th>
                 <th className="px-6 py-4 font-semibold">{tr('Status', 'Holat', 'Holat')}</th>
@@ -275,7 +275,7 @@ const Users: React.FC = () => {
                           e.stopPropagation();
                           openEdit(u);
                         }}
-                        className="p-1.5 text-gray-500 hover:text-primary-blue dark:hover:text-blue-400 transition-colors"
+                        className="p-1.5 text-gray-500 dark:text-gray-300 hover:text-primary-blue dark:hover:text-blue-400 transition-colors"
                         title={tr('Edit user', 'Foydalanuvchini tahrirlash', 'Foydalanuvchini tahrirlash')}
                       >
                         <Edit2 size={16} />
@@ -425,7 +425,7 @@ const Users: React.FC = () => {
                 {tr('Cancel', 'Bekor qilish', 'Bekor qilish')}
               </button>
               <button disabled={saving} type="submit" className="px-4 py-2 rounded-lg text-sm font-medium bg-primary-blue text-white hover:bg-blue-600 transition-colors disabled:opacity-50">
-                {saving ? tr('Saving...', 'Saqlanmoqda...', 'Saqlanmoqda...') : tr('Save Changes', 'O‘zgarishlarni saqlash', 'O‘zgarishlarni saqlash')}
+                {saving ? tr('Saving...', 'Saqlanmoqda...', 'Saqlanmoqda...') : tr('Save Changes', 'Oâ€˜zgarishlarni saqlash', 'Oâ€˜zgarishlarni saqlash')}
               </button>
             </div>
           </form>
@@ -466,7 +466,7 @@ const Users: React.FC = () => {
             <div>
               <p className="text-gray-500 mb-2">{tr('Permissions', 'Ruxsatlar', 'Ruxsatlar')}</p>
               {selectedPermissions.length === 0 ? (
-                <p className="text-gray-500">{tr('No permissions', 'Ruxsatlar yo‘q', 'Ruxsatlar yo‘q')}</p>
+                <p className="text-gray-500">{tr('No permissions', 'Ruxsatlar yoâ€˜q', 'Ruxsatlar yoâ€˜q')}</p>
               ) : (
                 <div className="flex flex-wrap gap-2">
                   {selectedPermissions.map((code) => (
@@ -485,3 +485,4 @@ const Users: React.FC = () => {
 };
 
 export default Users;
+

@@ -1419,7 +1419,7 @@ const Conversations: React.FC = () => {
             {error && <p className="text-xs text-red-600 mb-2">{error}</p>}
             <div className="rounded-2xl border border-light-border dark:border-navy-700 bg-gray-50 dark:bg-navy-900/40 p-2 shadow-sm">
               <div className="flex gap-2 items-end">
-              <button className="hidden p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" title={tr('Attachments not implemented', 'Fayl yuborish hali yo‘q', 'Fayl yuborish hali yo‘q')}> 
+              <button className="hidden p-2 text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-gray-200" title={tr('Attachments not implemented', 'Fayl yuborish hali yo‘q', 'Fayl yuborish hali yo‘q')}> 
                 <Paperclip size={20} />
               </button>
               <div className="flex-1 bg-white dark:bg-navy-800 rounded-xl p-2 border border-light-border dark:border-navy-700 focus-within:border-blue-300 dark:focus-within:border-blue-500/40">

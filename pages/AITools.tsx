@@ -213,7 +213,7 @@ const AITools: React.FC = () => {
               </div>
               <button
                 onClick={() => { setResult(null); setActiveConversationId(''); setChatHistory([]); setInput(''); }}
-                className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-navy-700"
+                className="p-2 rounded-lg text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-navy-700"
                 title={t('reset')}
               >
                 <RefreshCw size={16} />

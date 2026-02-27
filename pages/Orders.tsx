@@ -339,7 +339,7 @@ const Orders: React.FC = () => {
         <div className="bg-white dark:bg-navy-800 border border-light-border dark:border-navy-700 rounded-xl p-4 shadow-sm animate-fade-in-down" onClick={(e) => e.stopPropagation()}>
           <div className="flex justify-between items-center mb-4">
             <h3 className="font-semibold text-light-text dark:text-white text-sm">{t('filter')} {tr('Options', 'Parametrlar', 'Parametrlar')}</h3>
-            <button onClick={() => setIsFilterOpen(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"><X size={16} /></button>
+            <button onClick={() => setIsFilterOpen(false)} className="text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-gray-200"><X size={16} /></button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>

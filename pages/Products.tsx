@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { Card } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
 import { Badge } from '../components/ui/Badge';
@@ -44,7 +44,7 @@ const Products: React.FC = () => {
       const data = await apiRequest<{ results?: ApiProduct[] }>(`${ENDPOINTS.PRODUCTS.LIST_CREATE}${query}`);
       setProducts(data.results || []);
     } catch (e) {
-      const message = e instanceof Error ? e.message : tr('Failed to load products', 'Mahsulotlarni yuklab bo‘lmadi', 'Mahsulotlarni yuklab bo‘lmadi');
+      const message = e instanceof Error ? e.message : tr('Failed to load products', 'Mahsulotlarni yuklab boâ€˜lmadi', 'Mahsulotlarni yuklab boâ€˜lmadi');
       setError(message);
       toast.error(message);
     } finally {
@@ -94,7 +94,7 @@ const Products: React.FC = () => {
       await loadProducts();
       toast.success(editing ? tr('Product updated.', 'Mahsulot yangilandi.', 'Mahsulot yangilandi.') : tr('Product created.', 'Mahsulot yaratildi.', 'Mahsulot yaratildi.'));
     } catch (e) {
-      const message = e instanceof Error ? e.message : tr('Failed to save product', 'Mahsulotni saqlab bo‘lmadi', 'Mahsulotni saqlab bo‘lmadi');
+      const message = e instanceof Error ? e.message : tr('Failed to save product', 'Mahsulotni saqlab boâ€˜lmadi', 'Mahsulotni saqlab boâ€˜lmadi');
       setError(message);
       toast.error(message);
     } finally {
@@ -112,7 +112,7 @@ const Products: React.FC = () => {
       await loadProducts();
       toast.success(tr('Product deactivated.', 'Mahsulot nofaol qilindi.', 'Mahsulot nofaol qilindi.'));
     } catch (e) {
-      const message = e instanceof Error ? e.message : tr('Failed to deactivate product', 'Mahsulotni nofaol qilib bo‘lmadi', 'Mahsulotni nofaol qilib bo‘lmadi');
+      const message = e instanceof Error ? e.message : tr('Failed to deactivate product', 'Mahsulotni nofaol qilib boâ€˜lmadi', 'Mahsulotni nofaol qilib boâ€˜lmadi');
       setError(message);
       toast.error(message);
     }
@@ -205,8 +205,8 @@ const Products: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-2">
-                        <button onClick={() => { setEditing(p); setIsModalOpen(true); }} className="p-1.5 text-gray-500 hover:text-primary-blue dark:hover:text-blue-400 transition-colors"><Edit2 size={16} /></button>
-                        <button onClick={() => handleDeactivate(p)} className="p-1.5 text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors"><Trash2 size={16} /></button>
+                        <button onClick={() => { setEditing(p); setIsModalOpen(true); }} className="p-1.5 text-gray-500 dark:text-gray-300 hover:text-primary-blue dark:hover:text-blue-400 transition-colors"><Edit2 size={16} /></button>
+                        <button onClick={() => handleDeactivate(p)} className="p-1.5 text-gray-500 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400 transition-colors"><Trash2 size={16} /></button>
                       </div>
                     </td>
                   </tr>
@@ -275,3 +275,4 @@ const Products: React.FC = () => {
 };
 
 export default Products;
+

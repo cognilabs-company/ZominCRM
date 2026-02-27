@@ -575,10 +575,10 @@ const ConversationAutomation: React.FC = () => {
                     <td className="py-3 pr-3 text-sm text-gray-800 dark:text-gray-200">{rule.is_active ? tr('Yes', 'Ha', 'Ha') : tr('No', 'Yoq', "Yoq")}</td>
                     <td className="py-3 text-right">
                       <div className="inline-flex items-center gap-2">
-                        <button onClick={() => openEditRule(rule)} className="p-1.5 text-gray-500 hover:text-primary-blue transition-colors">
+                        <button onClick={() => openEditRule(rule)} className="p-1.5 text-gray-500 dark:text-gray-300 hover:text-primary-blue dark:hover:text-blue-400 transition-colors">
                           <Edit2 size={15} />
                         </button>
-                        <button onClick={() => deleteRule(rule.id)} className="p-1.5 text-gray-500 hover:text-red-600 transition-colors">
+                        <button onClick={() => deleteRule(rule.id)} className="p-1.5 text-gray-500 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 transition-colors">
                           <Trash2 size={15} />
                         </button>
                       </div>

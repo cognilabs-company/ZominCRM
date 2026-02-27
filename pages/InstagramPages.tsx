@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { Card } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
 import { Badge } from '../components/ui/Badge';
@@ -201,10 +201,10 @@ const InstagramPages: React.FC = () => {
                     <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{row.updated_at ? new Date(row.updated_at).toLocaleString() : '-'}</td>
                     <td className="px-6 py-4 text-right">
                       <div className="inline-flex items-center gap-2">
-                        <button onClick={() => openEdit(row)} className="p-1.5 text-gray-500 hover:text-primary-blue dark:hover:text-blue-400 transition-colors" title={tr('Edit', 'Tahrirlash', 'Tahrirlash')}>
+                        <button onClick={() => openEdit(row)} className="p-1.5 text-gray-500 dark:text-gray-300 hover:text-primary-blue dark:hover:text-blue-400 transition-colors" title={tr('Edit', 'Tahrirlash', 'Tahrirlash')}>
                           <Edit2 size={16} />
                         </button>
-                        <button onClick={() => onDelete(row)} disabled={deletingId === row.id} className="p-1.5 text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors disabled:opacity-50" title={tr('Delete', 'Ochirish', 'Ochirish')}>
+                        <button onClick={() => onDelete(row)} disabled={deletingId === row.id} className="p-1.5 text-gray-500 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 transition-colors disabled:opacity-50" title={tr('Delete', 'Ochirish', 'Ochirish')}>
                           <Trash2 size={16} />
                         </button>
                       </div>
@@ -284,3 +284,4 @@ const InstagramPages: React.FC = () => {
 };
 
 export default InstagramPages;
+
