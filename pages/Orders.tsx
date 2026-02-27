@@ -389,12 +389,14 @@ const Orders: React.FC = () => {
                   <td onClick={() => openOrderDetails(order)} className="px-6 py-4 cursor-pointer"><Badge variant={getStatusVariant(order.status) as any}>{getStatusLabel(order.status)}</Badge></td>
                   <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex justify-end gap-2">
-                      <button
-                        onClick={() => handleAction('dispatch', order.id)}
-                        className="px-3 py-1.5 rounded-lg text-xs font-medium border border-light-border dark:border-navy-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-navy-700"
-                      >
-                        {tr('Dispatch', 'Yuborish', 'Yuborish')}
-                      </button>
+                      {(order.status === 'INFO_COLLECTED' || order.status === 'PAYMENT_CONFIRMED') && (
+                        <button
+                          onClick={() => handleAction('dispatch', order.id)}
+                          className="px-3 py-1.5 rounded-lg text-xs font-medium border border-light-border dark:border-navy-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-navy-700"
+                        >
+                          {tr('Dispatch', 'Yuborish', 'Yuborish')}
+                        </button>
+                      )}
                       <button
                         onClick={() => handleAction('cancel', order.id)}
                         className="px-3 py-1.5 rounded-lg text-xs font-medium border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30"
