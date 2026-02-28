@@ -21,6 +21,10 @@ import Login from './pages/auth/Login';
 import Forbidden from './pages/auth/Forbidden';
 import Payments from './pages/Payments';
 import Couriers from './pages/Couriers';
+import { ClientAppProvider } from './client/bootstrap/ClientAppContext';
+import { ClientCartProvider } from './client/bootstrap/ClientCartContext';
+import { ClientAppLayout } from './client/components/ClientAppLayout';
+import { clientRouteDefinitions } from './client/routes';
 
 const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [mobileSidebarOpen, setMobileSidebarOpen] = React.useState(false);
@@ -90,6 +94,25 @@ const App: React.FC = () => {
           <AuthProvider>
             <Router>
               <Routes>
+                <Route
+                  path="/app"
+                  element={(
+                    <ClientAppProvider>
+                      <ClientCartProvider>
+                        <ClientAppLayout />
+                      </ClientCartProvider>
+                    </ClientAppProvider>
+                  )}
+                >
+                  <Route index element={<Navigate to="home" replace />} />
+                  {clientRouteDefinitions.map((route) => (
+                    <React.Fragment key={route.id}>
+                      <Route path={route.path} element={route.element} />
+                    </React.Fragment>
+                  ))}
+                  <Route path="*" element={<Navigate to="home" replace />} />
+                </Route>
+
                 <Route path="/login" element={<Login />} />
                 <Route path="/403" element={<Forbidden />} />
 
