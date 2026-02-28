@@ -147,7 +147,7 @@ const AICredentials: React.FC = () => {
         {loading ? (
           <p className="text-sm text-gray-500">{tr('Loading...', 'Yuklanmoqda...', 'Yuklanmoqda...')}</p>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-5">
             <Switch checked={status} onChange={setStatus} label={tr('Credentials Active', 'Credentiallar faol', 'Credentiallar faol')} />
 
             <div>
@@ -160,22 +160,35 @@ const AICredentials: React.FC = () => {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('System Prompt', 'Tizim prompti', 'Tizim prompti')}</label>
-              <textarea
-                value={aiSystemPrompt}
-                onChange={(e) => setAiSystemPrompt(e.target.value)}
-                className="w-full h-32 bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:border-primary-blue dark:text-white"
-              />
-            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Prompt Editors', 'Prompt editorlari', 'Prompt editorlari')}</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {tr('Edit system and user prompts side by side for easier comparison.', 'System va user promptlarni yonma-yon tahrirlang.', 'System va user promptlarni yonma-yon tahrirlang.')}
+                  </p>
+                </div>
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('User Prompt', 'Foydalanuvchi prompti', 'Foydalanuvchi prompti')}</label>
-              <textarea
-                value={aiUserPrompt}
-                onChange={(e) => setAiUserPrompt(e.target.value)}
-                className="w-full h-32 bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:border-primary-blue dark:text-white"
-              />
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                <div className="rounded-xl border border-light-border dark:border-navy-700 bg-gray-50/70 dark:bg-navy-900/40 p-4">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{tr('System Prompt', 'Tizim prompti', 'Tizim prompti')}</label>
+                  <textarea
+                    value={aiSystemPrompt}
+                    onChange={(e) => setAiSystemPrompt(e.target.value)}
+                    className="w-full min-h-[420px] bg-white dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-xl px-4 py-3 text-sm leading-6 resize-y focus:outline-none focus:border-primary-blue dark:text-white"
+                  />
+                </div>
+
+                <div className="rounded-xl border border-light-border dark:border-navy-700 bg-gray-50/70 dark:bg-navy-900/40 p-4">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{tr('User Prompt', 'Foydalanuvchi prompti', 'Foydalanuvchi prompti')}</label>
+                  <textarea
+                    value={aiUserPrompt}
+                    onChange={(e) => setAiUserPrompt(e.target.value)}
+                    className="w-full min-h-[420px] bg-white dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-xl px-4 py-3 text-sm leading-6 resize-y focus:outline-none focus:border-primary-blue dark:text-white"
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="flex justify-end">
