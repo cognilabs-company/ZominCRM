@@ -459,18 +459,20 @@ const Payments: React.FC = () => {
                             <Info size={14} />
                             {tr('Details', 'Detalno', 'Batafsil')}
                           </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openAttachModal(tx);
+                            }}
+                            className="inline-flex items-center gap-1 text-primary-blue dark:text-blue-300 hover:text-blue-700 dark:hover:text-blue-200 text-sm font-medium"
+                          >
+                            <Link2 size={14} />
+                            {tx.linked_order_id
+                              ? tr('Change order', 'Izmenit zakaz', 'Buyurtmani ozgartirish')
+                              : tr('Attach order', 'Privyazat zakaz', 'Buyurtmani boglash')}
+                          </button>
                           {!tx.linked_order_id && (
                             <>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  openAttachModal(tx);
-                                }}
-                                className="inline-flex items-center gap-1 text-primary-blue dark:text-blue-300 hover:text-blue-700 dark:hover:text-blue-200 text-sm font-medium"
-                              >
-                                <Link2 size={14} />
-                                {tr('Attach order', 'Privyazat zakaz', 'Buyurtmani boglash')}
-                              </button>
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -700,17 +702,38 @@ const Payments: React.FC = () => {
                 {selectedTransaction.linked_order_id ? (
                   <div className="mt-1 space-y-2">
                     <p className="text-gray-900 dark:text-white font-semibold">{formatOrderRef(selectedTransaction.linked_order_id)}</p>
+                    <p className="text-xs text-gray-500 font-mono break-all">{selectedTransaction.linked_order_id}</p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => openOrderPage(selectedTransaction.linked_order_id)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-light-border dark:border-navy-600 text-sm text-primary-blue dark:text-blue-300 hover:bg-gray-50 dark:hover:bg-navy-800"
+                      >
+                        <Link2 size={14} />
+                        {tr('Open order', 'Otkryt zakaz', 'Buyurtmani ochish')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => openAttachModal(selectedTransaction)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-light-border dark:border-navy-600 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-navy-800"
+                      >
+                        <Link2 size={14} />
+                        {tr('Change order', 'Izmenit zakaz', 'Buyurtmani ozgartirish')}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-1 space-y-2">
+                    <p className="font-mono break-all text-gray-900 dark:text-white">-</p>
                     <button
                       type="button"
-                      onClick={() => openOrderPage(selectedTransaction.linked_order_id)}
+                      onClick={() => openAttachModal(selectedTransaction)}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-light-border dark:border-navy-600 text-sm text-primary-blue dark:text-blue-300 hover:bg-gray-50 dark:hover:bg-navy-800"
                     >
                       <Link2 size={14} />
-                      {tr('Open order', 'Otkryt zakaz', 'Buyurtmani ochish')}
+                      {tr('Attach order', 'Privyazat zakaz', 'Buyurtmani boglash')}
                     </button>
                   </div>
-                ) : (
-                  <p className="font-mono break-all text-gray-900 dark:text-white">-</p>
                 )}
               </div>
               <div className="rounded-lg border border-light-border dark:border-navy-700 p-3"><p className="text-xs text-gray-500">{tr('Source chat ID', 'ID chata istochnika', 'Manba chat ID')}</p><p className="font-mono break-all text-gray-900 dark:text-white">{fieldValue(selectedTransaction.source_chat_id)}</p></div>

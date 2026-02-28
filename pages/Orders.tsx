@@ -154,6 +154,7 @@ const Orders: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [createLoading, setCreateLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>(searchParams.get('status') || '');
+  const targetOrderId = searchParams.get('order_id');
 
   const clientsById = useMemo(() => {
     const byId: Record<string, ApiClient> = {};
@@ -225,12 +226,22 @@ const Orders: React.FC = () => {
 
   // Sync URL with state
   useEffect(() => {
+    const nextParams = new URLSearchParams(searchParams);
     if (statusFilter) {
-      setSearchParams({ status: statusFilter }, { replace: true });
+      nextParams.set('status', statusFilter);
     } else {
-      setSearchParams({}, { replace: true });
+      nextParams.delete('status');
     }
-  }, [statusFilter, setSearchParams]);
+    setSearchParams(nextParams, { replace: true });
+  }, [targetOrderId, statusFilter, setSearchParams]);
+
+  useEffect(() => {
+    if (!targetOrderId || !orders.length) return;
+    const matchedOrder = orders.find((order) => order.id === targetOrderId);
+    if (matchedOrder && selectedOrder?.id !== matchedOrder.id) {
+      setSelectedOrder(matchedOrder);
+    }
+  }, [orders, selectedOrder?.id, targetOrderId]);
 
   const getStatusVariant = (status: OrderStatus) => {
     switch (status) {

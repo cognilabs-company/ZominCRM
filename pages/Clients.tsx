@@ -33,6 +33,7 @@ const Clients: React.FC = () => {
   const [q, setQ] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editing, setEditing] = useState<ClientRow | null>(null);
+  const [selectedClient, setSelectedClient] = useState<ClientRow | null>(null);
 
   const loadClients = async () => {
     try {
@@ -155,34 +156,36 @@ const Clients: React.FC = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50 dark:bg-navy-900/50 text-xs uppercase text-gray-500 dark:text-gray-400 border-b border-light-border dark:border-navy-700">
-                <th className="px-6 py-4 font-semibold">ID</th>
-                <th className="px-6 py-4 font-semibold">{tr('Full Name', 'Toliq ism', 'Toliq ism')}</th>
+                <th className="px-6 py-4 font-semibold">{tr('Client', 'Mijoz', 'Mijoz')}</th>
                 <th className="px-6 py-4 font-semibold">{tr('Phone', 'Telefon', 'Telefon')}</th>
-                <th className="px-6 py-4 font-semibold">{tr('Username', 'Username', 'Username')}</th>
                 <th className="px-6 py-4 font-semibold">{tr('Platform', 'Platforma', 'Platforma')}</th>
                 <th className="px-6 py-4 font-semibold">{tr('Language', 'Til', 'Til')}</th>
-                <th className="px-6 py-4 font-semibold">{tr('Address', 'Manzil', 'Manzil')}</th>
-                <th className="px-6 py-4 font-semibold">{tr('Created', 'Yaratilgan', 'Yaratilgan')}</th>
+                <th className="px-6 py-4 font-semibold">{tr('Updated', 'Yangilangan', 'Yangilangan')}</th>
                 <th className="px-6 py-4 font-semibold text-right">{t('actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-light-border dark:divide-navy-700">
               {loading ? (
-                <tr><td colSpan={9} className="px-6 py-10 text-center text-gray-400">{tr('Loading clients...', 'Mijozlar yuklanmoqda...', 'Mijozlar yuklanmoqda...')}</td></tr>
+                <tr><td colSpan={6} className="px-6 py-10 text-center text-gray-400">{tr('Loading clients...', 'Mijozlar yuklanmoqda...', 'Mijozlar yuklanmoqda...')}</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={9} className="px-6 py-10 text-center text-gray-400">{tr('No clients found', 'Mijozlar topilmadi', 'Mijozlar topilmadi')}</td></tr>
+                <tr><td colSpan={6} className="px-6 py-10 text-center text-gray-400">{tr('No clients found', 'Mijozlar topilmadi', 'Mijozlar topilmadi')}</td></tr>
               ) : (
                 filtered.map((c) => (
-                  <tr key={c.id} className="hover:bg-gray-50 dark:hover:bg-navy-700/50 transition-colors">
-                    <td className="px-6 py-4 text-sm font-medium text-primary-blue dark:text-blue-400">{c.id.slice(0, 8)}</td>
+                  <tr
+                    key={c.id}
+                    onClick={() => setSelectedClient(c)}
+                    className="hover:bg-gray-50 dark:hover:bg-navy-700/50 transition-colors cursor-pointer"
+                  >
                     <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
-                      <div className="inline-flex items-center gap-2">
+                      <div className="flex items-start gap-3">
                         <UserCircle2 size={16} className="text-gray-400" />
-                        <span>{c.full_name || '-'}</span>
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-white">{c.full_name || c.username || '-'}</p>
+                          <p className="text-xs text-gray-500 font-mono mt-1">{c.id.slice(0, 8)}</p>
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">{c.phone || '-'}</td>
-                    <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">{c.username || '-'}</td>
                     <td className="px-6 py-4 text-sm">
                       <Badge variant={c.platform === 'instagram' ? 'warning' : 'info'}>{platformLabel(c.platform)}</Badge>
                     </td>
@@ -193,11 +196,10 @@ const Clients: React.FC = () => {
                         <span className="text-gray-400">-</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300 max-w-[240px] truncate" title={c.address || ''}>{c.address || '-'}</td>
-                    <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{c.created_at ? new Date(c.created_at).toLocaleDateString() : '-'}</td>
+                    <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{c.updated_at ? new Date(c.updated_at).toLocaleDateString() : '-'}</td>
                     <td className="px-6 py-4 text-right">
                       <button
-                        onClick={() => { setEditing(c); setIsModalOpen(true); }}
+                        onClick={(e) => { e.stopPropagation(); setEditing(c); setIsModalOpen(true); }}
                         className="p-1.5 text-gray-500 dark:text-gray-300 hover:text-primary-blue dark:hover:text-blue-400 transition-colors"
                         title={tr('Edit client', 'Mijozni tahrirlash', 'Mijozni tahrirlash')}
                       >
@@ -211,6 +213,92 @@ const Clients: React.FC = () => {
           </table>
         </div>
       </Card>
+
+      <Modal
+        isOpen={!!selectedClient}
+        onClose={() => setSelectedClient(null)}
+        title={tr('Client details', 'Mijoz tafsilotlari', 'Mijoz tafsilotlari')}
+        footer={
+          selectedClient ? (
+            <div className="flex justify-end gap-3 w-full">
+              <button
+                type="button"
+                onClick={() => setSelectedClient(null)}
+                className="px-4 py-2 rounded-lg text-sm border border-light-border dark:border-navy-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-navy-700 transition-colors"
+              >
+                {t('cancel')}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditing(selectedClient);
+                  setSelectedClient(null);
+                  setIsModalOpen(true);
+                }}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-primary-blue text-white hover:bg-blue-600 transition-colors"
+              >
+                <Edit2 size={16} />
+                {tr('Edit client', 'Mijozni tahrirlash', 'Mijozni tahrirlash')}
+              </button>
+            </div>
+          ) : null
+        }
+      >
+        {selectedClient && (
+          <div className="space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="rounded-lg border border-light-border dark:border-navy-700 p-4 bg-gray-50 dark:bg-navy-900/40">
+                <p className="text-xs text-gray-500">{tr('Full Name', 'Toliq ism', 'Toliq ism')}</p>
+                <p className="text-base font-semibold text-gray-900 dark:text-white">{selectedClient.full_name || '-'}</p>
+              </div>
+              <div className="rounded-lg border border-light-border dark:border-navy-700 p-4 bg-gray-50 dark:bg-navy-900/40">
+                <p className="text-xs text-gray-500">ID</p>
+                <p className="text-sm font-mono text-gray-900 dark:text-white break-all">{selectedClient.id}</p>
+              </div>
+              <div className="rounded-lg border border-light-border dark:border-navy-700 p-4">
+                <p className="text-xs text-gray-500">{tr('Phone', 'Telefon', 'Telefon')}</p>
+                <p className="text-sm text-gray-900 dark:text-white">{selectedClient.phone || '-'}</p>
+              </div>
+              <div className="rounded-lg border border-light-border dark:border-navy-700 p-4">
+                <p className="text-xs text-gray-500">{tr('Username', 'Username', 'Username')}</p>
+                <p className="text-sm text-gray-900 dark:text-white">{selectedClient.username || '-'}</p>
+              </div>
+              <div className="rounded-lg border border-light-border dark:border-navy-700 p-4">
+                <p className="text-xs text-gray-500">{tr('Platform', 'Platforma', 'Platforma')}</p>
+                <div className="mt-1">
+                  <Badge variant={selectedClient.platform === 'instagram' ? 'warning' : 'info'}>{platformLabel(selectedClient.platform)}</Badge>
+                </div>
+              </div>
+              <div className="rounded-lg border border-light-border dark:border-navy-700 p-4">
+                <p className="text-xs text-gray-500">{tr('Preferred Language', 'Predpochtitelnyy yazyk', 'Afzal til')}</p>
+                <div className="mt-1">
+                  {selectedClient.preferred_language ? (
+                    <Badge variant={languageBadgeVariant(selectedClient.preferred_language)}>{languageLabel(selectedClient.preferred_language)}</Badge>
+                  ) : (
+                    <span className="text-sm text-gray-400">-</span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-light-border dark:border-navy-700 p-4">
+              <p className="text-xs text-gray-500">{tr('Address', 'Manzil', 'Manzil')}</p>
+              <p className="mt-1 text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{selectedClient.address || '-'}</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="rounded-lg border border-light-border dark:border-navy-700 p-4">
+                <p className="text-xs text-gray-500">{tr('Created', 'Yaratilgan', 'Yaratilgan')}</p>
+                <p className="text-sm text-gray-900 dark:text-white">{selectedClient.created_at ? new Date(selectedClient.created_at).toLocaleString() : '-'}</p>
+              </div>
+              <div className="rounded-lg border border-light-border dark:border-navy-700 p-4">
+                <p className="text-xs text-gray-500">{tr('Updated', 'Yangilangan', 'Yangilangan')}</p>
+                <p className="text-sm text-gray-900 dark:text-white">{selectedClient.updated_at ? new Date(selectedClient.updated_at).toLocaleString() : '-'}</p>
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       <Modal
         isOpen={isModalOpen}
