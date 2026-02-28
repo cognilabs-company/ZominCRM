@@ -5,7 +5,7 @@ import { Badge } from '../components/ui/Badge';
 import { Modal } from '../components/ui/Modal';
 import { useLanguage } from '../context/LanguageContext';
 import { useToast } from '../context/ToastContext';
-import { ENDPOINTS, apiRequest } from '../services/api';
+import { ApiError, ENDPOINTS, apiRequest } from '../services/api';
 import { RefreshCw, CreditCard, CheckCircle, AlertTriangle, PlayCircle, Eye, Link2, Info } from 'lucide-react';
 
 type PaymentsTab = 'transactions' | 'attempts' | 'ambiguous';
@@ -73,6 +73,18 @@ interface ReminderResponse {
   results?: unknown[];
 }
 
+interface AttachOrderResponse {
+  ok?: boolean;
+  transaction?: ApiTransaction;
+  order?: {
+    id: string;
+  };
+  payment_attempt?: ApiPaymentAttempt;
+  created_payment_attempt?: boolean;
+  already_linked?: boolean;
+  force?: boolean;
+}
+
 const statusBadge = (status: string) => {
   if (['CONFIRMED', 'MATCHED', 'SUCCESS'].includes(status)) return 'success' as const;
   if (['PENDING', 'NEEDS_ADMIN', 'WAITING'].includes(status)) return 'warning' as const;
@@ -112,6 +124,9 @@ const Payments: React.FC = () => {
   const [attempts, setAttempts] = useState<ApiPaymentAttempt[]>([]);
   const [ambiguousQueue, setAmbiguousQueue] = useState<AmbiguousQueueItem[]>([]);
   const [selectedTransaction, setSelectedTransaction] = useState<ApiTransaction | null>(null);
+  const [attachTransaction, setAttachTransaction] = useState<ApiTransaction | null>(null);
+  const [attachOrderId, setAttachOrderId] = useState('');
+  const [attaching, setAttaching] = useState(false);
   const [delayMinutes, setDelayMinutes] = useState(10);
   const [runLimit, setRunLimit] = useState(100);
   const [remindersBusy, setRemindersBusy] = useState<'preview' | 'run' | null>(null);
@@ -126,6 +141,38 @@ const Payments: React.FC = () => {
     if (!orderId) return;
     navigate(`/orders?order_id=${encodeURIComponent(orderId)}`);
   }, [navigate]);
+
+  const getAttachErrorMessage = useCallback((error: unknown) => {
+    if (error instanceof ApiError) {
+      if (error.code === 'E-ORD-004') {
+        return tr('Only transfer orders can be attached to a transaction.', 'K tranzaktsii mozhno privyazat tolko zakaz s TRANSFER.', 'Tranzaksiyaga faqat TRANSFER buyurtmani boglash mumkin.');
+      }
+      if (error.code === 'E-PAY-003') {
+        return tr('This transaction is already linked to another order.', 'Eta tranzaktsiya uzhe privyazana k drugomu zakazu.', 'Bu tranzaksiya allaqachon boshqa buyurtmaga boglangan.');
+      }
+      if (error.code === 'E-ORD-001') {
+        return tr('Order was not found.', 'Zakaz ne nayden.', 'Buyurtma topilmadi.');
+      }
+      if (error.code === 'E-PAY-005') {
+        return tr('Transaction was not found.', 'Tranzaktsiya ne naydena.', 'Tranzaksiya topilmadi.');
+      }
+      if (error.code === 'E-PAY-006') {
+        return tr('Validation failed for manual attach. Check amount, transaction success, or existing links.', 'Ruchnaya privyazka ne proshla proverku. Proverte summu, status tranzaktsii ili uzhe sushchestvuyushchie svyazi.', 'Qolda boglash tekshiruvdan otmadi. Summani, tranzaksiya holatini yoki mavjud boglanishlarni tekshiring.');
+      }
+    }
+    return error instanceof Error ? error.message : tr('Failed to attach transaction to order.', 'Ne udalos privyazat tranzaktsiyu k zakazu.', 'Tranzaksiyani buyurtmaga boglab bolmadi.');
+  }, [tr]);
+
+  const openAttachModal = useCallback((tx: ApiTransaction) => {
+    setAttachTransaction(tx);
+    setAttachOrderId(tx.linked_order_id || '');
+  }, []);
+
+  const closeAttachModal = useCallback(() => {
+    if (attaching) return;
+    setAttachTransaction(null);
+    setAttachOrderId('');
+  }, [attaching]);
 
   const loadTabData = useCallback(async () => {
     try {
@@ -146,6 +193,54 @@ const Payments: React.FC = () => {
       setLoading(false);
     }
   }, [activeTab, runLimit, toast, tr]);
+
+  const submitAttachOrder = useCallback(async (force = false) => {
+    if (!attachTransaction) return;
+    const orderId = attachOrderId.trim();
+    if (!orderId) {
+      toast.warning(tr('Enter order ID first.', 'Snachala ukazhite ID zakaza.', 'Avval buyurtma ID ni kiriting.'));
+      return;
+    }
+
+    const executeAttach = async (forceValue: boolean) => {
+      const res = await apiRequest<AttachOrderResponse>(ENDPOINTS.PAYMENTS.TRANSACTION_ATTACH_ORDER(attachTransaction.id), {
+        method: 'POST',
+        body: JSON.stringify({ order_id: orderId, force: forceValue }),
+      });
+
+      if (res.transaction) {
+        setSelectedTransaction(res.transaction);
+      }
+
+      closeAttachModal();
+      toast.success(tr('Transaction attached to order.', 'Tranzaktsiya privyazana k zakazu.', 'Tranzaksiya buyurtmaga boglandi.'));
+      await loadTabData();
+    };
+
+    try {
+      setAttaching(true);
+      await executeAttach(force);
+    } catch (error) {
+      if (!force && error instanceof ApiError && error.code === 'E-PAY-006') {
+        const shouldForce = window.confirm(
+          tr(
+            'Normal attach was rejected. Force attach this transaction to the selected order?',
+            'Obychnaya privyazka otklonena. Prinuditelno privyazat tranzaktsiyu k vybrannomu zakazu?',
+            'Oddiy boglash rad etildi. Tranzaksiyani tanlangan buyurtmaga majburan boglaysizmi?'
+          )
+        );
+
+        if (shouldForce) {
+          await executeAttach(true);
+          return;
+        }
+      }
+
+      toast.error(getAttachErrorMessage(error));
+    } finally {
+      setAttaching(false);
+    }
+  }, [attachOrderId, attachTransaction, closeAttachModal, getAttachErrorMessage, loadTabData, toast, tr]);
 
   useEffect(() => {
     loadTabData();
@@ -365,17 +460,29 @@ const Payments: React.FC = () => {
                             {tr('Details', 'Detalno', 'Batafsil')}
                           </button>
                           {!tx.linked_order_id && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleAutoMatch(tx);
-                              }}
-                              disabled={matchingId === tx.id}
-                              className="inline-flex items-center gap-1 text-primary-blue dark:text-blue-300 hover:text-blue-700 dark:hover:text-blue-200 text-sm font-medium disabled:opacity-50"
-                            >
-                              <Link2 size={14} />
-                              {matchingId === tx.id ? tr('Matching...', 'Svyazka...', 'Boglanmoqda...') : tr('Auto match', 'Avto-svyaz', "Avto boglash")}
-                            </button>
+                            <>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openAttachModal(tx);
+                                }}
+                                className="inline-flex items-center gap-1 text-primary-blue dark:text-blue-300 hover:text-blue-700 dark:hover:text-blue-200 text-sm font-medium"
+                              >
+                                <Link2 size={14} />
+                                {tr('Attach order', 'Privyazat zakaz', 'Buyurtmani boglash')}
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleAutoMatch(tx);
+                                }}
+                                disabled={matchingId === tx.id}
+                                className="inline-flex items-center gap-1 text-primary-blue dark:text-blue-300 hover:text-blue-700 dark:hover:text-blue-200 text-sm font-medium disabled:opacity-50"
+                              >
+                                <Link2 size={14} />
+                                {matchingId === tx.id ? tr('Matching...', 'Svyazka...', 'Boglanmoqda...') : tr('Auto match', 'Avto-svyaz', "Avto boglash")}
+                              </button>
+                            </>
                           )}
                         </div>
                       </td>
@@ -497,6 +604,68 @@ const Payments: React.FC = () => {
           </div>
         )}
       </Card>
+
+      <Modal isOpen={!!attachTransaction} onClose={closeAttachModal} title={tr('Attach transaction to order', 'Privyazat tranzaktsiyu k zakazu', 'Tranzaksiyani buyurtmaga boglash')} maxWidthClass="max-w-2xl">
+        {attachTransaction && (
+          <div className="space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="rounded-lg border border-light-border dark:border-navy-700 p-3 bg-gray-50 dark:bg-navy-900/40">
+                <p className="text-xs text-gray-500">{tr('Provider', 'Provayder', 'Provayder')}</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">{fieldValue(attachTransaction.provider)}</p>
+              </div>
+              <div className="rounded-lg border border-light-border dark:border-navy-700 p-3 bg-gray-50 dark:bg-navy-900/40">
+                <p className="text-xs text-gray-500">{tr('Amount', 'Summa', 'Summa')}</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatAmount(attachTransaction.amount_uzs)}</p>
+              </div>
+              <div className="rounded-lg border border-light-border dark:border-navy-700 p-3 bg-gray-50 dark:bg-navy-900/40">
+                <p className="text-xs text-gray-500">{tr('Transaction status', 'Status tranzaktsii', 'Tranzaksiya holati')}</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">{fieldValue(attachTransaction.status_text)}</p>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-light-border dark:border-navy-700 p-4 space-y-3">
+              <div>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{tr('Order ID', 'ID zakaza', 'Buyurtma ID')}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{tr('Paste full order UUID to attach this transaction.', 'Vstavte polnyy UUID zakaza dlya privyazki etoy tranzaktsii.', 'Ushbu tranzaksiyani boglash uchun buyurtmaning toliq UUID sini kiriting.')}</p>
+              </div>
+              <input
+                type="text"
+                value={attachOrderId}
+                onChange={(e) => setAttachOrderId(e.target.value)}
+                placeholder={tr('Enter order UUID', 'Vvedite UUID zakaza', 'Buyurtma UUID sini kiriting')}
+                className="w-full bg-white dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2.5 text-sm text-gray-900 dark:text-white outline-none focus:border-primary-blue"
+              />
+              <div className="rounded-lg border border-amber-200 dark:border-amber-700/40 bg-amber-50 dark:bg-amber-950/20 px-3 py-2 text-xs text-amber-800 dark:text-amber-200">
+                {tr(
+                  'Use force only if admin intentionally overrides amount or status validation.',
+                  'Force nuzhen tolko kogda admin soznatelno obkhodit proverku summy ili statusa.',
+                  'Force faqat admin summa yoki status tekshiruvini ongli ravishda chetlab otganda ishlatiladi.'
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={closeAttachModal}
+                disabled={attaching}
+                className="px-4 py-2 rounded-lg border border-light-border dark:border-navy-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-navy-800 disabled:opacity-60"
+              >
+                {tr('Cancel', 'Otmena', 'Bekor qilish')}
+              </button>
+              <button
+                type="button"
+                onClick={() => submitAttachOrder(false)}
+                disabled={attaching}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-primary-blue bg-primary-blue text-white hover:bg-blue-700 disabled:opacity-60"
+              >
+                <Link2 size={15} />
+                {attaching ? tr('Attaching...', 'Privyazka...', 'Boglanmoqda...') : tr('Attach to order', 'Privyazat k zakazu', 'Buyurtmaga boglash')}
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       <Modal isOpen={!!selectedTransaction} onClose={() => setSelectedTransaction(null)} title={tr('Transaction details', 'Detali tranzaktsii', 'Tranzaksiya tafsilotlari')} maxWidthClass="max-w-4xl">
         {selectedTransaction && (

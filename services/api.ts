@@ -98,6 +98,7 @@ export const ENDPOINTS = {
     TRANSACTIONS: `${API_BASE_URL}/payments/transactions/`,
     TRANSACTION_INGEST: `${API_BASE_URL}/payments/transactions/ingest/`,
     TRANSACTION_MATCH: (id: string) => `${API_BASE_URL}/payments/transactions/${id}/match/`,
+    TRANSACTION_ATTACH_ORDER: (id: string) => `${API_BASE_URL}/payments/transactions/${id}/attach-order/`,
     MANUAL_CONFIRM: `${API_BASE_URL}/payments/manual-confirm/`,
     REMINDERS_RUN: `${API_BASE_URL}/payments/reminders/run/`,
     QUEUE_AMBIGUOUS: `${API_BASE_URL}/payments/queue/ambiguous/`,
