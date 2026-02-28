@@ -35,6 +35,12 @@ interface CredentialsResponse {
   prompt_file?: PromptFileSnapshot;
 }
 
+const normalizePromptText = (value?: string | null) =>
+  String(value || '')
+    .replace(/\r\n/g, '\n')
+    .replace(/\\r\\n/g, '\n')
+    .replace(/\\n/g, '\n');
+
 const AICredentials: React.FC = () => {
   const navigate = useNavigate();
   const toast = useToast();
@@ -62,8 +68,8 @@ const AICredentials: React.FC = () => {
       if (cred) {
         setStatus(!!cred.status);
         setAiKey(cred.ai_key || '');
-        setAiUserPrompt(cred.ai_user_prompt || '');
-        setAiSystemPrompt(cred.ai_system_prompt || '');
+        setAiUserPrompt(normalizePromptText(cred.ai_user_prompt));
+        setAiSystemPrompt(normalizePromptText(cred.ai_system_prompt));
       }
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) {
