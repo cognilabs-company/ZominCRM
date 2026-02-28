@@ -1,5 +1,5 @@
 ﻿import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -26,6 +26,23 @@ import { ClientCartProvider } from './client/bootstrap/ClientCartContext';
 import { ClientLanguageProvider } from './client/bootstrap/ClientLanguageContext';
 import { ClientAppLayout } from './client/components/ClientAppLayout';
 import { clientRouteDefinitions } from './client/routes';
+
+const normalizeInitialPath = () => {
+  if (typeof window === 'undefined' || window.location.hash) {
+    return;
+  }
+
+  const { pathname, search } = window.location;
+
+  if (!pathname || pathname === '/') {
+    return;
+  }
+
+  window.history.replaceState(null, '', `/${search}`);
+  window.location.hash = `#${pathname}`;
+};
+
+normalizeInitialPath();
 
 const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [mobileSidebarOpen, setMobileSidebarOpen] = React.useState(false);
