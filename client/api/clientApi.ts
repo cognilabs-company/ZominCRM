@@ -77,9 +77,15 @@ const extractClientErrorMessage = (payload: unknown, fallback: string) => {
 };
 
 export async function clientApiRequest<T = unknown>(path: string, init?: RequestInit, sessionToken?: string): Promise<T> {
-  const hasBody = init?.body !== undefined && init?.body !== null;
+  const body = init?.body;
+  const hasBody = body !== undefined && body !== null;
+  const shouldSetJsonContentType =
+    hasBody &&
+    !(body instanceof FormData) &&
+    !(body instanceof URLSearchParams) &&
+    typeof body !== 'string';
   const headers: Record<string, string> = {
-    ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
+    ...(shouldSetJsonContentType ? { 'Content-Type': 'application/json' } : {}),
     ...(init?.headers as Record<string, string> | undefined),
   };
 
