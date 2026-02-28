@@ -127,6 +127,7 @@ const Payments: React.FC = () => {
   const [attachTransaction, setAttachTransaction] = useState<ApiTransaction | null>(null);
   const [attachOrderId, setAttachOrderId] = useState('');
   const [attaching, setAttaching] = useState(false);
+  const [attachError, setAttachError] = useState<string | null>(null);
   const [delayMinutes, setDelayMinutes] = useState(10);
   const [runLimit, setRunLimit] = useState(100);
   const [remindersBusy, setRemindersBusy] = useState<'preview' | 'run' | null>(null);
@@ -139,6 +140,7 @@ const Payments: React.FC = () => {
 
   const openOrderPage = useCallback((orderId?: string | null) => {
     if (!orderId) return;
+    setSelectedTransaction(null);
     navigate(`/orders?order_id=${encodeURIComponent(orderId)}`);
   }, [navigate]);
 
@@ -164,14 +166,17 @@ const Payments: React.FC = () => {
   }, [tr]);
 
   const openAttachModal = useCallback((tx: ApiTransaction) => {
+    setSelectedTransaction(null);
     setAttachTransaction(tx);
     setAttachOrderId(tx.linked_order_id || '');
+    setAttachError(null);
   }, []);
 
   const closeAttachModal = useCallback(() => {
     if (attaching) return;
     setAttachTransaction(null);
     setAttachOrderId('');
+    setAttachError(null);
   }, [attaching]);
 
   const loadTabData = useCallback(async () => {
@@ -198,7 +203,9 @@ const Payments: React.FC = () => {
     if (!attachTransaction) return;
     const orderId = attachOrderId.trim();
     if (!orderId) {
-      toast.warning(tr('Enter order ID first.', 'Snachala ukazhite ID zakaza.', 'Avval buyurtma ID ni kiriting.'));
+      const message = tr('Enter order ID first.', 'Snachala ukazhite ID zakaza.', 'Avval buyurtma ID ni kiriting.');
+      setAttachError(message);
+      toast.warning(message);
       return;
     }
 
@@ -219,6 +226,7 @@ const Payments: React.FC = () => {
 
     try {
       setAttaching(true);
+      setAttachError(null);
       await executeAttach(force);
     } catch (error) {
       if (!force && error instanceof ApiError && error.code === 'E-PAY-006') {
@@ -236,7 +244,9 @@ const Payments: React.FC = () => {
         }
       }
 
-      toast.error(getAttachErrorMessage(error));
+      const message = getAttachErrorMessage(error);
+      setAttachError(message);
+      toast.error(message);
     } finally {
       setAttaching(false);
     }
@@ -633,10 +643,18 @@ const Payments: React.FC = () => {
               <input
                 type="text"
                 value={attachOrderId}
-                onChange={(e) => setAttachOrderId(e.target.value)}
+                onChange={(e) => {
+                  setAttachOrderId(e.target.value);
+                  if (attachError) setAttachError(null);
+                }}
                 placeholder={tr('Enter order UUID', 'Vvedite UUID zakaza', 'Buyurtma UUID sini kiriting')}
                 className="w-full bg-white dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2.5 text-sm text-gray-900 dark:text-white outline-none focus:border-primary-blue"
               />
+              {attachError && (
+                <div className="rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/20 px-3 py-2 text-xs text-red-700 dark:text-red-300">
+                  {attachError}
+                </div>
+              )}
               <div className="rounded-lg border border-amber-200 dark:border-amber-700/40 bg-amber-50 dark:bg-amber-950/20 px-3 py-2 text-xs text-amber-800 dark:text-amber-200">
                 {tr(
                   'Use force only if admin intentionally overrides amount or status validation.',

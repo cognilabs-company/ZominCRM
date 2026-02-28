@@ -232,8 +232,12 @@ const Orders: React.FC = () => {
     } else {
       nextParams.delete('status');
     }
-    setSearchParams(nextParams, { replace: true });
-  }, [targetOrderId, statusFilter, setSearchParams]);
+    const nextQuery = nextParams.toString();
+    const currentQuery = searchParams.toString();
+    if (nextQuery !== currentQuery) {
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [searchParams, statusFilter, setSearchParams]);
 
   useEffect(() => {
     if (!targetOrderId || !orders.length) return;
@@ -326,6 +330,14 @@ const Orders: React.FC = () => {
   const openOrderDetails = (order: UiOrder) => {
     setSelectedOrder(order);
   };
+
+  const closeOrderDetails = useCallback(() => {
+    setSelectedOrder(null);
+    if (!targetOrderId) return;
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('order_id');
+    setSearchParams(nextParams, { replace: true });
+  }, [searchParams, setSearchParams, targetOrderId]);
 
   return (
     <div className="space-y-6">
@@ -426,7 +438,7 @@ const Orders: React.FC = () => {
         </div>
       </Card>
 
-      <Modal isOpen={!!selectedOrder} onClose={() => setSelectedOrder(null)} maxWidthClass="max-w-2xl" title={`${t('view_details')}: ${selectedOrder?.id}`} footer={<div className="flex gap-2 w-full justify-end"><button onClick={() => setSelectedOrder(null)} className="px-4 py-2 rounded-lg text-sm border border-light-border dark:border-navy-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-navy-700 transition-colors">{t('cancel')}</button></div>}>
+      <Modal isOpen={!!selectedOrder} onClose={closeOrderDetails} maxWidthClass="max-w-2xl" title={`${t('view_details')}: ${selectedOrder?.id}`} footer={<div className="flex gap-2 w-full justify-end"><button onClick={closeOrderDetails} className="px-4 py-2 rounded-lg text-sm border border-light-border dark:border-navy-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-navy-700 transition-colors">{t('cancel')}</button></div>}>
         {selectedOrder && (
           <div className="space-y-6">
             <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-navy-900/50 rounded-lg border border-light-border dark:border-navy-700">
