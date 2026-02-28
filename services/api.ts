@@ -35,6 +35,7 @@ export const ENDPOINTS = {
   ORDERS: {
     LIST: `${API_BASE_URL}/orders/`, // params: status, limit, offset
     CREATE: `${API_BASE_URL}/orders/create/`,
+    CREATE_FULL: `${API_BASE_URL}/orders/create-full/`,
     UPDATE_STATUS: (id: string) => `${API_BASE_URL}/orders/${id}/status/transition/`,
     ADD_ITEM: (id: string) => `${API_BASE_URL}/orders/${id}/items/upsert/`,
     REMOVE_ITEM: (id: string) => `${API_BASE_URL}/orders/${id}/items/remove/`,
@@ -52,6 +53,8 @@ export const ENDPOINTS = {
   CLIENTS: {
     LIST: `${API_BASE_URL}/clients/`,
     UPSERT: `${API_BASE_URL}/clients/upsert/`,
+    BOTTLE_BALANCES: (id: string) => `${API_BASE_URL}/clients/${id}/bottle-balances/`,
+    BOTTLE_REFUNDS: (id: string) => `${API_BASE_URL}/clients/${id}/bottle-refunds/`,
   },
   LEADS: {
     LIST: `${API_BASE_URL}/leads/`,
@@ -119,7 +122,10 @@ export const ENDPOINTS = {
     OUT_FOR_DELIVERY: (id: string) => `${API_BASE_URL}/couriers/orders/${id}/out-for-delivery/`,
     DELIVERED: (id: string) => `${API_BASE_URL}/couriers/orders/${id}/delivered/`,
     PROBLEM: (id: string) => `${API_BASE_URL}/couriers/orders/${id}/problem/`,
-  }
+  },
+  BOTTLES: {
+    MOVEMENTS: `${API_BASE_URL}/bottles/movements/`,
+  },
 };
 
 // Helper for headers

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { ENDPOINTS, apiRequest } from '../services/api';
 
-export type UserRole = 'ADMIN' | 'SUPERUSER';
+export type UserRole = 'ADMIN' | 'SUPERUSER' | 'OPERATOR';
 
 export interface AuthUser {
   id: string;
@@ -107,8 +107,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const hasPermission = (permission: string) => {
     if (!user) return false;
     if (user.role === 'ADMIN') return true;
-    // Business rule: superuser can never access AI tools/config.
+    // Business rule: non-admin users can never access AI or user management.
     if (permission === 'ai.access') return false;
+    if (permission === 'users.manage') return false;
     return (user.permissions || []).includes(permission);
   };
 
@@ -133,4 +134,3 @@ export const useAuth = () => {
   if (!ctx) throw new Error('useAuth must be used within AuthProvider');
   return ctx;
 };
-

@@ -21,6 +21,17 @@ interface DashboardStatsResponse {
   pending_payments_amount_snapshot?: number;
   in_delivery?: number;
   in_delivery_snapshot?: number;
+  deposit_held_total_uzs?: number;
+  deposit_held_uzs?: number;
+  bottle_deposit_held_uzs?: number;
+  deposit_charged_period_uzs?: number;
+  deposit_charged_uzs?: number;
+  bottle_deposit_charged_period_uzs?: number;
+  bottle_deposit_charged_uzs?: number;
+  deposit_refunded_period_uzs?: number;
+  deposit_refunded_uzs?: number;
+  bottle_deposit_refunded_period_uzs?: number;
+  bottle_deposit_refunded_uzs?: number;
   orders_trend?: unknown;
   revenue_trend?: unknown;
 }
@@ -177,6 +188,17 @@ const normalizeTrend = (source: unknown, preferredKeys: string[]): TrendPoint[] 
     })
     .filter((point): point is TrendPoint => Boolean(point));
 };
+
+const pickMetric = (source: DashboardStatsResponse, keys: string[]): number | null => {
+  for (const key of keys) {
+    const candidate = (source as Record<string, unknown>)[key];
+    if (candidate !== undefined) return toNumber(candidate);
+  }
+  return null;
+};
+
+const hasMetric = (source: DashboardStatsResponse, keys: string[]): boolean =>
+  keys.some((key) => Object.prototype.hasOwnProperty.call(source, key));
 
 const Dashboard: React.FC = () => {
   const { t, language } = useLanguage();
@@ -389,6 +411,13 @@ const Dashboard: React.FC = () => {
 
   const showCharts = true;
   const revenuePeriodValue = stats.revenue_period ?? stats.revenue_today ?? 0;
+  const depositHeldValue = pickMetric(stats, ['deposit_held_total_uzs', 'deposit_held_uzs', 'bottle_deposit_held_uzs']) ?? 0;
+  const depositChargedValue = pickMetric(stats, ['deposit_charged_period_uzs', 'deposit_charged_uzs', 'bottle_deposit_charged_period_uzs', 'bottle_deposit_charged_uzs']) ?? 0;
+  const depositRefundedValue = pickMetric(stats, ['deposit_refunded_period_uzs', 'deposit_refunded_uzs', 'bottle_deposit_refunded_period_uzs', 'bottle_deposit_refunded_uzs']) ?? 0;
+  const showDepositCards =
+    hasMetric(stats, ['deposit_held_total_uzs', 'deposit_held_uzs', 'bottle_deposit_held_uzs']) ||
+    hasMetric(stats, ['deposit_charged_period_uzs', 'deposit_charged_uzs', 'bottle_deposit_charged_period_uzs', 'bottle_deposit_charged_uzs']) ||
+    hasMetric(stats, ['deposit_refunded_period_uzs', 'deposit_refunded_uzs', 'bottle_deposit_refunded_period_uzs', 'bottle_deposit_refunded_uzs']);
 
   const kpiCards = [
     {
@@ -399,9 +428,9 @@ const Dashboard: React.FC = () => {
       color: 'text-blue-500',
     },
     {
-      title: tr('Revenue', 'Выручка', 'Tushum'),
+      title: tr('Product Revenue', 'Выручка по товарам', 'Mahsulot tushumi'),
       value: `${revenuePeriodValue.toLocaleString()} UZS`,
-      sub: tr('Revenue in selected period', 'Vyruchka v vybrannom periode', 'Tanlangan davrdagi tushum'),
+      sub: tr('Product revenue in selected period', 'Выручка по товарам за период', 'Tanlangan davrdagi mahsulot tushumi'),
       icon: DollarSign,
       color: 'text-green-500',
     },
@@ -551,6 +580,26 @@ const Dashboard: React.FC = () => {
           </Card>
         ))}
       </div>
+
+      {showDepositCards ? (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card accent="amber">
+            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{tr('Deposit Held', 'Удерживаемый депозит', 'Ushlab turilgan depozit')}</p>
+            <h3 className="mt-2 text-2xl font-bold text-light-text dark:text-white">{loading ? '...' : `${depositHeldValue.toLocaleString()} UZS`}</h3>
+            <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">{tr('Current bottle deposit held from clients', 'Текущий депозит за тару на удержании', 'Mijozlardan ushlab turilgan joriy idish depoziti')}</p>
+          </Card>
+          <Card accent="blue">
+            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{tr('Deposit Charged', 'Начисленный депозит', 'Hisoblangan depozit')}</p>
+            <h3 className="mt-2 text-2xl font-bold text-light-text dark:text-white">{loading ? '...' : `${depositChargedValue.toLocaleString()} UZS`}</h3>
+            <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">{tr('Deposit charged in selected period', 'Депозит, начисленный за период', 'Tanlangan davrda hisoblangan depozit')}</p>
+          </Card>
+          <Card accent="emerald">
+            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{tr('Deposit Refunded', 'Возвращенный депозит', 'Qaytarilgan depozit')}</p>
+            <h3 className="mt-2 text-2xl font-bold text-light-text dark:text-white">{loading ? '...' : `${depositRefundedValue.toLocaleString()} UZS`}</h3>
+            <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">{tr('Deposit refunded in selected period', 'Депозит, возвращенный за период', 'Tanlangan davrda qaytarilgan depozit')}</p>
+          </Card>
+        </div>
+      ) : null}
 
       {showCharts && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

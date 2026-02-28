@@ -130,7 +130,7 @@ const Users: React.FC = () => {
           first_name: String(form.get('first_name') || ''),
           last_name: String(form.get('last_name') || ''),
           email: String(form.get('email') || ''),
-          role: 'SUPERUSER',
+          role: String(form.get('role') || 'OPERATOR'),
           permission_codes: selectedPerms,
         }),
       });
@@ -317,6 +317,14 @@ const Users: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Email', 'Email', 'Email')}</label>
               <input name="email" type="email" className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" />
             </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Role', 'Rol', 'Rol')}</label>
+              <select name="role" defaultValue="OPERATOR" className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white">
+                <option value="OPERATOR">OPERATOR</option>
+                <option value="SUPERUSER">SUPERUSER</option>
+                <option value="ADMIN">ADMIN</option>
+              </select>
+            </div>
           </div>
 
           <div>
@@ -385,6 +393,7 @@ const Users: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Role', 'Rol', 'Rol')}</label>
                 <select name="role" defaultValue={editingUser.role || 'SUPERUSER'} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white">
+                  <option value="OPERATOR">OPERATOR</option>
                   <option value="SUPERUSER">SUPERUSER</option>
                   <option value="ADMIN">ADMIN</option>
                 </select>

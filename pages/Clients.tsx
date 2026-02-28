@@ -21,6 +21,49 @@ interface ClientRow {
   updated_at: string;
 }
 
+interface BottleSummary {
+  client_id: string;
+  total_outstanding_bottles_count: number;
+  deposit_held_total_uzs: number;
+  total_deposit_charged_uzs: number;
+  total_deposit_refunded_uzs: number;
+}
+
+interface BottleBalance {
+  id: string;
+  client_id: string;
+  product_id: string;
+  product_name: string;
+  product_size_liters?: string | null;
+  requires_returnable_bottle: boolean;
+  bottle_deposit_uzs: number;
+  outstanding_bottles_count: number;
+  deposit_held_uzs: number;
+  total_deposit_charged_uzs: number;
+  total_deposit_refunded_uzs: number;
+  updated_at?: string;
+}
+
+interface BottleMovement {
+  id: string;
+  client_id: string;
+  product_id?: string | null;
+  product_name?: string | null;
+  product_size_liters?: string | null;
+  order_id?: string | null;
+  movement_type: 'ORDER_DELIVERED' | 'REFUND' | 'MANUAL_ADJUST' | string;
+  order_quantity?: number | null;
+  bottles_delta: number;
+  deposit_delta_uzs: number;
+  balance_before_count?: number | null;
+  balance_after_count?: number | null;
+  deposit_before_uzs?: number | null;
+  deposit_after_uzs?: number | null;
+  actor?: string | null;
+  note?: string | null;
+  created_at: string;
+}
+
 const Clients: React.FC = () => {
   const { t, language } = useLanguage();
   const toast = useToast();
@@ -34,6 +77,18 @@ const Clients: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editing, setEditing] = useState<ClientRow | null>(null);
   const [selectedClient, setSelectedClient] = useState<ClientRow | null>(null);
+  const [bottleLoading, setBottleLoading] = useState(false);
+  const [bottleSummary, setBottleSummary] = useState<BottleSummary | null>(null);
+  const [bottleBalances, setBottleBalances] = useState<BottleBalance[]>([]);
+  const [bottleMovements, setBottleMovements] = useState<BottleMovement[]>([]);
+  const [isRefundOpen, setIsRefundOpen] = useState(false);
+  const [refundSaving, setRefundSaving] = useState(false);
+  const [refundForm, setRefundForm] = useState({
+    product_id: '',
+    quantity: '1',
+    refund_all: false,
+    note: '',
+  });
 
   const loadClients = async () => {
     try {
@@ -54,6 +109,44 @@ const Clients: React.FC = () => {
   useEffect(() => {
     loadClients();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!selectedClient) {
+      setBottleSummary(null);
+      setBottleBalances([]);
+      setBottleMovements([]);
+      setIsRefundOpen(false);
+      setRefundForm({ product_id: '', quantity: '1', refund_all: false, note: '' });
+      return;
+    }
+
+    let active = true;
+
+    (async () => {
+      try {
+        setBottleLoading(true);
+        const [balanceData, movementData] = await Promise.all([
+          apiRequest<{ summary?: BottleSummary; results?: BottleBalance[] }>(ENDPOINTS.CLIENTS.BOTTLE_BALANCES(selectedClient.id)),
+          apiRequest<{ results?: BottleMovement[] }>(`${ENDPOINTS.BOTTLES.MOVEMENTS}?client_id=${encodeURIComponent(selectedClient.id)}`),
+        ]);
+
+        if (!active) return;
+        setBottleSummary(balanceData.summary || null);
+        setBottleBalances(balanceData.results || []);
+        setBottleMovements(movementData.results || []);
+      } catch (e) {
+        if (!active) return;
+        const message = e instanceof Error ? e.message : tr('Failed to load bottle data', 'Ne udalos zagruzit dannye po tare', 'Idish maʼlumotlarini yuklab bo‘lmadi');
+        toast.error(message);
+      } finally {
+        if (active) setBottleLoading(false);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [selectedClient, toast]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const filtered = useMemo(() => {
     const keyword = q.trim().toLowerCase();
@@ -85,6 +178,31 @@ const Clients: React.FC = () => {
     if (lang === 'ru') return 'info' as const;
     if (lang === 'en') return 'purple' as const;
     return 'default' as const;
+  };
+
+  const movementLabel = (movementType: BottleMovement['movement_type']) => {
+    if (movementType === 'ORDER_DELIVERED') return tr('Delivered order', 'Dostavlennyy zakaz', 'Yetkazilgan buyurtma');
+    if (movementType === 'REFUND') return tr('Refund', 'Vozvrat', 'Qaytarish');
+    if (movementType === 'MANUAL_ADJUST') return tr('Manual adjust', 'Ruchnaya korrektirovka', 'Qoʻlda tuzatish');
+    return movementType;
+  };
+
+  const movementBadgeVariant = (movementType: BottleMovement['movement_type']) => {
+    if (movementType === 'ORDER_DELIVERED') return 'info' as const;
+    if (movementType === 'REFUND') return 'success' as const;
+    if (movementType === 'MANUAL_ADJUST') return 'warning' as const;
+    return 'default' as const;
+  };
+
+  const openRefund = () => {
+    const defaultProductId = bottleBalances[0]?.product_id || '';
+    setRefundForm({
+      product_id: defaultProductId,
+      quantity: '1',
+      refund_all: false,
+      note: '',
+    });
+    setIsRefundOpen(true);
   };
 
   const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -121,6 +239,47 @@ const Clients: React.FC = () => {
       toast.error(message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleRefund = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!selectedClient) return;
+
+    if (!refundForm.product_id) {
+      toast.error(tr('Select a product balance first', 'Snachala vyberite produkt', 'Avval mahsulotni tanlang'));
+      return;
+    }
+
+    try {
+      setRefundSaving(true);
+      await apiRequest(ENDPOINTS.CLIENTS.BOTTLE_REFUNDS(selectedClient.id), {
+        method: 'POST',
+        body: JSON.stringify({
+          product_id: refundForm.product_id,
+          quantity: Number(refundForm.quantity || 0),
+          refund_all: refundForm.refund_all,
+          note: refundForm.note.trim(),
+        }),
+      });
+
+      setIsRefundOpen(false);
+      setRefundForm({ product_id: '', quantity: '1', refund_all: false, note: '' });
+      toast.success(tr('Bottle refund recorded', 'Vozvrat tary zafiksirovan', 'Idish qaytarilishi saqlandi'));
+
+      const [balanceData, movementData] = await Promise.all([
+        apiRequest<{ summary?: BottleSummary; results?: BottleBalance[] }>(ENDPOINTS.CLIENTS.BOTTLE_BALANCES(selectedClient.id)),
+        apiRequest<{ results?: BottleMovement[] }>(`${ENDPOINTS.BOTTLES.MOVEMENTS}?client_id=${encodeURIComponent(selectedClient.id)}`),
+      ]);
+
+      setBottleSummary(balanceData.summary || null);
+      setBottleBalances(balanceData.results || []);
+      setBottleMovements(movementData.results || []);
+    } catch (refundError) {
+      const message = refundError instanceof Error ? refundError.message : tr('Failed to save bottle refund', 'Ne udalos sohranit vozvrat tary', 'Idish qaytarilishini saqlab bo‘lmadi');
+      toast.error(message);
+    } finally {
+      setRefundSaving(false);
     }
   };
 
@@ -302,8 +461,179 @@ const Clients: React.FC = () => {
                 <p className="text-sm text-gray-900 dark:text-white">{selectedClient.updated_at ? new Date(selectedClient.updated_at).toLocaleString() : '-'}</p>
               </div>
             </div>
+
+            <div className="rounded-lg border border-light-border dark:border-navy-700 p-4 space-y-4">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Bottle balance', 'Balans tary', 'Idish balansi')}</p>
+                  <p className="text-xs text-gray-500">{tr('Current held deposit and reusable bottle coverage by product', 'Tekushchiy depozit i pokrytie po tare', 'Mahsulot kesimida idish qoplami va depozit')}</p>
+                </div>
+                {bottleBalances.length ? (
+                  <button
+                    type="button"
+                    onClick={openRefund}
+                    className="inline-flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium bg-primary-blue text-white hover:bg-blue-600 transition-colors"
+                  >
+                    {tr('Manual refund', 'Ruchnoy vozvrat', 'Qoʻlda qaytarish')}
+                  </button>
+                ) : null}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div className="rounded-lg border border-light-border dark:border-navy-700 p-4 bg-gray-50 dark:bg-navy-900/40">
+                  <p className="text-xs text-gray-500">{tr('Outstanding bottles', 'Butylki na rukah', 'Qoʻldagi idishlar')}</p>
+                  <p className="text-lg font-semibold text-gray-900 dark:text-white">{bottleSummary?.total_outstanding_bottles_count ?? 0}</p>
+                </div>
+                <div className="rounded-lg border border-light-border dark:border-navy-700 p-4 bg-gray-50 dark:bg-navy-900/40">
+                  <p className="text-xs text-gray-500">{tr('Deposit held', 'Uderzhivaemyy depozit', 'Ushlab turilgan depozit')}</p>
+                  <p className="text-lg font-semibold text-gray-900 dark:text-white">{(bottleSummary?.deposit_held_total_uzs ?? 0).toLocaleString()} UZS</p>
+                </div>
+                <div className="rounded-lg border border-light-border dark:border-navy-700 p-4 bg-gray-50 dark:bg-navy-900/40">
+                  <p className="text-xs text-gray-500">{tr('Charged total', 'Nachisleno vsego', 'Jami olingan')}</p>
+                  <p className="text-lg font-semibold text-gray-900 dark:text-white">{(bottleSummary?.total_deposit_charged_uzs ?? 0).toLocaleString()} UZS</p>
+                </div>
+                <div className="rounded-lg border border-light-border dark:border-navy-700 p-4 bg-gray-50 dark:bg-navy-900/40">
+                  <p className="text-xs text-gray-500">{tr('Refunded total', 'Vozvrashcheno vsego', 'Jami qaytarilgan')}</p>
+                  <p className="text-lg font-semibold text-gray-900 dark:text-white">{(bottleSummary?.total_deposit_refunded_uzs ?? 0).toLocaleString()} UZS</p>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-light-border dark:border-navy-700 overflow-hidden">
+                <div className="px-4 py-3 bg-gray-50 dark:bg-navy-900 border-b border-light-border dark:border-navy-700">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Balances by product', 'Balans po produktam', 'Mahsulotlar bo‘yicha balans')}</p>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm">
+                    <thead className="bg-gray-50/80 dark:bg-navy-900/70 text-gray-500 dark:text-gray-400">
+                      <tr>
+                        <th className="px-4 py-3 font-medium">{t('product_name')}</th>
+                        <th className="px-4 py-3 font-medium text-right">{tr('Size', 'Razmer', 'Hajm')}</th>
+                        <th className="px-4 py-3 font-medium text-right">{tr('Covered bottles', 'Pokrytie', 'Qoplama')}</th>
+                        <th className="px-4 py-3 font-medium text-right">{tr('Deposit held', 'Depozit', 'Depozit')}</th>
+                        <th className="px-4 py-3 font-medium text-right">{tr('Refunded', 'Vozvrat', 'Qaytarilgan')}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-light-border dark:divide-navy-700">
+                      {bottleLoading ? (
+                        <tr><td colSpan={5} className="px-4 py-4 text-center text-gray-500">{tr('Loading bottle balances...', 'Zagruzka balansa tary...', 'Idish balansi yuklanmoqda...')}</td></tr>
+                      ) : bottleBalances.length ? (
+                        bottleBalances.map((balance) => (
+                          <tr key={balance.id}>
+                            <td className="px-4 py-3 text-gray-900 dark:text-white">{balance.product_name}</td>
+                            <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-400">{balance.product_size_liters || '-'}</td>
+                            <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-400">{balance.outstanding_bottles_count}</td>
+                            <td className="px-4 py-3 text-right text-gray-900 dark:text-white">{balance.deposit_held_uzs.toLocaleString()}</td>
+                            <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-400">{balance.total_deposit_refunded_uzs.toLocaleString()}</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr><td colSpan={5} className="px-4 py-4 text-center text-gray-500">{tr('No bottle balances found', 'Balans tary ne nayden', 'Idish balansi topilmadi')}</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-light-border dark:border-navy-700 overflow-hidden">
+                <div className="px-4 py-3 bg-gray-50 dark:bg-navy-900 border-b border-light-border dark:border-navy-700">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Recent bottle movements', 'Poslednie dvizheniya tary', 'Soʻnggi idish harakatlari')}</p>
+                </div>
+                <div className="divide-y divide-light-border dark:divide-navy-700 max-h-72 overflow-y-auto">
+                  {bottleLoading ? (
+                    <div className="px-4 py-4 text-sm text-gray-500">{tr('Loading movements...', 'Zagruzka dvizheniy...', 'Harakatlar yuklanmoqda...')}</div>
+                  ) : bottleMovements.length ? (
+                    bottleMovements.map((movement) => (
+                      <div key={movement.id} className="px-4 py-4 space-y-2">
+                        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Badge variant={movementBadgeVariant(movement.movement_type)}>{movementLabel(movement.movement_type)}</Badge>
+                            <span className="text-sm font-medium text-gray-900 dark:text-white">{movement.product_name || '-'}</span>
+                            {movement.product_size_liters ? <span className="text-xs text-gray-500">{movement.product_size_liters}L</span> : null}
+                          </div>
+                          <span className="text-xs text-gray-500">{movement.created_at ? new Date(movement.created_at).toLocaleString() : '-'}</span>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs text-gray-500">
+                          <p>{tr('Bottle delta', 'Izmenenie butylok', 'Idish o‘zgarishi')}: <span className="text-gray-900 dark:text-white">{movement.bottles_delta}</span></p>
+                          <p>{tr('Deposit delta', 'Izmenenie depozita', 'Depozit o‘zgarishi')}: <span className="text-gray-900 dark:text-white">{movement.deposit_delta_uzs.toLocaleString()} UZS</span></p>
+                          <p>{tr('Balance after', 'Balans posle', 'Yakuniy balans')}: <span className="text-gray-900 dark:text-white">{movement.balance_after_count ?? '-'}</span></p>
+                          <p>{tr('Actor', 'Ispolnitel', 'Amal bajaruvchi')}: <span className="text-gray-900 dark:text-white">{movement.actor || '-'}</span></p>
+                        </div>
+                        {movement.note ? <p className="text-xs text-gray-500">{movement.note}</p> : null}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="px-4 py-4 text-sm text-gray-500">{tr('No bottle movements yet', 'Dvizheniy tary poka net', 'Hali idish harakati yoʻq')}</div>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         )}
+      </Modal>
+
+      <Modal
+        isOpen={isRefundOpen}
+        onClose={() => setIsRefundOpen(false)}
+        title={tr('Manual bottle refund', 'Ruchnoy vozvrat tary', 'Qoʻlda idish qaytarish')}
+        footer={null}
+      >
+        <form onSubmit={handleRefund} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('product_name')}</label>
+            <select
+              value={refundForm.product_id}
+              onChange={(e) => setRefundForm((state) => ({ ...state, product_id: e.target.value }))}
+              className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white"
+            >
+              <option value="">{tr('Select product', 'Vyberite produkt', 'Mahsulotni tanlang')}</option>
+              {bottleBalances.map((balance) => (
+                <option key={balance.id} value={balance.product_id}>
+                  {balance.product_name} {balance.product_size_liters ? `· ${balance.product_size_liters}L` : ''} · {balance.outstanding_bottles_count}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Quantity', 'Kolichestvo', 'Soni')}</label>
+              <input
+                type="number"
+                min="1"
+                value={refundForm.quantity}
+                onChange={(e) => setRefundForm((state) => ({ ...state, quantity: e.target.value }))}
+                disabled={refundForm.refund_all}
+                className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white disabled:opacity-60"
+              />
+            </div>
+            <div className="flex items-end">
+              <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                <input
+                  type="checkbox"
+                  checked={refundForm.refund_all}
+                  onChange={(e) => setRefundForm((state) => ({ ...state, refund_all: e.target.checked }))}
+                />
+                {tr('Refund all covered bottles', 'Vernut vse butylki', 'Barcha qoplangan idishlarni qaytarish')}
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Note', 'Primechanie', 'Izoh')}</label>
+            <textarea
+              value={refundForm.note}
+              onChange={(e) => setRefundForm((state) => ({ ...state, note: e.target.value }))}
+              className="w-full h-24 bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white"
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-light-border dark:border-navy-700">
+            <button type="button" onClick={() => setIsRefundOpen(false)} className="px-4 py-2 rounded-lg text-sm border border-light-border dark:border-navy-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-navy-700 transition-colors">{t('cancel')}</button>
+            <button disabled={refundSaving} type="submit" className="px-4 py-2 rounded-lg text-sm font-medium bg-primary-blue text-white hover:bg-blue-600 transition-colors disabled:opacity-50">
+              {refundSaving ? tr('Saving...', 'Sokhranenie...', 'Saqlanmoqda...') : tr('Save refund', 'Sohranit vozvrat', 'Qaytarishni saqlash')}
+            </button>
+          </div>
+        </form>
       </Modal>
 
       <Modal

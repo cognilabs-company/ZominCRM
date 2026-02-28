@@ -75,6 +75,8 @@ export interface Product {
   count: number;
   min_stock_threshold: number;
   availability_status: 'in_stock' | 'low_stock' | 'out_of_stock';
+  requires_returnable_bottle?: boolean;
+  bottle_deposit_uzs?: number;
   is_active: boolean;
   updated_at: string | null;
 }
@@ -83,9 +85,13 @@ export interface OrderItem {
   id: string;
   order_id: string;
   product_name: string;
+  product_size_liters?: string | number | null;
   qty: number;
   price_uzs: number;
   line_total_uzs: number;
+  bottle_deposit_unit_uzs?: number;
+  bottle_deposit_charge_quantity?: number;
+  bottle_deposit_total_uzs?: number;
 }
 
 export interface Order {
@@ -96,6 +102,8 @@ export interface Order {
   status: OrderStatus;
   payment_method: PaymentMethod;
   total_uzs: number;
+  product_subtotal_uzs?: number;
+  bottle_deposit_total_uzs?: number;
   delivery_address: string | null;
   delivery_lat: number | null;
   delivery_lng: number | null;
