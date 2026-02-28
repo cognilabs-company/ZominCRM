@@ -3,6 +3,7 @@ const DEFAULT_CLIENT_API_BASE_URL =
   (typeof window !== 'undefined' ? `${window.location.origin}/client/webapp` : '/client/webapp');
 
 export const CLIENT_API_BASE_URL = DEFAULT_CLIENT_API_BASE_URL;
+export const CLIENT_CONFIG_URL = `${CLIENT_API_BASE_URL}/config/`;
 
 export class ClientApiError extends Error {
   status: number;

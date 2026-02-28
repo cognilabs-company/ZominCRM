@@ -1,12 +1,17 @@
 ﻿import React from 'react';
 import { clientApiRequest, CLIENT_API_BASE_URL } from '../api/clientApi';
-import { ClientBootstrapResponse, ClientBootstrapState, ClientTelegramUser } from '../types';
+import { ClientBootstrapResponse, ClientBootstrapState, ClientTelegramUser, ClientWebAppConfigResponse, ClientWebAppEntry } from '../types';
 
 interface ClientAppContextValue extends ClientBootstrapState {
   refreshBootstrap: () => Promise<void>;
 }
 
 const ClientAppContext = React.createContext<ClientAppContextValue | undefined>(undefined);
+
+const resolveOpenInTelegramUrl = (entry: ClientWebAppEntry | null) => {
+  if (!entry) return null;
+  return entry.startapp_url || entry.start_url || entry.bot_url || null;
+};
 
 const getTelegramSnapshot = () => {
   if (typeof window === 'undefined') {
@@ -53,6 +58,8 @@ const initialState: ClientBootstrapState = {
   activeOrder: null,
   bottleSummary: null,
   isAuthenticated: false,
+  entry: null,
+  openInTelegramUrl: null,
 };
 
 export const ClientAppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -65,7 +72,16 @@ export const ClientAppProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     const snapshot = getTelegramSnapshot();
 
+    const loadConfig = async () => {
+      try {
+        return await clientApiRequest<ClientWebAppConfigResponse>('/config/', { method: 'GET' });
+      } catch {
+        return null;
+      }
+    };
+
     if (!snapshot.initData) {
+      const config = await loadConfig();
       setState({
         ...initialState,
         status: 'ready',
@@ -74,6 +90,8 @@ export const ClientAppProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         initData: snapshot.initData,
         telegramUser: snapshot.telegramUser,
         apiBaseUrl: CLIENT_API_BASE_URL,
+        entry: config?.entry || null,
+        openInTelegramUrl: resolveOpenInTelegramUrl(config?.entry || null),
       });
       return;
     }
@@ -113,8 +131,11 @@ export const ClientAppProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         activeOrder: data.active_order,
         bottleSummary: data.bottle_summary,
         isAuthenticated: Boolean(data.token),
+        entry: data.entry || null,
+        openInTelegramUrl: resolveOpenInTelegramUrl(data.entry || null),
       });
     } catch (error) {
+      const config = await loadConfig();
       setState({
         ...initialState,
         status: 'error',
@@ -124,6 +145,8 @@ export const ClientAppProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         telegramUser: snapshot.telegramUser,
         apiBaseUrl: CLIENT_API_BASE_URL,
         error: error instanceof Error ? error.message : 'Mijoz WebApp bootstrapi bajarilmadi.',
+        entry: config?.entry || null,
+        openInTelegramUrl: resolveOpenInTelegramUrl(config?.entry || null),
       });
     }
   }, []);
@@ -147,4 +170,3 @@ export const useClientApp = () => {
   }
   return context;
 };
-

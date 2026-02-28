@@ -11,7 +11,7 @@ import { ClientProduct, ClientProductsResponse } from '../types';
 import { formatAmount, getAvailabilityClasses, getAvailabilityLabel } from '../utils';
 
 export const ClientProductsPage: React.FC = () => {
-  const { isAuthenticated, sessionToken, status } = useClientApp();
+  const { isAuthenticated, sessionToken, status, openInTelegramUrl } = useClientApp();
   const { addProduct, updateQuantity, getItemQuantity, itemsCount } = useClientCart();
   const { language, t } = useClientLanguage();
   const [products, setProducts] = React.useState<ClientProduct[]>([]);
@@ -48,6 +48,11 @@ export const ClientProductsPage: React.FC = () => {
       <ClientPage title={t('products.title')} subtitle={t('products.unauth_subtitle')}>
         <ClientPanel className="p-5">
           <p className="text-sm leading-6 text-slate-500">{t('products.unauth_description')}</p>
+          {openInTelegramUrl ? (
+            <a href={openInTelegramUrl} className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800">
+              {t('home.open_in_telegram_cta')}
+            </a>
+          ) : null}
         </ClientPanel>
       </ClientPage>
     );

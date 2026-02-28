@@ -9,7 +9,7 @@ import { ClientOrder, ClientOrderDetailResponse, ClientOrdersListResponse } from
 import { formatAmount, formatDateTime, formatOrderRef, getOrderStatusClasses, getOrderStatusLabel, getPaymentMethodLabel } from '../utils';
 
 export const ClientOrdersPage: React.FC = () => {
-  const { sessionToken, isAuthenticated, activeOrder } = useClientApp();
+  const { sessionToken, isAuthenticated, activeOrder, openInTelegramUrl } = useClientApp();
   const { language, t } = useClientLanguage();
   const [orders, setOrders] = React.useState<ClientOrder[]>([]);
   const [selectedOrder, setSelectedOrder] = React.useState<ClientOrder | null>(null);
@@ -62,7 +62,14 @@ export const ClientOrdersPage: React.FC = () => {
   if (!isAuthenticated) {
     return (
       <ClientPage title={t('orders.title')} subtitle={t('orders.unauth_subtitle')}>
-        <ClientPanel className="p-5 text-sm text-slate-500">{t('orders.unauth_description')}</ClientPanel>
+        <ClientPanel className="p-5 text-sm text-slate-500">
+          <p>{t('orders.unauth_description')}</p>
+          {openInTelegramUrl ? (
+            <a href={openInTelegramUrl} className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800">
+              {t('home.open_in_telegram_cta')}
+            </a>
+          ) : null}
+        </ClientPanel>
       </ClientPage>
     );
   }

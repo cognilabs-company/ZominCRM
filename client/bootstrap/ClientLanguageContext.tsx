@@ -40,6 +40,7 @@ const translations: TranslationMap = {
   "home.title": { uz: "Bosh sahifa", ru: "Главная", en: "Home" },
   "home.subtitle": { uz: "Telegram ichidagi mijoz oqimi va jonli WebApp ma'lumotlari.", ru: "Клиентский Telegram-поток и живые данные WebApp.", en: "Client-first Telegram flow with live WebApp data." },
   "home.open_in_telegram": { uz: "Buni Telegram ichida oching", ru: "Откройте это внутри Telegram", en: "Open this inside Telegram" },
+  "home.open_in_telegram_cta": { uz: "Telegramda ochish", ru: "Открыть в Telegram", en: "Open in Telegram" },
   "home.preview_mode": { uz: "Sinov rejimi faol. Haqiqiy mijoz ma'lumotlari Telegram WebApp bootstrap muvaffaqiyatli otgach chiqadi.", ru: "Режим предпросмотра активен. Реальные данные клиента появятся после успешного bootstrap Telegram WebApp.", en: "Preview mode is active. Real client data will appear after Telegram WebApp bootstrap succeeds." },
   "home.verifying": { uz: "Mijoz sessiyasi hali tekshirilmoqda.", ru: "Сессия клиента еще проверяется.", en: "Client session is still being verified." },
   "home.cart_items": { uz: "Savatchadagi mahsulotlar", ru: "Товары в корзине", en: "Cart items" },

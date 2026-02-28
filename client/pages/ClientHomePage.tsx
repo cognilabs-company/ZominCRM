@@ -9,7 +9,7 @@ import { ClientPanel } from '../components/ClientPanel';
 import { formatAmount, formatOrderRef } from '../utils';
 
 export const ClientHomePage: React.FC = () => {
-  const { client, bottleSummary, activeOrder, isAuthenticated, status, mode } = useClientApp();
+  const { client, bottleSummary, activeOrder, isAuthenticated, status, mode, openInTelegramUrl } = useClientApp();
   const { itemsCount, productSubtotal } = useClientCart();
   const { language, t } = useClientLanguage();
 
@@ -55,6 +55,15 @@ export const ClientHomePage: React.FC = () => {
           <p className="mt-2 text-sm leading-6 text-slate-500">
             {mode === 'preview' ? t('home.preview_mode') : t('home.verifying')}
           </p>
+          {mode === 'preview' && openInTelegramUrl ? (
+            <a
+              href={openInTelegramUrl}
+              className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+            >
+              {t('home.open_in_telegram_cta')}
+              <ArrowRight size={15} />
+            </a>
+          ) : null}
         </ClientPanel>
       ) : null}
 

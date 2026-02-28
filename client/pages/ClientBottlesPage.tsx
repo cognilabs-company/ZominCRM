@@ -9,7 +9,7 @@ import { ClientBottlesResponse } from '../types';
 import { formatAmount, formatDateTime, formatOrderRef, getMovementLabel } from '../utils';
 
 export const ClientBottlesPage: React.FC = () => {
-  const { sessionToken, isAuthenticated } = useClientApp();
+  const { sessionToken, isAuthenticated, openInTelegramUrl } = useClientApp();
   const { language, t } = useClientLanguage();
   const [data, setData] = React.useState<ClientBottlesResponse | null>(null);
   const [loading, setLoading] = React.useState(false);
@@ -36,7 +36,14 @@ export const ClientBottlesPage: React.FC = () => {
   if (!isAuthenticated) {
     return (
       <ClientPage title={t('bottles.title')} subtitle={t('bottles.unauth_subtitle')}>
-        <ClientPanel className="p-5 text-sm text-slate-500">{t('bottles.unauth_description')}</ClientPanel>
+        <ClientPanel className="p-5 text-sm text-slate-500">
+          <p>{t('bottles.unauth_description')}</p>
+          {openInTelegramUrl ? (
+            <a href={openInTelegramUrl} className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800">
+              {t('home.open_in_telegram_cta')}
+            </a>
+          ) : null}
+        </ClientPanel>
       </ClientPage>
     );
   }

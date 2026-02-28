@@ -138,6 +138,21 @@ export interface ClientBootstrapResponse {
   active_order: ClientOrder | null;
   bottle_summary: ClientBottleSummary | null;
   telegram_user: ClientTelegramUser | null;
+  entry?: ClientWebAppEntry | null;
+}
+
+export interface ClientWebAppEntry {
+  webapp_url: string;
+  bot_username?: string;
+  bot_url?: string;
+  start_url?: string;
+  startapp_url?: string;
+  open_in_telegram_required?: boolean;
+}
+
+export interface ClientWebAppConfigResponse {
+  ok: boolean;
+  entry: ClientWebAppEntry;
 }
 
 export interface ClientBootstrapState {
@@ -156,6 +171,8 @@ export interface ClientBootstrapState {
   activeOrder: ClientOrder | null;
   bottleSummary: ClientBottleSummary | null;
   isAuthenticated: boolean;
+  entry: ClientWebAppEntry | null;
+  openInTelegramUrl: string | null;
 }
 
 export interface ClientProductsResponse {

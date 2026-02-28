@@ -20,6 +20,7 @@ export const ClientAppLayout: React.FC = () => {
     error,
     isAuthenticated,
     tokenExpiresAt,
+    openInTelegramUrl,
   } = useClientApp();
   const { language, t } = useClientLanguage();
 
@@ -119,9 +120,34 @@ export const ClientAppLayout: React.FC = () => {
           </div>
         </ClientPanel>
 
+        {!isAuthenticated && mode === 'preview' ? (
+          <ClientPanel className="mt-4 p-5">
+            <h2 className="text-base font-semibold text-slate-950">{t('home.open_in_telegram')}</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-500">{t('home.preview_mode')}</p>
+            {openInTelegramUrl ? (
+              <a
+                href={openInTelegramUrl}
+                className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+              >
+                {t('home.open_in_telegram_cta')}
+                <ArrowRight size={15} />
+              </a>
+            ) : null}
+          </ClientPanel>
+        ) : null}
+
         {error ? (
           <ClientPanel className="mt-4 border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
-            {error}
+            <p>{error}</p>
+            {openInTelegramUrl ? (
+              <a
+                href={openInTelegramUrl}
+                className="mt-3 inline-flex items-center gap-2 rounded-2xl bg-rose-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-rose-800"
+              >
+                {t('home.open_in_telegram_cta')}
+                <ArrowRight size={15} />
+              </a>
+            ) : null}
           </ClientPanel>
         ) : null}
 
