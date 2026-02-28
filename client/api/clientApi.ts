@@ -1,6 +1,34 @@
-const DEFAULT_CLIENT_API_BASE_URL =
-  (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_CLIENT_API_BASE_URL) ||
-  (typeof window !== 'undefined' ? `${window.location.origin}/client/webapp` : '/client/webapp');
+const envClientApiBaseUrl =
+  typeof import.meta !== 'undefined' ? (import.meta as any).env?.VITE_CLIENT_API_BASE_URL : undefined;
+
+const envAdminApiBaseUrl =
+  typeof import.meta !== 'undefined' ? (import.meta as any).env?.VITE_API_BASE_URL : undefined;
+
+const deriveClientApiBaseUrl = () => {
+  if (envClientApiBaseUrl) {
+    return envClientApiBaseUrl;
+  }
+
+  if (envAdminApiBaseUrl) {
+    return envAdminApiBaseUrl.replace(/\/internal\/?$/, '/client/webapp');
+  }
+
+  if (typeof window !== 'undefined') {
+    const { protocol, hostname, origin } = window.location;
+    const isLocalHost = hostname === 'localhost' || hostname === '127.0.0.1';
+    const isApiHost = hostname.startsWith('api.');
+
+    if (!isLocalHost && !isApiHost) {
+      return `${protocol}//api.${hostname}/client/webapp`;
+    }
+
+    return `${origin}/client/webapp`;
+  }
+
+  return '/client/webapp';
+};
+
+const DEFAULT_CLIENT_API_BASE_URL = deriveClientApiBaseUrl();
 
 export const CLIENT_API_BASE_URL = DEFAULT_CLIENT_API_BASE_URL;
 export const CLIENT_CONFIG_URL = `${CLIENT_API_BASE_URL}/config/`;

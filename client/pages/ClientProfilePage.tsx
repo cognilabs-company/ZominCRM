@@ -1,15 +1,15 @@
-﻿import React from 'react';
-import { KeyRound, UserRound } from 'lucide-react';
+import React from 'react';
+import { UserRound } from 'lucide-react';
 import { clientApiRequest } from '../api/clientApi';
 import { useClientApp } from '../bootstrap/ClientAppContext';
 import { useClientLanguage } from '../bootstrap/ClientLanguageContext';
 import { ClientPage } from '../components/ClientPage';
 import { ClientPanel } from '../components/ClientPanel';
 import { ClientProfile, ClientProfileResponse } from '../types';
-import { formatDateTime, getClientLanguageLabel } from '../utils';
+import { getClientLanguageLabel } from '../utils';
 
 export const ClientProfilePage: React.FC = () => {
-  const { telegramUser, telegramAvailable, initData, apiBaseUrl, sessionToken, client: bootstrapClient, tokenExpiresAt, clientCreated } = useClientApp();
+  const { telegramUser, telegramAvailable, sessionToken, client: bootstrapClient, clientCreated } = useClientApp();
   const { language, t } = useClientLanguage();
   const [profile, setProfile] = React.useState<ClientProfile | null>(bootstrapClient);
   const [loading, setLoading] = React.useState(false);
@@ -69,27 +69,6 @@ export const ClientProfilePage: React.FC = () => {
                 <p><span className="font-medium text-slate-950">{t('profile.client_created')}:</span> {clientCreated ? t('profile.yes') : t('profile.no')}</p>
               </div>
               {loading ? <p className="mt-3 text-xs text-slate-400">{t('profile.refreshing')}</p> : null}
-            </div>
-          </div>
-        </ClientPanel>
-
-        <ClientPanel className="p-5">
-          <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-950 text-white">
-              <KeyRound size={20} />
-            </div>
-            <div className="min-w-0">
-              <h2 className="text-base font-semibold text-slate-950">{t('profile.client_session')}</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-500">
-                {t('profile.client_session_description')}
-              </p>
-              <div className="mt-4 space-y-2 text-sm text-slate-600">
-                <p><span className="font-medium text-slate-950">{t('profile.api_base')}:</span> {apiBaseUrl}</p>
-                <p><span className="font-medium text-slate-950">{t('profile.token_expires_at')}:</span> {tokenExpiresAt ? formatDateTime(tokenExpiresAt, language) : '-'}</p>
-              </div>
-              <p className="mt-3 break-all rounded-2xl bg-slate-100 px-3 py-2 text-xs text-slate-500">
-                {initData || t('profile.initdata_missing')}
-              </p>
             </div>
           </div>
         </ClientPanel>
