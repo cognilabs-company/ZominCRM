@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Modal } from '../components/ui/Modal';
@@ -93,6 +94,7 @@ const fieldValue = (value: unknown) => {
 };
 
 const Payments: React.FC = () => {
+  const navigate = useNavigate();
   const { t, language } = useLanguage();
   const toast = useToast();
   const tr = useCallback((en: string, ru: string, uz: string) => (language === 'ru' ? ru : language === 'uz' ? uz : en), [language]);
@@ -114,6 +116,16 @@ const Payments: React.FC = () => {
   const [runLimit, setRunLimit] = useState(100);
   const [remindersBusy, setRemindersBusy] = useState<'preview' | 'run' | null>(null);
   const [reminderPreview, setReminderPreview] = useState<ReminderResponse | null>(null);
+
+  const formatOrderRef = useCallback((orderId?: string | null) => {
+    if (!orderId) return '-';
+    return `#${orderId.slice(0, 8)}`;
+  }, []);
+
+  const openOrderPage = useCallback((orderId?: string | null) => {
+    if (!orderId) return;
+    navigate(`/orders?order_id=${encodeURIComponent(orderId)}`);
+  }, [navigate]);
 
   const loadTabData = useCallback(async () => {
     try {
@@ -321,9 +333,21 @@ const Payments: React.FC = () => {
                       <td className="px-6 py-4 text-sm text-gray-500">{formatDateTime(tx.occurred_at || tx.created_at, locale)}</td>
                       <td className="px-6 py-4">
                         {tx.linked_order_id ? (
-                          <Badge variant="success" className="flex w-max items-center gap-1">
-                            <CheckCircle size={14} /> {tr('Linked', 'Svyazano', "Boglangan")}
-                          </Badge>
+                          <div className="flex flex-col items-start gap-1.5">
+                            <Badge variant="success" className="flex w-max items-center gap-1">
+                              <CheckCircle size={14} /> {tr('Linked to order', 'Privyazano k zakazu', "Buyurtmaga boglangan")}
+                            </Badge>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openOrderPage(tx.linked_order_id);
+                              }}
+                              className="text-xs font-medium text-primary-blue dark:text-blue-300 hover:text-blue-700 dark:hover:text-blue-200"
+                            >
+                              {formatOrderRef(tx.linked_order_id)}
+                            </button>
+                          </div>
                         ) : (
                           <Badge variant="warning">{tr('Unlinked', 'Ne svyazano', "Boglanmagan")}</Badge>
                         )}
@@ -502,7 +526,24 @@ const Payments: React.FC = () => {
               <div className="rounded-lg border border-light-border dark:border-navy-700 p-3"><p className="text-xs text-gray-500">{tr('Merchant name', 'Nazvanie magazina', 'Qabul qiluvchi nomi')}</p><p className="text-gray-900 dark:text-white">{fieldValue(selectedTransaction.merchant_name)}</p></div>
               <div className="rounded-lg border border-light-border dark:border-navy-700 p-3"><p className="text-xs text-gray-500">{tr('Payer name', 'Imya platelshchika', "Tolovchi ismi")}</p><p className="text-gray-900 dark:text-white">{fieldValue(selectedTransaction.payer_name)}</p></div>
               <div className="rounded-lg border border-light-border dark:border-navy-700 p-3"><p className="text-xs text-gray-500">{tr('Payer phone', 'Telefon platelshchika', "Tolovchi telefoni")}</p><p className="text-gray-900 dark:text-white">{fieldValue(selectedTransaction.payer_phone_masked)}</p></div>
-              <div className="rounded-lg border border-light-border dark:border-navy-700 p-3"><p className="text-xs text-gray-500">{tr('Linked order', 'Svyazannyy zakaz', "Boglangan buyurtma")}</p><p className="font-mono break-all text-gray-900 dark:text-white">{fieldValue(selectedTransaction.linked_order_id)}</p></div>
+              <div className="rounded-lg border border-light-border dark:border-navy-700 p-3">
+                <p className="text-xs text-gray-500">{tr('Linked order', 'Svyazannyy zakaz', "Boglangan buyurtma")}</p>
+                {selectedTransaction.linked_order_id ? (
+                  <div className="mt-1 space-y-2">
+                    <p className="text-gray-900 dark:text-white font-semibold">{formatOrderRef(selectedTransaction.linked_order_id)}</p>
+                    <button
+                      type="button"
+                      onClick={() => openOrderPage(selectedTransaction.linked_order_id)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-light-border dark:border-navy-600 text-sm text-primary-blue dark:text-blue-300 hover:bg-gray-50 dark:hover:bg-navy-800"
+                    >
+                      <Link2 size={14} />
+                      {tr('Open order', 'Otkryt zakaz', 'Buyurtmani ochish')}
+                    </button>
+                  </div>
+                ) : (
+                  <p className="font-mono break-all text-gray-900 dark:text-white">-</p>
+                )}
+              </div>
               <div className="rounded-lg border border-light-border dark:border-navy-700 p-3"><p className="text-xs text-gray-500">{tr('Source chat ID', 'ID chata istochnika', 'Manba chat ID')}</p><p className="font-mono break-all text-gray-900 dark:text-white">{fieldValue(selectedTransaction.source_chat_id)}</p></div>
               <div className="rounded-lg border border-light-border dark:border-navy-700 p-3"><p className="text-xs text-gray-500">{tr('Source message ID', 'ID soobshcheniya', 'Manba xabar ID')}</p><p className="font-mono break-all text-gray-900 dark:text-white">{fieldValue(selectedTransaction.source_message_id)}</p></div>
             </div>
