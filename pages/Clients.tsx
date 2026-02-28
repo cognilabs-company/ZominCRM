@@ -67,14 +67,6 @@ const Clients: React.FC = () => {
     ));
   }, [clients, q]);
 
-  const stats = useMemo(() => {
-    const total = clients.length;
-    const telegram = clients.filter((client) => client.platform === 'telegram').length;
-    const instagram = clients.filter((client) => client.platform === 'instagram').length;
-    const withLanguage = clients.filter((client) => !!client.preferred_language).length;
-    return { total, telegram, instagram, withLanguage };
-  }, [clients]);
-
   const platformLabel = (p: Platform) => (
     p === 'instagram'
       ? tr('Instagram', 'Instagram', 'Instagram')
@@ -146,36 +138,23 @@ const Clients: React.FC = () => {
 
       {error && <div className="rounded-lg border border-red-200 bg-red-50 text-red-700 px-4 py-3 text-sm">{error}</div>}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <Card className="space-y-1">
-          <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">{tr('Total clients', 'Vsego klientov', 'Jami mijozlar')}</p>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</p>
-        </Card>
-        <Card className="space-y-1">
-          <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">{tr('Telegram', 'Telegram', 'Telegram')}</p>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.telegram}</p>
-        </Card>
-        <Card className="space-y-1">
-          <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">{tr('Instagram', 'Instagram', 'Instagram')}</p>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.instagram}</p>
-        </Card>
-        <Card className="space-y-1">
-          <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">{tr('Language set', 'Yazyk ukazan', 'Til belgilangan')}</p>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.withLanguage}</p>
-        </Card>
-      </div>
-
       <Card className="!p-0 overflow-hidden">
         <div className="p-4 border-b border-light-border dark:border-navy-700 bg-white dark:bg-navy-800">
-          <div className="relative w-full md:max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-            <input
-              type="text"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder={`${t('search')}...`}
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg text-sm focus:outline-none focus:border-primary-blue dark:text-white"
-            />
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Clients list', 'Mijozlar royxati', 'Mijozlar royxati')}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{tr('Total clients', 'Vsego klientov', 'Jami mijozlar')}: {clients.length}</p>
+            </div>
+            <div className="relative w-full md:max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <input
+                type="text"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder={`${t('search')}...`}
+                className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg text-sm focus:outline-none focus:border-primary-blue dark:text-white"
+              />
+            </div>
           </div>
         </div>
 
