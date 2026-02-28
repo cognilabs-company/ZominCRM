@@ -32,6 +32,10 @@ const resolveApiBaseUrl = () => {
     return envApiBaseUrl;
   }
 
+  if (currentHost === 'zomin.cognilabs.org') {
+    return 'https://api.zomin.cognilabs.org/internal';
+  }
+
   if (!currentHostIsLocal && !currentHost.startsWith('api.')) {
     return `${window.location.protocol}//api.${currentHost}/internal`;
   }

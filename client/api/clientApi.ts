@@ -16,9 +16,12 @@ const isLocalLikeUrl = (value?: string) => {
 };
 
 const deriveClientApiBaseUrl = () => {
+  const currentHost =
+    typeof window !== 'undefined' && window.location.hostname
+      ? window.location.hostname
+      : '';
   const currentHostIsLocal =
-    typeof window !== 'undefined' &&
-    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+    currentHost === 'localhost' || currentHost === '127.0.0.1';
 
   if (envClientApiBaseUrl && (!isLocalLikeUrl(envClientApiBaseUrl) || currentHostIsLocal)) {
     return envClientApiBaseUrl;
@@ -26,6 +29,10 @@ const deriveClientApiBaseUrl = () => {
 
   if (envAdminApiBaseUrl && (!isLocalLikeUrl(envAdminApiBaseUrl) || currentHostIsLocal)) {
     return envAdminApiBaseUrl.replace(/\/internal\/?$/, '/client/webapp');
+  }
+
+  if (currentHost === 'zomin.cognilabs.org') {
+    return 'https://api.zomin.cognilabs.org/client/webapp';
   }
 
   if (typeof window !== 'undefined') {
@@ -94,10 +101,21 @@ export async function clientApiRequest<T = unknown>(path: string, init?: Request
   }
 
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-  const response = await fetch(`${CLIENT_API_BASE_URL}${normalizedPath}`, {
-    ...init,
-    headers,
-  });
+  const requestUrl = `${CLIENT_API_BASE_URL}${normalizedPath}`;
+  let response: Response;
+
+  try {
+    response = await fetch(requestUrl, {
+      ...init,
+      headers,
+      mode: 'cors',
+    });
+  } catch (error) {
+    throw new ClientApiError(
+      error instanceof Error ? `${error.message} (${requestUrl})` : `Failed to fetch (${requestUrl})`,
+      0
+    );
+  }
 
   const text = await response.text();
   let payload: unknown = null;
