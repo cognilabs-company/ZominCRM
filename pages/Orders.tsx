@@ -19,6 +19,7 @@ interface ApiOrderItem {
   id: string;
   order_id: string;
   product_id?: string;
+  product_size_liters?: number | null;
   product_name: string;
   product_available_count?: number | null;
   quantity: number;
@@ -49,6 +50,7 @@ interface UiOrderItem {
   id: string;
   order_id: string;
   product_id?: string;
+  product_size_liters?: number | null;
   product_name: string;
   product_available_count?: number | null;
   quantity: number;
@@ -127,6 +129,7 @@ const mapOrder = (o: ApiOrder, clientsById: Record<string, ApiClient>): UiOrder 
     id: i.id,
     order_id: i.order_id,
     product_id: i.product_id,
+    product_size_liters: i.product_size_liters,
     product_name: i.product_name,
     product_available_count: i.product_available_count,
     quantity: i.quantity,
@@ -443,7 +446,7 @@ const Orders: React.FC = () => {
                   <thead className="bg-gray-50 dark:bg-navy-900">
                     <tr>
                       <th className="px-4 py-2 text-gray-500 font-medium">{t('product_name')}</th>
-                      <th className="px-4 py-2 text-gray-500 font-medium text-right">ID</th>
+                      <th className="px-4 py-2 text-gray-500 font-medium text-right">{tr('Size (L)', 'Razmer (L)', 'Hajmi (L)')}</th>
                       <th className="px-4 py-2 text-gray-500 font-medium text-right">{tr('Qty', 'Soni', 'Soni')}</th>
                       <th className="px-4 py-2 text-gray-500 font-medium text-right">{tr('Unit', 'Birlik', 'Birlik')}</th>
                       <th className="px-4 py-2 text-gray-500 font-medium text-right">{t('stock')}</th>
@@ -454,7 +457,7 @@ const Orders: React.FC = () => {
                     {selectedOrder.items?.length ? selectedOrder.items.map((item, idx) => (
                       <tr key={idx}>
                         <td className="px-4 py-2 text-gray-800 dark:text-gray-200">{item.product_name}</td>
-                        <td className="px-4 py-2 text-gray-600 dark:text-gray-400 text-right">{item.product_id?.slice(0, 8) || '-'}</td>
+                        <td className="px-4 py-2 text-gray-600 dark:text-gray-400 text-right">{item.product_size_liters ?? '-'}</td>
                         <td className="px-4 py-2 text-gray-600 dark:text-gray-400 text-right">{item.quantity}</td>
                         <td className="px-4 py-2 text-gray-600 dark:text-gray-400 text-right">{item.unit_price_uzs.toLocaleString()}</td>
                         <td className="px-4 py-2 text-gray-600 dark:text-gray-400 text-right">{item.product_available_count ?? '-'}</td>
