@@ -5,6 +5,7 @@ import { Badge } from '../components/ui/Badge';
 import { useLanguage } from '../context/LanguageContext';
 import { useToast } from '../context/ToastContext';
 import { ENDPOINTS, apiRequest } from '../services/api';
+import type { OrderStatus } from '../types';
 import { Edit2, Plus, Search, UserCircle2 } from 'lucide-react';
 
 type Platform = 'telegram' | 'instagram';
@@ -64,6 +65,27 @@ interface BottleMovement {
   created_at: string;
 }
 
+interface ClientOrder {
+  id: string;
+  client_id: string;
+  status: OrderStatus;
+  payment_method?: 'CASH' | 'TRANSFER' | 'UNKNOWN' | string;
+  total_amount_uzs: number;
+  location_text?: string | null;
+  created_at: string;
+  updated_at?: string;
+}
+
+const ACTIVE_ORDER_STATUSES: OrderStatus[] = [
+  'NEW_LEAD',
+  'INFO_COLLECTED',
+  'PAYMENT_PENDING',
+  'PAYMENT_CONFIRMED',
+  'DISPATCHED',
+  'ASSIGNED',
+  'OUT_FOR_DELIVERY',
+];
+
 const Clients: React.FC = () => {
   const { t, language } = useLanguage();
   const toast = useToast();
@@ -81,6 +103,7 @@ const Clients: React.FC = () => {
   const [bottleSummary, setBottleSummary] = useState<BottleSummary | null>(null);
   const [bottleBalances, setBottleBalances] = useState<BottleBalance[]>([]);
   const [bottleMovements, setBottleMovements] = useState<BottleMovement[]>([]);
+  const [clientOrders, setClientOrders] = useState<ClientOrder[]>([]);
   const [isRefundOpen, setIsRefundOpen] = useState(false);
   const [refundSaving, setRefundSaving] = useState(false);
   const [refundForm, setRefundForm] = useState({
@@ -115,6 +138,7 @@ const Clients: React.FC = () => {
       setBottleSummary(null);
       setBottleBalances([]);
       setBottleMovements([]);
+      setClientOrders([]);
       setIsRefundOpen(false);
       setRefundForm({ product_id: '', quantity: '1', refund_all: false, note: '' });
       return;
@@ -125,15 +149,22 @@ const Clients: React.FC = () => {
     (async () => {
       try {
         setBottleLoading(true);
-        const [balanceData, movementData] = await Promise.all([
+        const [balanceData, movementData, orderData] = await Promise.all([
           apiRequest<{ summary?: BottleSummary; results?: BottleBalance[] }>(ENDPOINTS.CLIENTS.BOTTLE_BALANCES(selectedClient.id)),
           apiRequest<{ results?: BottleMovement[] }>(`${ENDPOINTS.BOTTLES.MOVEMENTS}?client_id=${encodeURIComponent(selectedClient.id)}`),
+          apiRequest<{ results?: ClientOrder[] }>(ENDPOINTS.ORDERS.LIST),
         ]);
 
         if (!active) return;
         setBottleSummary(balanceData.summary || null);
         setBottleBalances(balanceData.results || []);
         setBottleMovements(movementData.results || []);
+        setClientOrders(
+          (orderData.results || [])
+            .filter((order) => order.client_id === selectedClient.id && ACTIVE_ORDER_STATUSES.includes(order.status))
+            .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+            .slice(0, 6)
+        );
       } catch (e) {
         if (!active) return;
         const message = e instanceof Error ? e.message : tr('Failed to load bottle data', 'Ne udalos zagruzit dannye po tare', 'Idish maʼlumotlarini yuklab bo‘lmadi');
@@ -167,9 +198,9 @@ const Clients: React.FC = () => {
   );
 
   const languageLabel = (lang?: ClientRow['preferred_language']) => {
-    if (lang === 'ru') return tr('Russian', 'Ð ÑƒÑÑÐºÐ¸Ð¹', 'Ruscha');
+    if (lang === 'ru') return tr('Russian', 'Русский', 'Ruscha');
     if (lang === 'uz') return tr("Uzbek", 'Uzbek', "O'zbek");
-    if (lang === 'en') return tr('English', 'ÐÐ½Ð³Ð»Ð¸Ð¹ÑÐºÐ¸Ð¹', 'Inglizcha');
+    if (lang === 'en') return tr('English', 'Английский', 'Inglizcha');
     return '-';
   };
 
@@ -192,6 +223,41 @@ const Clients: React.FC = () => {
     if (movementType === 'REFUND') return 'success' as const;
     if (movementType === 'MANUAL_ADJUST') return 'warning' as const;
     return 'default' as const;
+  };
+
+  const orderStatusLabel = (status: OrderStatus) => {
+    switch (status) {
+      case 'NEW_LEAD': return tr('New lead', 'Новый лид', 'Yangi lid');
+      case 'INFO_COLLECTED': return tr('Info collected', 'Информация собрана', "Ma'lumot yig'ilgan");
+      case 'PAYMENT_PENDING': return tr('Payment pending', 'Ожидает оплаты', "To'lov kutilmoqda");
+      case 'PAYMENT_CONFIRMED': return tr('Payment confirmed', 'Оплата подтверждена', "To'lov tasdiqlangan");
+      case 'DISPATCHED': return tr('Dispatched', 'Отправлен', 'Yuborilgan');
+      case 'ASSIGNED': return tr('Assigned', 'Назначен', 'Biriktirilgan');
+      case 'OUT_FOR_DELIVERY': return tr('Out for delivery', 'В доставке', 'Yetkazib berishda');
+      case 'DELIVERED': return tr('Delivered', 'Доставлен', 'Yetkazildi');
+      case 'CANCELED': return tr('Canceled', 'Отменен', 'Bekor qilingan');
+      case 'FAILED': return tr('Failed', 'Неудачно', 'Muvaffaqiyatsiz');
+      default: return status;
+    }
+  };
+
+  const orderStatusVariant = (status: OrderStatus) => {
+    switch (status) {
+      case 'PAYMENT_PENDING':
+      case 'INFO_COLLECTED':
+        return 'warning' as const;
+      case 'DISPATCHED':
+      case 'ASSIGNED':
+      case 'OUT_FOR_DELIVERY':
+        return 'info' as const;
+      case 'DELIVERED':
+        return 'success' as const;
+      case 'CANCELED':
+      case 'FAILED':
+        return 'error' as const;
+      default:
+        return 'default' as const;
+    }
   };
 
   const openRefund = () => {
@@ -462,6 +528,37 @@ const Clients: React.FC = () => {
               </div>
             </div>
 
+            <div className="rounded-lg border border-light-border dark:border-navy-700 overflow-hidden">
+              <div className="px-4 py-3 bg-gray-50 dark:bg-navy-900 border-b border-light-border dark:border-navy-700">
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Active orders', 'Активные заказы', 'Faol buyurtmalar')}</p>
+                <p className="text-xs text-gray-500">{tr('Current open orders for this client', 'Текущие открытые заказы этого клиента', 'Bu mijozning joriy ochiq buyurtmalari')}</p>
+              </div>
+              <div className="divide-y divide-light-border dark:divide-navy-700">
+                {bottleLoading ? (
+                  <div className="px-4 py-4 text-sm text-gray-500">{tr('Loading active orders...', 'Активные заказы загружаются...', 'Faol buyurtmalar yuklanmoqda...')}</div>
+                ) : clientOrders.length ? (
+                  clientOrders.map((order) => (
+                    <div key={order.id} className="px-4 py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white">#{order.id.slice(0, 8)}</p>
+                          <Badge variant={orderStatusVariant(order.status)}>{orderStatusLabel(order.status)}</Badge>
+                        </div>
+                        <p className="mt-1 text-xs text-gray-500">{order.location_text || '-'}</p>
+                        <p className="mt-1 text-xs text-gray-500">{new Date(order.created_at).toLocaleString()}</p>
+                      </div>
+                      <div className="text-left md:text-right">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">{order.total_amount_uzs.toLocaleString()} UZS</p>
+                        <p className="text-xs text-gray-500">{tr('Payment', 'Оплата', "To'lov")}: {order.payment_method || '-'}</p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="px-4 py-4 text-sm text-gray-500">{tr('No active orders found', 'Активные заказы не найдены', 'Faol buyurtmalar topilmadi')}</div>
+                )}
+              </div>
+            </div>
+
             <div className="rounded-lg border border-light-border dark:border-navy-700 p-4 space-y-4">
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
@@ -673,8 +770,8 @@ const Clients: React.FC = () => {
               >
                 <option value="">{tr('Not set', 'Ne ukazan', 'Belgilanmagan')}</option>
                 <option value="uz">{tr("Uzbek", 'Uzbek', "O'zbek")}</option>
-                <option value="ru">{tr('Russian', 'Ð ÑƒÑÑÐºÐ¸Ð¹', 'Ruscha')}</option>
-                <option value="en">{tr('English', 'ÐÐ½Ð³Ð»Ð¸Ð¹ÑÐºÐ¸Ð¹', 'Inglizcha')}</option>
+                <option value="ru">{tr('Russian', 'Русский', 'Ruscha')}</option>
+                <option value="en">{tr('English', 'Английский', 'Inglizcha')}</option>
               </select>
             </div>
           </div>

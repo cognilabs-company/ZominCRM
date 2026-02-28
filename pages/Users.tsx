@@ -61,7 +61,7 @@ const Users: React.FC = () => {
       const list = Array.isArray(data) ? data : (data.results || []);
       setUsers(list);
     } catch (e) {
-      const message = e instanceof Error ? e.message : tr('Failed to load users', 'Foydalanuvchilarni yuklab boâ€˜lmadi', 'Foydalanuvchilarni yuklab boâ€˜lmadi');
+      const message = e instanceof Error ? e.message : tr('Failed to load users', 'Не удалось загрузить пользователей', 'Foydalanuvchilarni yuklab bo‘lmadi');
       setError(message);
       toast.error(message);
     } finally {
@@ -79,7 +79,7 @@ const Users: React.FC = () => {
       });
       setPermissions(rows);
     } catch (e) {
-      const message = e instanceof Error ? e.message : tr('Failed to load permissions', 'Ruxsatlarni yuklab boâ€˜lmadi', 'Ruxsatlarni yuklab boâ€˜lmadi');
+      const message = e instanceof Error ? e.message : tr('Failed to load permissions', 'Не удалось загрузить разрешения', 'Ruxsatlarni yuklab bo‘lmadi');
       setError(message);
       toast.error(message);
     } finally {
@@ -108,7 +108,7 @@ const Users: React.FC = () => {
       if (e instanceof ApiError && e.status === 405) {
         return;
       }
-      const message = e instanceof Error ? e.message : tr('Failed to load user detail', 'Foydalanuvchi tafsilotlarini yuklab boâ€˜lmadi', 'Foydalanuvchi tafsilotlarini yuklab boâ€˜lmadi');
+      const message = e instanceof Error ? e.message : tr('Failed to load user detail', 'Не удалось загрузить детали пользователя', 'Foydalanuvchi tafsilotlarini yuklab bo‘lmadi');
       setError(message);
       toast.error(message);
     } finally {
@@ -140,7 +140,7 @@ const Users: React.FC = () => {
       setSelectedPerms([]);
       await loadUsers();
     } catch (e2) {
-      const message = e2 instanceof Error ? e2.message : tr('Failed to create user', 'Foydalanuvchini yaratib boâ€˜lmadi', 'Foydalanuvchini yaratib boâ€˜lmadi');
+      const message = e2 instanceof Error ? e2.message : tr('Failed to create user', 'Не удалось создать пользователя', 'Foydalanuvchini yaratib bo‘lmadi');
       setError(message);
       toast.error(message);
     } finally {
@@ -197,7 +197,7 @@ const Users: React.FC = () => {
         toast.error(message);
         return;
       }
-      const message = e instanceof Error ? e.message : tr('Failed to update user', 'Foydalanuvchini yangilab boâ€˜lmadi', 'Foydalanuvchini yangilab boâ€˜lmadi');
+      const message = e instanceof Error ? e.message : tr('Failed to update user', 'Не удалось обновить пользователя', 'Foydalanuvchini yangilab bo‘lmadi');
       setError(message);
       toast.error(message);
     } finally {
@@ -239,7 +239,7 @@ const Users: React.FC = () => {
             <thead>
               <tr className="bg-gray-50 dark:bg-navy-900/50 text-xs uppercase text-gray-500 dark:text-gray-400 border-b border-light-border dark:border-navy-700">
                 <th className="px-6 py-4 font-semibold">{tr('Username', 'Login', 'Login')}</th>
-                <th className="px-6 py-4 font-semibold">{tr('Full Name', 'Toâ€˜liq ism', 'Toâ€˜liq ism')}</th>
+                <th className="px-6 py-4 font-semibold">{tr('Full Name', 'Полное имя', 'To‘liq ism')}</th>
                 <th className="px-6 py-4 font-semibold">{tr('Email', 'Email', 'Email')}</th>
                 <th className="px-6 py-4 font-semibold">{tr('Role', 'Rol', 'Rol')}</th>
                 <th className="px-6 py-4 font-semibold">{tr('Status', 'Holat', 'Holat')}</th>
@@ -434,7 +434,7 @@ const Users: React.FC = () => {
                 {tr('Cancel', 'Bekor qilish', 'Bekor qilish')}
               </button>
               <button disabled={saving} type="submit" className="px-4 py-2 rounded-lg text-sm font-medium bg-primary-blue text-white hover:bg-blue-600 transition-colors disabled:opacity-50">
-                {saving ? tr('Saving...', 'Saqlanmoqda...', 'Saqlanmoqda...') : tr('Save Changes', 'Oâ€˜zgarishlarni saqlash', 'Oâ€˜zgarishlarni saqlash')}
+                {saving ? tr('Saving...', 'Сохранение...', 'Saqlanmoqda...') : tr('Save Changes', 'Сохранить изменения', 'O‘zgarishlarni saqlash')}
               </button>
             </div>
           </form>
@@ -475,7 +475,7 @@ const Users: React.FC = () => {
             <div>
               <p className="text-gray-500 mb-2">{tr('Permissions', 'Ruxsatlar', 'Ruxsatlar')}</p>
               {selectedPermissions.length === 0 ? (
-                <p className="text-gray-500">{tr('No permissions', 'Ruxsatlar yoâ€˜q', 'Ruxsatlar yoâ€˜q')}</p>
+                <p className="text-gray-500">{tr('No permissions', 'Нет разрешений', 'Ruxsatlar yo‘q')}</p>
               ) : (
                 <div className="flex flex-wrap gap-2">
                   {selectedPermissions.map((code) => (

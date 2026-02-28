@@ -123,7 +123,7 @@ export const ClientAppProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       const data = await clientApiRequest<ClientBootstrapResponse>('/bootstrap/', {
         method: 'POST',
-        body: new URLSearchParams({ init_data: snapshot.initData }),
+        body: JSON.stringify({ init_data: snapshot.initData }),
       });
 
       setState({
