@@ -13,6 +13,8 @@ const resolveOpenInTelegramUrl = (entry: ClientWebAppEntry | null) => {
   return entry.startapp_url || entry.start_url || entry.bot_url || null;
 };
 
+const wait = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
+
 const getTelegramSnapshot = () => {
   if (typeof window === 'undefined') {
     return {
@@ -66,11 +68,23 @@ export const ClientAppProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [state, setState] = React.useState<ClientBootstrapState>(initialState);
 
   const refreshBootstrap = React.useCallback(async () => {
+    const resolveSnapshot = async () => {
+      let attempts = 0;
+      let snapshot = getTelegramSnapshot();
+
+      while (!snapshot.initData && attempts < 10) {
+        attempts += 1;
+        await wait(150);
+        snapshot = getTelegramSnapshot();
+      }
+
+      return snapshot;
+    };
+
+    const snapshot = await resolveSnapshot();
     const telegramWebApp = typeof window !== 'undefined' ? (window as any).Telegram?.WebApp : null;
     telegramWebApp?.ready?.();
     telegramWebApp?.expand?.();
-
-    const snapshot = getTelegramSnapshot();
 
     const loadConfig = async () => {
       try {
