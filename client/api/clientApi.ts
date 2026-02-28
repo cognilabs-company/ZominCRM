@@ -4,12 +4,27 @@ const envClientApiBaseUrl =
 const envAdminApiBaseUrl =
   typeof import.meta !== 'undefined' ? (import.meta as any).env?.VITE_API_BASE_URL : undefined;
 
+const isLocalLikeUrl = (value?: string) => {
+  if (!value) return false;
+
+  try {
+    const parsed = new URL(value);
+    return parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1';
+  } catch {
+    return value.includes('localhost') || value.includes('127.0.0.1');
+  }
+};
+
 const deriveClientApiBaseUrl = () => {
-  if (envClientApiBaseUrl) {
+  const currentHostIsLocal =
+    typeof window !== 'undefined' &&
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+  if (envClientApiBaseUrl && (!isLocalLikeUrl(envClientApiBaseUrl) || currentHostIsLocal)) {
     return envClientApiBaseUrl;
   }
 
-  if (envAdminApiBaseUrl) {
+  if (envAdminApiBaseUrl && (!isLocalLikeUrl(envAdminApiBaseUrl) || currentHostIsLocal)) {
     return envAdminApiBaseUrl.replace(/\/internal\/?$/, '/client/webapp');
   }
 

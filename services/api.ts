@@ -6,15 +6,40 @@
  * Envelope: { "ok": true, ...data }
  */
 
-const DEFAULT_API_HOST =
-  typeof window !== 'undefined' && window.location.hostname
-    ? window.location.hostname
-    : 'localhost';
+const envApiBaseUrl =
+  typeof import.meta !== 'undefined' ? (import.meta as any).env?.VITE_API_BASE_URL : undefined;
 
-// Local development base URL
-export const API_BASE_URL =
-  (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_BASE_URL) ||
-  `http://${DEFAULT_API_HOST}:8000/internal`;
+const isLocalLikeUrl = (value?: string) => {
+  if (!value) return false;
+
+  try {
+    const parsed = new URL(value);
+    return parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1';
+  } catch {
+    return value.includes('localhost') || value.includes('127.0.0.1');
+  }
+};
+
+const resolveApiBaseUrl = () => {
+  const currentHost =
+    typeof window !== 'undefined' && window.location.hostname
+      ? window.location.hostname
+      : 'localhost';
+
+  const currentHostIsLocal = currentHost === 'localhost' || currentHost === '127.0.0.1';
+
+  if (envApiBaseUrl && (!isLocalLikeUrl(envApiBaseUrl) || currentHostIsLocal)) {
+    return envApiBaseUrl;
+  }
+
+  if (!currentHostIsLocal && !currentHost.startsWith('api.')) {
+    return `${window.location.protocol}//api.${currentHost}/internal`;
+  }
+
+  return `http://${currentHost}:8000/internal`;
+};
+
+export const API_BASE_URL = resolveApiBaseUrl();
 
 // Endpoints
 export const ENDPOINTS = {
