@@ -100,7 +100,7 @@ const App: React.FC = () => {
                   <Route path="/orders" element={<RequirePermission permission="orders.access"><Orders /></RequirePermission>} />
                   <Route path="/products" element={<RequirePermission permission="products.access"><Products /></RequirePermission>} />
                   <Route path="/clients" element={<RequirePermission permission="crm.access"><Clients /></RequirePermission>} />
-                  <Route path="/leads" element={<RequirePermission permission="crm.access"><Leads /></RequirePermission>} />
+                  <Route path="/leads" element={<RequireAdmin><Leads /></RequireAdmin>} />
                   <Route path="/payments" element={<RequirePermission permission="payments.access"><Payments /></RequirePermission>} />
                   <Route path="/couriers" element={<RequirePermission permission="couriers.access"><Couriers /></RequirePermission>} />
                   <Route path="/users" element={<RequireAdmin><Users /></RequireAdmin>} />

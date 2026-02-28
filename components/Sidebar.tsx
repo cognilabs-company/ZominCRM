@@ -20,8 +20,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onCloseMob
     switch (id) {
       case 'dashboard': return hasPermission('dashboard.access');
       case 'conversations':
-      case 'clients':
-      case 'leads': return hasPermission('crm.access');
+      case 'clients': return hasPermission('crm.access');
+      case 'leads': return isAdmin;
       case 'orders': return hasPermission('orders.access');
       case 'payments': return hasPermission('payments.access');
       case 'couriers': return hasPermission('couriers.access');

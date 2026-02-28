@@ -6,6 +6,7 @@ import { Modal } from '../components/ui/Modal';
 import { useLanguage } from '../context/LanguageContext';
 import { useToast } from '../context/ToastContext';
 import { ApiError, ENDPOINTS, apiRequest } from '../services/api';
+import { OrderStatus } from '../types';
 import { RefreshCw, CreditCard, CheckCircle, AlertTriangle, PlayCircle, Eye, Link2, Info } from 'lucide-react';
 
 type PaymentsTab = 'transactions' | 'attempts' | 'ambiguous';
@@ -85,6 +86,26 @@ interface AttachOrderResponse {
   force?: boolean;
 }
 
+interface AttachableOrder {
+  id: string;
+  status: OrderStatus;
+  payment_method: 'UNKNOWN' | 'CASH' | 'TRANSFER';
+  total_amount_uzs: number;
+  client_id?: string | null;
+  location_text?: string | null;
+  created_at?: string;
+}
+
+const ATTACHABLE_ORDER_STATUSES: OrderStatus[] = [
+  'NEW_LEAD',
+  'INFO_COLLECTED',
+  'PAYMENT_PENDING',
+  'PAYMENT_CONFIRMED',
+  'DISPATCHED',
+  'ASSIGNED',
+  'OUT_FOR_DELIVERY',
+];
+
 const statusBadge = (status: string) => {
   if (['CONFIRMED', 'MATCHED', 'SUCCESS'].includes(status)) return 'success' as const;
   if (['PENDING', 'NEEDS_ADMIN', 'WAITING'].includes(status)) return 'warning' as const;
@@ -128,6 +149,8 @@ const Payments: React.FC = () => {
   const [attachOrderId, setAttachOrderId] = useState('');
   const [attaching, setAttaching] = useState(false);
   const [attachError, setAttachError] = useState<string | null>(null);
+  const [attachOrders, setAttachOrders] = useState<AttachableOrder[]>([]);
+  const [attachOrdersLoading, setAttachOrdersLoading] = useState(false);
   const [delayMinutes, setDelayMinutes] = useState(10);
   const [runLimit, setRunLimit] = useState(100);
   const [remindersBusy, setRemindersBusy] = useState<'preview' | 'run' | null>(null);
@@ -138,11 +161,44 @@ const Payments: React.FC = () => {
     return `#${orderId.slice(0, 8)}`;
   }, []);
 
+  const getOrderStatusLabel = useCallback((status: OrderStatus) => {
+    if (status === 'NEW_LEAD') return tr('New lead', 'Novyy lid', 'Yangi lid');
+    if (status === 'INFO_COLLECTED') return tr('Info collected', 'Dannye sobrany', "Malumot yigilgan");
+    if (status === 'PAYMENT_PENDING') return tr('Payment pending', 'Ozhidayet oplaty', "Tolov kutilmoqda");
+    if (status === 'PAYMENT_CONFIRMED') return tr('Payment confirmed', 'Oplata podtverzhdena', "Tolov tasdiqlangan");
+    if (status === 'DISPATCHED') return tr('Dispatched', 'Otpravlen', 'Yuborilgan');
+    if (status === 'ASSIGNED') return tr('Assigned', 'Naznachen', 'Biriktirilgan');
+    if (status === 'OUT_FOR_DELIVERY') return tr('Out for delivery', 'V dostavke', 'Yetkazib berishda');
+    if (status === 'DELIVERED') return tr('Delivered', 'Dostavlen', 'Yetkazildi');
+    if (status === 'CANCELED') return tr('Canceled', 'Otmenen', 'Bekor qilingan');
+    return tr('Failed', 'Neudachno', 'Muvaffaqiyatsiz');
+  }, [tr]);
+
   const openOrderPage = useCallback((orderId?: string | null) => {
     if (!orderId) return;
     setSelectedTransaction(null);
     navigate(`/orders?order_id=${encodeURIComponent(orderId)}`);
   }, [navigate]);
+
+  const loadAttachOrders = useCallback(async () => {
+    try {
+      setAttachOrdersLoading(true);
+      const params = new URLSearchParams({
+        payment_method: 'TRANSFER',
+        status: ATTACHABLE_ORDER_STATUSES.join(','),
+      });
+      const res = await apiRequest<{ results?: AttachableOrder[] }>(`${ENDPOINTS.ORDERS.LIST}?${params.toString()}`);
+      setAttachOrders(res.results || []);
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : tr('Failed to load available orders.', 'Ne udalos zagruzit dostupnye zakazy.', 'Mavjud buyurtmalarni yuklab bolmadi.');
+      setAttachOrders([]);
+      setAttachError(message);
+    } finally {
+      setAttachOrdersLoading(false);
+    }
+  }, [tr]);
 
   const getAttachErrorMessage = useCallback((error: unknown) => {
     if (error instanceof ApiError) {
@@ -170,13 +226,15 @@ const Payments: React.FC = () => {
     setAttachTransaction(tx);
     setAttachOrderId(tx.linked_order_id || '');
     setAttachError(null);
-  }, []);
+    void loadAttachOrders();
+  }, [loadAttachOrders]);
 
   const closeAttachModal = useCallback(() => {
     if (attaching) return;
     setAttachTransaction(null);
     setAttachOrderId('');
     setAttachError(null);
+    setAttachOrders([]);
   }, [attaching]);
 
   const loadTabData = useCallback(async () => {
@@ -637,19 +695,30 @@ const Payments: React.FC = () => {
 
             <div className="rounded-lg border border-light-border dark:border-navy-700 p-4 space-y-3">
               <div>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">{tr('Order ID', 'ID zakaza', 'Buyurtma ID')}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{tr('Paste full order UUID to attach this transaction.', 'Vstavte polnyy UUID zakaza dlya privyazki etoy tranzaktsii.', 'Ushbu tranzaksiyani boglash uchun buyurtmaning toliq UUID sini kiriting.')}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{tr('Select order', 'Vyberite zakaz', 'Buyurtmani tanlang')}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{tr('Only active transfer orders are shown here.', 'Zdes pokazany tolko aktivnye zakazy s TRANSFER.', 'Bu yerda faqat aktiv otkazma buyurtmalar korsatiladi.')}</p>
               </div>
-              <input
-                type="text"
+              <select
                 value={attachOrderId}
                 onChange={(e) => {
                   setAttachOrderId(e.target.value);
                   if (attachError) setAttachError(null);
                 }}
-                placeholder={tr('Enter order UUID', 'Vvedite UUID zakaza', 'Buyurtma UUID sini kiriting')}
+                disabled={attachOrdersLoading || attaching}
                 className="w-full bg-white dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2.5 text-sm text-gray-900 dark:text-white outline-none focus:border-primary-blue"
-              />
+              >
+                <option value="">{attachOrdersLoading ? tr('Loading orders...', 'Zagruzka zakazov...', 'Buyurtmalar yuklanmoqda...') : tr('Choose order', 'Vyberite zakaz', 'Buyurtmani tanlang')}</option>
+                {attachOrders.map((order) => (
+                  <option key={order.id} value={order.id}>
+                    {`${formatOrderRef(order.id)} · ${formatAmount(order.total_amount_uzs)} · ${getOrderStatusLabel(order.status)}`}
+                  </option>
+                ))}
+              </select>
+              {!attachOrdersLoading && attachOrders.length === 0 && !attachError && (
+                <div className="rounded-lg border border-light-border dark:border-navy-700 bg-gray-50 dark:bg-navy-900/40 px-3 py-2 text-xs text-gray-600 dark:text-gray-300">
+                  {tr('No active transfer orders available for manual attach.', 'Net aktivnykh TRANSFER-zakazov dlya ruchnoy privyazki.', 'Qolda boglash uchun aktiv otkazma buyurtmalar topilmadi.')}
+                </div>
+              )}
               {attachError && (
                 <div className="rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/20 px-3 py-2 text-xs text-red-700 dark:text-red-300">
                   {attachError}
