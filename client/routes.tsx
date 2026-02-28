@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Droplets, Home, Package, ShoppingBag, ShoppingCart, UserRound } from 'lucide-react';
 import { ClientBottlesPage } from './pages/ClientBottlesPage';
 import { ClientCartPage } from './pages/ClientCartPage';
@@ -11,8 +11,7 @@ import { ClientProfilePage } from './pages/ClientProfilePage';
 export interface ClientRouteDefinition {
   id: string;
   path: string;
-  label: string;
-  navLabel: string;
+  navLabelKey: string;
   icon: React.ComponentType<{ size?: number; className?: string }>;
   showInNav: boolean;
   element: React.ReactElement;
@@ -22,8 +21,7 @@ export const clientRouteDefinitions: ClientRouteDefinition[] = [
   {
     id: 'home',
     path: 'home',
-    label: 'Home',
-    navLabel: 'Home',
+    navLabelKey: 'nav.home',
     icon: Home,
     showInNav: true,
     element: <ClientHomePage />,
@@ -31,8 +29,7 @@ export const clientRouteDefinitions: ClientRouteDefinition[] = [
   {
     id: 'products',
     path: 'products',
-    label: 'Products',
-    navLabel: 'Products',
+    navLabelKey: 'nav.products',
     icon: ShoppingBag,
     showInNav: true,
     element: <ClientProductsPage />,
@@ -40,8 +37,7 @@ export const clientRouteDefinitions: ClientRouteDefinition[] = [
   {
     id: 'cart',
     path: 'cart',
-    label: 'Cart',
-    navLabel: 'Cart',
+    navLabelKey: 'nav.cart',
     icon: ShoppingCart,
     showInNav: true,
     element: <ClientCartPage />,
@@ -49,8 +45,7 @@ export const clientRouteDefinitions: ClientRouteDefinition[] = [
   {
     id: 'checkout-preview',
     path: 'checkout-preview',
-    label: 'Checkout Preview',
-    navLabel: 'Preview',
+    navLabelKey: 'nav.preview',
     icon: Package,
     showInNav: false,
     element: <ClientCheckoutPreviewPage />,
@@ -58,8 +53,7 @@ export const clientRouteDefinitions: ClientRouteDefinition[] = [
   {
     id: 'orders',
     path: 'orders',
-    label: 'Orders',
-    navLabel: 'Orders',
+    navLabelKey: 'nav.orders',
     icon: Package,
     showInNav: true,
     element: <ClientOrdersPage />,
@@ -67,8 +61,7 @@ export const clientRouteDefinitions: ClientRouteDefinition[] = [
   {
     id: 'bottles',
     path: 'bottles',
-    label: 'Bottles',
-    navLabel: 'Bottles',
+    navLabelKey: 'nav.bottles',
     icon: Droplets,
     showInNav: true,
     element: <ClientBottlesPage />,
@@ -76,8 +69,7 @@ export const clientRouteDefinitions: ClientRouteDefinition[] = [
   {
     id: 'profile',
     path: 'profile',
-    label: 'Profile',
-    navLabel: 'Profile',
+    navLabelKey: 'nav.profile',
     icon: UserRound,
     showInNav: false,
     element: <ClientProfilePage />,

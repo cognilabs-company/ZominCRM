@@ -1,13 +1,14 @@
-import React from 'react';
+ï»¿import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { AlertTriangle, ArrowLeft, CheckCircle2, ReceiptText } from 'lucide-react';
 import { clientApiRequest } from '../api/clientApi';
 import { useClientApp } from '../bootstrap/ClientAppContext';
 import { useClientCart } from '../bootstrap/ClientCartContext';
+import { useClientLanguage } from '../bootstrap/ClientLanguageContext';
 import { ClientPage } from '../components/ClientPage';
 import { ClientPanel } from '../components/ClientPanel';
 import { ClientCreateOrderResponse, ClientOrderPreviewResponse } from '../types';
-import { formatAmount, formatDateTime, formatOrderRef, getOrderStatusClasses, getOrderStatusLabel, parseNumericInput } from '../utils';
+import { formatAmount, formatDateTime, formatOrderRef, getOrderStatusClasses, getOrderStatusLabel, getPaymentMethodLabel, parseNumericInput } from '../utils';
 
 const buildPayload = (items: ReturnType<typeof useClientCart>['items'], orderDraft: ReturnType<typeof useClientCart>['orderDraft']) => ({
   order: {
@@ -27,6 +28,7 @@ export const ClientCheckoutPreviewPage: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated, sessionToken, refreshBootstrap } = useClientApp();
   const { items, orderDraft, clearCart } = useClientCart();
+  const { language, t } = useClientLanguage();
   const [preview, setPreview] = React.useState<ClientOrderPreviewResponse | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
@@ -50,11 +52,11 @@ export const ClientCheckoutPreviewPage: React.FC = () => {
       setPreview(response);
     } catch (loadError) {
       setPreview(null);
-      setError(loadError instanceof Error ? loadError.message : 'Failed to preview order.');
+      setError(loadError instanceof Error ? loadError.message : t('checkout.error_preview'));
     } finally {
       setLoading(false);
     }
-  }, [canRequestPreview, items, orderDraft, sessionToken]);
+  }, [canRequestPreview, items, orderDraft, sessionToken, t]);
 
   React.useEffect(() => {
     void loadPreview();
@@ -77,7 +79,7 @@ export const ClientCheckoutPreviewPage: React.FC = () => {
       await refreshBootstrap();
       navigate('/app/orders');
     } catch (createError) {
-      setError(createError instanceof Error ? createError.message : 'Failed to create order.');
+      setError(createError instanceof Error ? createError.message : t('checkout.error_create'));
     } finally {
       setSubmitting(false);
     }
@@ -85,28 +87,28 @@ export const ClientCheckoutPreviewPage: React.FC = () => {
 
   if (!isAuthenticated) {
     return (
-      <ClientPage title="Checkout Preview" subtitle="Open the Telegram WebApp to preview and submit orders.">
-        <ClientPanel className="p-5 text-sm text-slate-500">Client preview requires a verified Telegram session.</ClientPanel>
+      <ClientPage title={t('checkout.title')} subtitle={t('checkout.unauth_subtitle')}>
+        <ClientPanel className="p-5 text-sm text-slate-500">{t('checkout.unauth_description')}</ClientPanel>
       </ClientPage>
     );
   }
 
   if (!items.length) {
     return (
-      <ClientPage title="Checkout Preview" subtitle="There is nothing to preview yet.">
-        <ClientPanel className="p-5 text-sm text-slate-500">Add products to the cart first, then return here for exact deposit-aware pricing.</ClientPanel>
+      <ClientPage title={t('checkout.title')} subtitle={t('checkout.empty_subtitle')}>
+        <ClientPanel className="p-5 text-sm text-slate-500">{t('checkout.empty_description')}</ClientPanel>
       </ClientPage>
     );
   }
 
   if (!orderDraft.location_text.trim()) {
     return (
-      <ClientPage title="Checkout Preview" subtitle="Delivery details are required before preview.">
+      <ClientPage title={t('checkout.title')} subtitle={t('checkout.address_required_subtitle')}>
         <ClientPanel className="p-5">
-          <p className="text-sm leading-6 text-slate-500">Add a delivery address in the cart page before requesting preview.</p>
+          <p className="text-sm leading-6 text-slate-500">{t('checkout.address_required_description')}</p>
           <NavLink to="/app/cart" className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800">
             <ArrowLeft size={15} />
-            Back to cart
+            {t('checkout.back_to_cart')}
           </NavLink>
         </ClientPanel>
       </ClientPage>
@@ -115,15 +117,15 @@ export const ClientCheckoutPreviewPage: React.FC = () => {
 
   return (
     <ClientPage
-      title="Checkout Preview"
-      subtitle="Preview exact product subtotal, bottle deposit, and total payable before creating the order."
+      title={t('checkout.title')}
+      subtitle={t('checkout.subtitle')}
       action={
         <NavLink
           to="/app/cart"
           className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
         >
           <ArrowLeft size={15} />
-          Back to cart
+          {t('checkout.back_to_cart')}
         </NavLink>
       }
     >
@@ -132,7 +134,7 @@ export const ClientCheckoutPreviewPage: React.FC = () => {
       ) : null}
 
       {loading ? (
-        <ClientPanel className="p-5 text-sm text-slate-500">Calculating preview...</ClientPanel>
+        <ClientPanel className="p-5 text-sm text-slate-500">{t('checkout.loading')}</ClientPanel>
       ) : null}
 
       {preview?.blocked_by_active_order && preview.active_order ? (
@@ -142,17 +144,17 @@ export const ClientCheckoutPreviewPage: React.FC = () => {
               <AlertTriangle size={20} />
             </div>
             <div className="min-w-0 flex-1">
-              <h2 className="text-base font-semibold text-slate-950">New order is blocked</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-500">You already have an active order. Open it first before creating a new one.</p>
+              <h2 className="text-base font-semibold text-slate-950">{t('checkout.blocked_title')}</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-500">{t('checkout.blocked_description')}</p>
               <div className="mt-4 rounded-2xl bg-slate-100 p-4">
                 <p className="text-sm font-semibold text-slate-950">{formatOrderRef(preview.active_order.id)}</p>
-                <p className="mt-1 text-sm text-slate-500">{preview.active_order.location_text || 'Delivery address pending'}</p>
+                <p className="mt-1 text-sm text-slate-500">{preview.active_order.location_text || t('checkout.delivery_pending')}</p>
                 <div className={`mt-3 inline-flex rounded-full px-3 py-1 text-xs font-medium ${getOrderStatusClasses(preview.active_order.status)}`}>
-                  {getOrderStatusLabel(preview.active_order.status)}
+                  {getOrderStatusLabel(preview.active_order.status, language)}
                 </div>
               </div>
               <NavLink to="/app/orders" className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800">
-                Open orders
+                {t('checkout.open_orders')}
               </NavLink>
             </div>
           </div>
@@ -163,30 +165,30 @@ export const ClientCheckoutPreviewPage: React.FC = () => {
         <>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <ClientPanel className="p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Product subtotal</p>
-              <p className="mt-2 text-xl font-semibold text-slate-950">{formatAmount(preview.preview.product_subtotal_uzs)}</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{t('checkout.product_subtotal')}</p>
+              <p className="mt-2 text-xl font-semibold text-slate-950">{formatAmount(preview.preview.product_subtotal_uzs, language)}</p>
             </ClientPanel>
             <ClientPanel className="p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Bottle deposit</p>
-              <p className="mt-2 text-xl font-semibold text-slate-950">{formatAmount(preview.preview.bottle_deposit_total_uzs)}</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{t('checkout.deposit')}</p>
+              <p className="mt-2 text-xl font-semibold text-slate-950">{formatAmount(preview.preview.bottle_deposit_total_uzs, language)}</p>
             </ClientPanel>
             <ClientPanel className="p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Total payable</p>
-              <p className="mt-2 text-xl font-semibold text-slate-950">{formatAmount(preview.preview.total_amount_uzs)}</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{t('checkout.total_payable')}</p>
+              <p className="mt-2 text-xl font-semibold text-slate-950">{formatAmount(preview.preview.total_amount_uzs, language)}</p>
             </ClientPanel>
           </div>
 
           {preview.bottle_summary ? (
             <ClientPanel className="p-5">
-              <h2 className="text-base font-semibold text-slate-950">Bottle coverage summary</h2>
+              <h2 className="text-base font-semibold text-slate-950">{t('checkout.coverage_summary')}</h2>
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <div className="rounded-2xl bg-slate-100 px-4 py-3">
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Outstanding bottles</p>
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{t('checkout.outstanding_bottles')}</p>
                   <p className="mt-2 text-xl font-semibold text-slate-950">{preview.bottle_summary.total_outstanding_bottles_count}</p>
                 </div>
                 <div className="rounded-2xl bg-slate-100 px-4 py-3">
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Deposit held</p>
-                  <p className="mt-2 text-xl font-semibold text-slate-950">{formatAmount(preview.bottle_summary.deposit_held_total_uzs)}</p>
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{t('checkout.deposit_held')}</p>
+                  <p className="mt-2 text-xl font-semibold text-slate-950">{formatAmount(preview.bottle_summary.deposit_held_total_uzs, language)}</p>
                 </div>
               </div>
             </ClientPanel>
@@ -198,16 +200,16 @@ export const ClientCheckoutPreviewPage: React.FC = () => {
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h2 className="text-sm font-semibold text-slate-950">{item.product_name}</h2>
-                    <p className="mt-1 text-sm text-slate-500">{item.product_size_liters || '-'}L · Qty {item.quantity}</p>
+                    <p className="mt-1 text-sm text-slate-500">{item.product_size_liters || '-'}L Â· {t('orders.qty', { count: item.quantity })}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-semibold text-slate-950">{formatAmount(item.line_total_uzs)}</p>
-                    <p className="mt-1 text-xs text-slate-400">Deposit {formatAmount(item.bottle_deposit_total_uzs || 0)}</p>
+                    <p className="text-sm font-semibold text-slate-950">{formatAmount(item.line_total_uzs, language)}</p>
+                    <p className="mt-1 text-xs text-slate-400">{t('orders.deposit_item', { amount: formatAmount(item.bottle_deposit_total_uzs || 0, language) })}</p>
                   </div>
                 </div>
                 {item.requires_returnable_bottle ? (
                   <div className="mt-4 rounded-2xl bg-slate-100 px-4 py-3 text-sm text-slate-600">
-                    Covered bottles: {item.already_covered_bottle_count || 0} · Deposit charge qty: {item.bottle_deposit_charge_quantity || 0}
+                    {t('checkout.covered_bottles', { count: item.already_covered_bottle_count || 0 })} Â· {t('checkout.deposit_charge_qty', { count: item.bottle_deposit_charge_quantity || 0 })}
                   </div>
                 ) : null}
               </ClientPanel>
@@ -220,10 +222,10 @@ export const ClientCheckoutPreviewPage: React.FC = () => {
                 <ReceiptText size={20} />
               </div>
               <div className="min-w-0 flex-1">
-                <h2 className="text-base font-semibold text-slate-950">Delivery and payment</h2>
+                <h2 className="text-base font-semibold text-slate-950">{t('checkout.delivery_payment')}</h2>
                 <p className="mt-2 text-sm leading-6 text-slate-500">{orderDraft.location_text}</p>
-                <p className="mt-2 text-sm text-slate-500">Payment method: {orderDraft.payment_method}</p>
-                <p className="mt-1 text-sm text-slate-500">Requested delivery: {formatDateTime(orderDraft.delivery_time_requested ? new Date(orderDraft.delivery_time_requested).toISOString() : null)}</p>
+                <p className="mt-2 text-sm text-slate-500">{t('checkout.payment_method')}: {getPaymentMethodLabel(orderDraft.payment_method, language)}</p>
+                <p className="mt-1 text-sm text-slate-500">{t('checkout.requested_delivery')}: {formatDateTime(orderDraft.delivery_time_requested ? new Date(orderDraft.delivery_time_requested).toISOString() : null, language)}</p>
               </div>
             </div>
 
@@ -235,7 +237,7 @@ export const ClientCheckoutPreviewPage: React.FC = () => {
                 className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
               >
                 <CheckCircle2 size={18} />
-                {submitting ? 'Creating order...' : 'Create order'}
+                {submitting ? t('checkout.creating_order') : t('checkout.create_order')}
               </button>
             </div>
           </ClientPanel>

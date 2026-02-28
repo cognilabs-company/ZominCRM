@@ -1,9 +1,10 @@
-import React from 'react';
+﻿import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Minus, Plus, ShoppingBag, ShoppingCart, Trash2 } from 'lucide-react';
+import { Minus, Plus, ShoppingBag, ShoppingCart } from 'lucide-react';
 import { clientApiRequest } from '../api/clientApi';
 import { useClientApp } from '../bootstrap/ClientAppContext';
 import { useClientCart } from '../bootstrap/ClientCartContext';
+import { useClientLanguage } from '../bootstrap/ClientLanguageContext';
 import { ClientPage } from '../components/ClientPage';
 import { ClientPanel } from '../components/ClientPanel';
 import { ClientProduct, ClientProductsResponse } from '../types';
@@ -12,6 +13,7 @@ import { formatAmount, getAvailabilityClasses, getAvailabilityLabel } from '../u
 export const ClientProductsPage: React.FC = () => {
   const { isAuthenticated, sessionToken, status } = useClientApp();
   const { addProduct, updateQuantity, getItemQuantity, itemsCount } = useClientCart();
+  const { language, t } = useClientLanguage();
   const [products, setProducts] = React.useState<ClientProduct[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -29,7 +31,7 @@ export const ClientProductsPage: React.FC = () => {
         setProducts(response.results || []);
       } catch (loadError) {
         if (!active) return;
-        setError(loadError instanceof Error ? loadError.message : 'Failed to load products.');
+        setError(loadError instanceof Error ? loadError.message : t('products.error_load'));
       } finally {
         if (active) setLoading(false);
       }
@@ -39,13 +41,13 @@ export const ClientProductsPage: React.FC = () => {
     return () => {
       active = false;
     };
-  }, [sessionToken]);
+  }, [sessionToken, t]);
 
   if (!isAuthenticated && status !== 'loading') {
     return (
-      <ClientPage title="Products" subtitle="Open the Telegram WebApp to load your client catalog.">
+      <ClientPage title={t('products.title')} subtitle={t('products.unauth_subtitle')}>
         <ClientPanel className="p-5">
-          <p className="text-sm leading-6 text-slate-500">Client products are available only after Telegram WebApp bootstrap returns a client session token.</p>
+          <p className="text-sm leading-6 text-slate-500">{t('products.unauth_description')}</p>
         </ClientPanel>
       </ClientPage>
     );
@@ -53,15 +55,15 @@ export const ClientProductsPage: React.FC = () => {
 
   return (
     <ClientPage
-      title="Products"
-      subtitle="Active catalog products from /client/webapp/products/."
+      title={t('products.title')}
+      subtitle={t('products.subtitle')}
       action={
         <NavLink
           to="/app/cart"
           className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
         >
           <ShoppingCart size={16} />
-          Cart {itemsCount ? `(${itemsCount})` : ''}
+          {t('products.cart')} {itemsCount ? `(${itemsCount})` : ''}
         </NavLink>
       }
     >
@@ -70,11 +72,11 @@ export const ClientProductsPage: React.FC = () => {
       ) : null}
 
       {loading ? (
-        <ClientPanel className="p-5 text-sm text-slate-500">Loading products...</ClientPanel>
+        <ClientPanel className="p-5 text-sm text-slate-500">{t('products.loading')}</ClientPanel>
       ) : null}
 
       {!loading && !error && products.length === 0 ? (
-        <ClientPanel className="p-5 text-sm text-slate-500">No active products are available right now.</ClientPanel>
+        <ClientPanel className="p-5 text-sm text-slate-500">{t('products.empty')}</ClientPanel>
       ) : null}
 
       <div className="grid grid-cols-1 gap-3">
@@ -92,28 +94,28 @@ export const ClientProductsPage: React.FC = () => {
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <h2 className="text-base font-semibold text-slate-950">{product.name}</h2>
-                      <p className="mt-1 text-sm text-slate-500">{product.size_liters}L � {product.sku}</p>
+                      <p className="mt-1 text-sm text-slate-500">{product.size_liters}L · {product.sku}</p>
                     </div>
                     <span className={`inline-flex shrink-0 rounded-full px-3 py-1 text-xs font-medium ${getAvailabilityClasses(product.availability_status)}`}>
-                      {getAvailabilityLabel(product.availability_status)}
+                      {getAvailabilityLabel(product.availability_status, language)}
                     </span>
                   </div>
 
                   <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
                     <div className="rounded-2xl bg-slate-100 px-3 py-2">
-                      <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Price</p>
-                      <p className="mt-1 font-semibold text-slate-950">{formatAmount(product.price_uzs)}</p>
+                      <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{t('products.price')}</p>
+                      <p className="mt-1 font-semibold text-slate-950">{formatAmount(product.price_uzs, language)}</p>
                     </div>
                     <div className="rounded-2xl bg-slate-100 px-3 py-2">
-                      <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Bottle deposit</p>
+                      <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{t('products.deposit')}</p>
                       <p className="mt-1 font-semibold text-slate-950">
-                        {product.requires_returnable_bottle ? formatAmount(product.bottle_deposit_uzs) : 'No deposit'}
+                        {product.requires_returnable_bottle ? formatAmount(product.bottle_deposit_uzs, language) : t('products.no_deposit')}
                       </p>
                     </div>
                   </div>
 
                   <div className="mt-4 flex items-center justify-between gap-3">
-                    <p className="text-sm text-slate-500">Available count: {product.count}</p>
+                    <p className="text-sm text-slate-500">{t('products.available_count', { count: product.count })}</p>
                     {quantity > 0 ? (
                       <div className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-2 py-2 text-white">
                         <button type="button" onClick={() => updateQuantity(product.id, quantity - 1)} className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 transition hover:bg-white/15">
@@ -132,7 +134,7 @@ export const ClientProductsPage: React.FC = () => {
                         className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
                       >
                         <Plus size={16} />
-                        Add
+                        {t('products.add')}
                       </button>
                     )}
                   </div>
@@ -145,3 +147,4 @@ export const ClientProductsPage: React.FC = () => {
     </ClientPage>
   );
 };
+

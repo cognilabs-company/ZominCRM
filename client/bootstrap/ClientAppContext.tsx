@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { clientApiRequest, CLIENT_API_BASE_URL } from '../api/clientApi';
 import { ClientBootstrapResponse, ClientBootstrapState, ClientTelegramUser } from '../types';
 
@@ -123,7 +123,7 @@ export const ClientAppProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         initData: snapshot.initData,
         telegramUser: snapshot.telegramUser,
         apiBaseUrl: CLIENT_API_BASE_URL,
-        error: error instanceof Error ? error.message : 'Client bootstrap failed.',
+        error: error instanceof Error ? error.message : 'Mijoz WebApp bootstrapi bajarilmadi.',
       });
     }
   }, []);
@@ -147,3 +147,4 @@ export const useClientApp = () => {
   }
   return context;
 };
+

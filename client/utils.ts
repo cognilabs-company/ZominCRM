@@ -1,37 +1,49 @@
-import { ClientOrderStatus } from './types';
+﻿import { ClientOrderStatus, ClientPaymentMethod, ClientUiLanguage } from './types';
 
-export const formatAmount = (value?: number | null) => `${Number(value || 0).toLocaleString()} UZS`;
-
-export const formatDateTime = (value?: string | null) => {
-  if (!value) return '-';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '-';
-  return date.toLocaleString();
+const localeMap: Record<ClientUiLanguage, string> = {
+  uz: 'uz-UZ',
+  ru: 'ru-RU',
+  en: 'en-US',
 };
 
-export const formatDate = (value?: string | null) => {
+const currencySuffix: Record<ClientUiLanguage, string> = {
+  uz: 'so\'m',
+  ru: 'сум',
+  en: 'UZS',
+};
+
+export const formatAmount = (value?: number | null, language: ClientUiLanguage = 'uz') => `${Intl.NumberFormat(localeMap[language]).format(Number(value || 0))} ${currencySuffix[language]}`;
+
+export const formatDateTime = (value?: string | null, language: ClientUiLanguage = 'uz') => {
   if (!value) return '-';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '-';
-  return date.toLocaleDateString();
+  return date.toLocaleString(localeMap[language]);
+};
+
+export const formatDate = (value?: string | null, language: ClientUiLanguage = 'uz') => {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+  return date.toLocaleDateString(localeMap[language]);
 };
 
 export const formatOrderRef = (orderId?: string | null) => (orderId ? `#${orderId.slice(0, 8)}` : '-');
 
-export const getOrderStatusLabel = (status?: ClientOrderStatus | string | null) => {
-  switch (status) {
-    case 'NEW_LEAD': return 'New lead';
-    case 'INFO_COLLECTED': return 'Info collected';
-    case 'PAYMENT_PENDING': return 'Payment pending';
-    case 'PAYMENT_CONFIRMED': return 'Payment confirmed';
-    case 'DISPATCHED': return 'Dispatched';
-    case 'ASSIGNED': return 'Assigned';
-    case 'OUT_FOR_DELIVERY': return 'Out for delivery';
-    case 'DELIVERED': return 'Delivered';
-    case 'CANCELED': return 'Canceled';
-    case 'FAILED': return 'Failed';
-    default: return status || '-';
-  }
+export const getOrderStatusLabel = (status?: ClientOrderStatus | string | null, language: ClientUiLanguage = 'uz') => {
+  const labels: Record<string, Record<ClientUiLanguage, string>> = {
+    NEW_LEAD: { uz: 'Yangi murojaat', ru: 'Новый лид', en: 'New lead' },
+    INFO_COLLECTED: { uz: 'Ma\'lumot olindi', ru: 'Данные собраны', en: 'Info collected' },
+    PAYMENT_PENDING: { uz: 'To\'lov kutilmoqda', ru: 'Ожидается оплата', en: 'Payment pending' },
+    PAYMENT_CONFIRMED: { uz: 'To\'lov tasdiqlangan', ru: 'Оплата подтверждена', en: 'Payment confirmed' },
+    DISPATCHED: { uz: 'Jo\'natildi', ru: 'Отправлен', en: 'Dispatched' },
+    ASSIGNED: { uz: 'Biriktirildi', ru: 'Назначен', en: 'Assigned' },
+    OUT_FOR_DELIVERY: { uz: 'Yetkazib berishda', ru: 'В доставке', en: 'Out for delivery' },
+    DELIVERED: { uz: 'Yetkazildi', ru: 'Доставлен', en: 'Delivered' },
+    CANCELED: { uz: 'Bekor qilindi', ru: 'Отменен', en: 'Canceled' },
+    FAILED: { uz: 'Muvaffaqiyatsiz', ru: 'Неуспешно', en: 'Failed' },
+  };
+  return labels[status || '']?.[language] || status || '-';
 };
 
 export const getOrderStatusClasses = (status?: ClientOrderStatus | string | null) => {
@@ -55,13 +67,13 @@ export const getOrderStatusClasses = (status?: ClientOrderStatus | string | null
   }
 };
 
-export const getAvailabilityLabel = (status?: string | null) => {
-  switch (status) {
-    case 'in_stock': return 'In stock';
-    case 'low_stock': return 'Low stock';
-    case 'out_of_stock': return 'Out of stock';
-    default: return status || '-';
-  }
+export const getAvailabilityLabel = (status?: string | null, language: ClientUiLanguage = 'uz') => {
+  const labels: Record<string, Record<ClientUiLanguage, string>> = {
+    in_stock: { uz: 'Bor', ru: 'В наличии', en: 'In stock' },
+    low_stock: { uz: 'Kam qoldi', ru: 'Мало осталось', en: 'Low stock' },
+    out_of_stock: { uz: 'Tugagan', ru: 'Нет в наличии', en: 'Out of stock' },
+  };
+  return labels[status || '']?.[language] || status || '-';
 };
 
 export const getAvailabilityClasses = (status?: string | null) => {
@@ -73,13 +85,36 @@ export const getAvailabilityClasses = (status?: string | null) => {
   }
 };
 
-export const getMovementLabel = (movementType?: string | null) => {
-  switch (movementType) {
-    case 'ORDER_DELIVERED': return 'Order delivered';
-    case 'REFUND': return 'Refund';
-    case 'MANUAL_ADJUST': return 'Manual adjust';
-    default: return movementType || '-';
+export const getMovementLabel = (movementType?: string | null, language: ClientUiLanguage = 'uz') => {
+  const labels: Record<string, Record<ClientUiLanguage, string>> = {
+    ORDER_DELIVERED: { uz: 'Buyurtma yetkazildi', ru: 'Заказ доставлен', en: 'Order delivered' },
+    REFUND: { uz: 'Qaytarildi', ru: 'Возврат', en: 'Refund' },
+    MANUAL_ADJUST: { uz: 'Qo\'lda tuzatish', ru: 'Ручная корректировка', en: 'Manual adjust' },
+  };
+  return labels[movementType || '']?.[language] || movementType || '-';
+};
+
+export const getPaymentMethodLabel = (paymentMethod?: ClientPaymentMethod | string | null, language: ClientUiLanguage = 'uz') => {
+  const labels: Record<string, Record<ClientUiLanguage, string>> = {
+    CASH: { uz: 'Naqd pul', ru: 'Наличные', en: 'Cash' },
+    TRANSFER: { uz: 'O\'tkazma', ru: 'Перевод', en: 'Transfer' },
+    UNKNOWN: { uz: 'Noma\'lum', ru: 'Неизвестно', en: 'Unknown' },
+  };
+  return labels[paymentMethod || '']?.[language] || paymentMethod || '-';
+};
+
+export const getClientLanguageLabel = (languageCode?: string | null, language: ClientUiLanguage = 'uz') => {
+  const normalized = (languageCode || '').trim().toLowerCase();
+  if (normalized.startsWith('ru')) {
+    return language === 'uz' ? 'Ruscha' : language === 'ru' ? 'Русский' : 'Russian';
   }
+  if (normalized.startsWith('en')) {
+    return language === 'uz' ? 'Inglizcha' : language === 'ru' ? 'Английский' : 'English';
+  }
+  if (normalized.startsWith('uz')) {
+    return language === 'uz' ? 'O\'zbekcha' : language === 'ru' ? 'Узбекский' : 'Uzbek';
+  }
+  return languageCode || '-';
 };
 
 export const parseNumericInput = (value: string) => {
@@ -88,3 +123,4 @@ export const parseNumericInput = (value: string) => {
   const numeric = Number(trimmed);
   return Number.isFinite(numeric) ? numeric : null;
 };
+

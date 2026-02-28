@@ -23,6 +23,7 @@ import Payments from './pages/Payments';
 import Couriers from './pages/Couriers';
 import { ClientAppProvider } from './client/bootstrap/ClientAppContext';
 import { ClientCartProvider } from './client/bootstrap/ClientCartContext';
+import { ClientLanguageProvider } from './client/bootstrap/ClientLanguageContext';
 import { ClientAppLayout } from './client/components/ClientAppLayout';
 import { clientRouteDefinitions } from './client/routes';
 
@@ -98,9 +99,11 @@ const App: React.FC = () => {
                   path="/app"
                   element={(
                     <ClientAppProvider>
-                      <ClientCartProvider>
-                        <ClientAppLayout />
-                      </ClientCartProvider>
+                      <ClientLanguageProvider>
+                        <ClientCartProvider>
+                          <ClientAppLayout />
+                        </ClientCartProvider>
+                      </ClientLanguageProvider>
                     </ClientAppProvider>
                   )}
                 >
@@ -145,4 +148,5 @@ const App: React.FC = () => {
 };
 
 export default App;
+
 

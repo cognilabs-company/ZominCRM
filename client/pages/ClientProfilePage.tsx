@@ -1,13 +1,16 @@
-import React from 'react';
+﻿import React from 'react';
 import { KeyRound, UserRound } from 'lucide-react';
 import { clientApiRequest } from '../api/clientApi';
 import { useClientApp } from '../bootstrap/ClientAppContext';
+import { useClientLanguage } from '../bootstrap/ClientLanguageContext';
 import { ClientPage } from '../components/ClientPage';
 import { ClientPanel } from '../components/ClientPanel';
 import { ClientProfile, ClientProfileResponse } from '../types';
+import { formatDateTime, getClientLanguageLabel } from '../utils';
 
 export const ClientProfilePage: React.FC = () => {
   const { telegramUser, telegramAvailable, initData, apiBaseUrl, sessionToken, client: bootstrapClient, tokenExpiresAt, clientCreated } = useClientApp();
+  const { language, t } = useClientLanguage();
   const [profile, setProfile] = React.useState<ClientProfile | null>(bootstrapClient);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -25,7 +28,7 @@ export const ClientProfilePage: React.FC = () => {
         setProfile(currentProfile);
       } catch (loadError) {
         if (!active) return;
-        setError(loadError instanceof Error ? loadError.message : 'Failed to load profile.');
+        setError(loadError instanceof Error ? loadError.message : t('profile.error_load'));
       } finally {
         if (active) setLoading(false);
       }
@@ -35,12 +38,12 @@ export const ClientProfilePage: React.FC = () => {
     return () => {
       active = false;
     };
-  }, [sessionToken]);
+  }, [sessionToken, t]);
 
   return (
     <ClientPage
-      title="Profile"
-      subtitle="Telegram identity, verified client profile, and WebApp session context."
+      title={t('profile.title')}
+      subtitle={t('profile.subtitle')}
     >
       {error ? (
         <ClientPanel className="border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{error}</ClientPanel>
@@ -53,19 +56,19 @@ export const ClientProfilePage: React.FC = () => {
               <UserRound size={20} />
             </div>
             <div className="min-w-0">
-              <h2 className="text-base font-semibold text-slate-950">{profile?.full_name || telegramUser?.first_name || telegramUser?.username || 'Telegram client'}</h2>
+              <h2 className="text-base font-semibold text-slate-950">{profile?.full_name || telegramUser?.first_name || telegramUser?.username || t('layout.telegram_client')}</h2>
               <p className="mt-1 text-sm text-slate-500">
-                {telegramAvailable ? 'Telegram WebApp context detected.' : 'Preview mode outside Telegram WebApp.'}
+                {telegramAvailable ? t('profile.context_detected') : t('profile.context_preview')}
               </p>
               <div className="mt-4 grid grid-cols-1 gap-2 text-sm text-slate-600">
-                <p><span className="font-medium text-slate-950">Username:</span> {profile?.username || telegramUser?.username || '-'}</p>
-                <p><span className="font-medium text-slate-950">Phone:</span> {profile?.phone || '-'}</p>
-                <p><span className="font-medium text-slate-950">Address:</span> {profile?.address || '-'}</p>
-                <p><span className="font-medium text-slate-950">Preferred language:</span> {profile?.preferred_language || telegramUser?.language_code || '-'}</p>
-                <p><span className="font-medium text-slate-950">Platform user ID:</span> {profile?.platform_user_id || telegramUser?.id || '-'}</p>
-                <p><span className="font-medium text-slate-950">Client created on bootstrap:</span> {clientCreated ? 'Yes' : 'No'}</p>
+                <p><span className="font-medium text-slate-950">{t('profile.username')}:</span> {profile?.username || telegramUser?.username || '-'}</p>
+                <p><span className="font-medium text-slate-950">{t('profile.phone')}:</span> {profile?.phone || '-'}</p>
+                <p><span className="font-medium text-slate-950">{t('profile.address')}:</span> {profile?.address || '-'}</p>
+                <p><span className="font-medium text-slate-950">{t('profile.preferred_language')}:</span> {getClientLanguageLabel(profile?.preferred_language || telegramUser?.language_code, language)}</p>
+                <p><span className="font-medium text-slate-950">{t('profile.platform_user_id')}:</span> {profile?.platform_user_id || telegramUser?.id || '-'}</p>
+                <p><span className="font-medium text-slate-950">{t('profile.client_created')}:</span> {clientCreated ? t('profile.yes') : t('profile.no')}</p>
               </div>
-              {loading ? <p className="mt-3 text-xs text-slate-400">Refreshing profile...</p> : null}
+              {loading ? <p className="mt-3 text-xs text-slate-400">{t('profile.refreshing')}</p> : null}
             </div>
           </div>
         </ClientPanel>
@@ -76,16 +79,16 @@ export const ClientProfilePage: React.FC = () => {
               <KeyRound size={20} />
             </div>
             <div className="min-w-0">
-              <h2 className="text-base font-semibold text-slate-950">Client session</h2>
+              <h2 className="text-base font-semibold text-slate-950">{t('profile.client_session')}</h2>
               <p className="mt-2 text-sm leading-6 text-slate-500">
-                The client app now uses `/client/webapp/bootstrap/` and the returned bearer token for all WebApp requests. Admin `/internal/...` APIs are not used here.
+                {t('profile.client_session_description')}
               </p>
               <div className="mt-4 space-y-2 text-sm text-slate-600">
-                <p><span className="font-medium text-slate-950">API base:</span> {apiBaseUrl}</p>
-                <p><span className="font-medium text-slate-950">Token expires at:</span> {tokenExpiresAt || '-'}</p>
+                <p><span className="font-medium text-slate-950">{t('profile.api_base')}:</span> {apiBaseUrl}</p>
+                <p><span className="font-medium text-slate-950">{t('profile.token_expires_at')}:</span> {tokenExpiresAt ? formatDateTime(tokenExpiresAt, language) : '-'}</p>
               </div>
               <p className="mt-3 break-all rounded-2xl bg-slate-100 px-3 py-2 text-xs text-slate-500">
-                {initData || 'Telegram initData is not available in preview mode.'}
+                {initData || t('profile.initdata_missing')}
               </p>
             </div>
           </div>

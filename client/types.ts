@@ -1,8 +1,10 @@
-export type ClientAppStatus = 'loading' | 'ready' | 'error';
+﻿export type ClientAppStatus = 'loading' | 'ready' | 'error';
 
 export type ClientAppMode = 'telegram' | 'preview';
 
 export type ClientPreferredLanguage = 'en' | 'ru' | 'uz' | string;
+
+export type ClientUiLanguage = 'uz' | 'ru' | 'en';
 
 export type ClientPaymentMethod = 'UNKNOWN' | 'CASH' | 'TRANSFER';
 
@@ -229,3 +231,4 @@ export interface ClientBottlesResponse {
   movements_count: number;
   movements: ClientBottleMovement[];
 }
+

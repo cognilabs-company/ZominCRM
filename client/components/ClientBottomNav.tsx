@@ -1,8 +1,10 @@
-import React from 'react';
+﻿import React from 'react';
 import { NavLink } from 'react-router-dom';
+import { useClientLanguage } from '../bootstrap/ClientLanguageContext';
 import { clientRouteDefinitions } from '../routes';
 
 export const ClientBottomNav: React.FC = () => {
+  const { t } = useClientLanguage();
   const navItems = clientRouteDefinitions.filter((item) => item.showInNav);
 
   return (
@@ -23,7 +25,7 @@ export const ClientBottomNav: React.FC = () => {
             {({ isActive }) => (
               <>
                 <item.icon size={18} className={isActive ? 'text-white' : ''} />
-                <span>{item.navLabel}</span>
+                <span>{t(item.navLabelKey)}</span>
               </>
             )}
           </NavLink>
