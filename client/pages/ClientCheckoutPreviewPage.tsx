@@ -122,7 +122,7 @@ export const ClientCheckoutPreviewPage: React.FC = () => {
       action={
         <NavLink
           to="/app/cart"
-          className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+          className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 active:bg-slate-100 shadow-sm hover:shadow-md"
         >
           <ArrowLeft size={15} />
           {t('checkout.back_to_cart')}
@@ -153,7 +153,7 @@ export const ClientCheckoutPreviewPage: React.FC = () => {
                   {getOrderStatusLabel(preview.active_order.status, language)}
                 </div>
               </div>
-              <NavLink to="/app/orders" className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800">
+              <NavLink to="/app/orders" className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 active:bg-slate-900 shadow-md hover:shadow-lg">
                 {t('checkout.open_orders')}
               </NavLink>
             </div>
@@ -233,8 +233,12 @@ export const ClientCheckoutPreviewPage: React.FC = () => {
               <button
                 type="button"
                 onClick={handleCreateOrder}
-                disabled={submitting}
-                className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
+                disabled={submitting || !canRequestPreview}
+                className={`inline-flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-medium transition ${
+                  submitting || !canRequestPreview
+                    ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                    : 'bg-slate-950 text-white hover:bg-slate-800 active:bg-slate-900 shadow-md hover:shadow-lg'
+                }`}
               >
                 <CheckCircle2 size={18} />
                 {submitting ? t('checkout.creating_order') : t('checkout.create_order')}

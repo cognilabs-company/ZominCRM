@@ -39,7 +39,7 @@ export const ClientBottlesPage: React.FC = () => {
         <ClientPanel className="p-5 text-sm text-slate-500">
           <p>{t('bottles.unauth_description')}</p>
           {openInTelegramUrl ? (
-            <a href={openInTelegramUrl} className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800">
+            <a href={openInTelegramUrl} className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 active:bg-slate-900 shadow-md hover:shadow-lg">
               {t('home.open_in_telegram_cta')}
             </a>
           ) : null}
@@ -56,7 +56,7 @@ export const ClientBottlesPage: React.FC = () => {
         <button
           type="button"
           onClick={() => void loadBottles()}
-          className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+          className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 active:bg-slate-100 shadow-sm hover:shadow-md"
         >
           <RefreshCw size={15} />
           {t('orders.refresh')}

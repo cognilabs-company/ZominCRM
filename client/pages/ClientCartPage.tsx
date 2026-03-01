@@ -19,7 +19,12 @@ export const ClientCartPage: React.FC = () => {
       action={
         <NavLink
           to="/app/checkout-preview"
-          className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-medium transition ${hasItems ? 'bg-slate-950 text-white hover:bg-slate-800' : 'bg-slate-200 text-slate-500'}`}
+          className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-medium transition ${
+            hasItems 
+              ? 'bg-slate-950 text-white hover:bg-slate-800 active:bg-slate-900 shadow-md hover:shadow-lg' 
+              : 'bg-slate-200 text-slate-400 cursor-not-allowed pointer-events-none'
+          }`}
+          aria-disabled={!hasItems}
         >
           {t('cart.preview')}
           <ArrowRight size={15} />
@@ -40,17 +45,17 @@ export const ClientCartPage: React.FC = () => {
                   <p className="mt-1 text-sm text-slate-500">{item.size_liters}L · {item.sku}</p>
                   <p className="mt-2 text-sm text-slate-500">{t('cart.unit_price')} {formatAmount(item.unit_price_uzs, language)}</p>
                 </div>
-                <button type="button" onClick={() => removeProduct(item.product_id)} className="rounded-2xl bg-rose-50 px-3 py-2 text-sm font-medium text-rose-600 transition hover:bg-rose-100">
+                <button type="button" onClick={() => removeProduct(item.product_id)} className="rounded-2xl bg-rose-50 px-3 py-2 text-sm font-medium text-rose-600 transition hover:bg-rose-100 active:bg-rose-200" title="Remove from cart">
                   {t('cart.remove')}
                 </button>
               </div>
               <div className="mt-4 flex items-center justify-between gap-3">
-                <div className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-2 py-2 text-white">
-                  <button type="button" onClick={() => updateQuantity(item.product_id, item.quantity - 1)} className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 transition hover:bg-white/15">
+                <div className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-2 py-2 text-white shadow-md">
+                  <button type="button" onClick={() => updateQuantity(item.product_id, item.quantity - 1)} className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 transition hover:bg-white/20 active:bg-white/25" aria-label="Decrease quantity">
                     <Minus size={16} />
                   </button>
                   <span className="min-w-8 text-center text-sm font-semibold">{item.quantity}</span>
-                  <button type="button" onClick={() => updateQuantity(item.product_id, item.quantity + 1)} className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 transition hover:bg-white/15">
+                  <button type="button" onClick={() => updateQuantity(item.product_id, item.quantity + 1)} className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 transition hover:bg-white/20 active:bg-white/25" aria-label="Increase quantity">
                     <Plus size={16} />
                   </button>
                 </div>
@@ -147,7 +152,7 @@ export const ClientCartPage: React.FC = () => {
               </div>
               <NavLink
                 to="/app/checkout-preview"
-                className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100"
+                className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100 active:bg-slate-200 shadow-lg hover:shadow-xl"
               >
                 {t('cart.continue_checkout')}
                 <ArrowRight size={16} />

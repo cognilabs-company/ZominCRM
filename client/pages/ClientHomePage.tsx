@@ -91,7 +91,7 @@ export const ClientHomePage: React.FC = () => {
             </div>
             <NavLink
               to="/app/orders"
-              className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+              className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 active:bg-slate-900 shadow-md hover:shadow-lg"
             >
               {t('home.open_orders')}
               <ArrowRight size={15} />
@@ -109,7 +109,7 @@ export const ClientHomePage: React.FC = () => {
             </div>
             <NavLink
               to="/app/cart"
-              className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+              className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 active:bg-slate-900 shadow-md hover:shadow-lg"
             >
               {t('products.open_cart')}
               <ArrowRight size={15} />

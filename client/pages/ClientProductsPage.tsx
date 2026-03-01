@@ -65,7 +65,7 @@ export const ClientProductsPage: React.FC = () => {
       action={
         <NavLink
           to="/app/cart"
-          className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+          className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 active:bg-slate-900 shadow-md hover:shadow-lg"
         >
           <ShoppingCart size={16} />
           {t('products.cart')} {itemsCount ? `(${itemsCount})` : ''}
@@ -122,12 +122,12 @@ export const ClientProductsPage: React.FC = () => {
                   <div className="mt-4 flex items-center justify-between gap-3">
                     <p className="text-sm text-slate-500">{t('products.available_count', { count: product.count })}</p>
                     {quantity > 0 ? (
-                      <div className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-2 py-2 text-white">
-                        <button type="button" onClick={() => updateQuantity(product.id, quantity - 1)} className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 transition hover:bg-white/15">
+                      <div className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-2 py-2 text-white shadow-md">
+                        <button type="button" onClick={() => updateQuantity(product.id, Math.max(0, quantity - 1))} className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 transition hover:bg-white/20 active:bg-white/25">
                           <Minus size={16} />
                         </button>
                         <span className="min-w-8 text-center text-sm font-semibold">{quantity}</span>
-                        <button type="button" onClick={() => updateQuantity(product.id, quantity + 1)} className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 transition hover:bg-white/15">
+                        <button type="button" onClick={() => updateQuantity(product.id, quantity + 1)} className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 transition hover:bg-white/20 active:bg-white/25">
                           <Plus size={16} />
                         </button>
                       </div>
@@ -136,7 +136,11 @@ export const ClientProductsPage: React.FC = () => {
                         type="button"
                         onClick={() => addProduct(product)}
                         disabled={unavailable}
-                        className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
+                        className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-medium transition ${
+                          unavailable
+                            ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                            : 'bg-slate-950 text-white hover:bg-slate-800 active:bg-slate-900 shadow-md hover:shadow-lg'
+                        }`}
                       >
                         <Plus size={16} />
                         {t('products.add')}

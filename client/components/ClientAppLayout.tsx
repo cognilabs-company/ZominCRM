@@ -82,7 +82,7 @@ export const ClientAppLayout: React.FC = () => {
                 </p>
               </div>
 
-              <NavLink to="/app/profile" className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800">
+              <NavLink to="/app/profile" className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 active:bg-slate-900 shadow-md hover:shadow-lg">
                 {t('layout.profile')}
                 <ArrowRight size={15} />
               </NavLink>
