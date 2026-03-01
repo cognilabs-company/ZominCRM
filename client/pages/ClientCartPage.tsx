@@ -10,6 +10,7 @@ import { formatAmount, getPaymentMethodLabel } from '../utils';
 export const ClientCartPage: React.FC = () => {
   const { items, itemsCount, orderDraft, productSubtotal, updateQuantity, removeProduct, setOrderDraft } = useClientCart();
   const { language, t } = useClientLanguage();
+  const hasItems = itemsCount > 0;
 
   return (
     <ClientPage
@@ -18,7 +19,7 @@ export const ClientCartPage: React.FC = () => {
       action={
         <NavLink
           to="/app/checkout-preview"
-          className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-medium transition ${itemsCount ? 'bg-slate-950 text-white hover:bg-slate-800' : 'bg-slate-200 text-slate-500'}`}
+          className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-medium transition ${hasItems ? 'bg-slate-950 text-white hover:bg-slate-800' : 'bg-slate-200 text-slate-500'}`}
         >
           {t('cart.preview')}
           <ArrowRight size={15} />
@@ -134,6 +135,27 @@ export const ClientCartPage: React.FC = () => {
           <p className="mt-2 text-xl font-semibold text-slate-950">{t('cart.deposit_preview')}</p>
         </ClientPanel>
       </div>
+
+      {hasItems ? (
+        <div className="sticky bottom-24 z-20">
+          <ClientPanel className="border-slate-950 bg-slate-950 p-4 text-white shadow-[0_18px_40px_rgba(15,23,42,0.26)]">
+            <div className="flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-xs uppercase tracking-[0.2em] text-white/55">{t('cart.ready_title')}</p>
+                <p className="mt-1 text-sm text-white/80">{t('cart.ready_description')}</p>
+                <p className="mt-2 text-base font-semibold">{formatAmount(productSubtotal, language)}</p>
+              </div>
+              <NavLink
+                to="/app/checkout-preview"
+                className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100"
+              >
+                {t('cart.continue_checkout')}
+                <ArrowRight size={16} />
+              </NavLink>
+            </div>
+          </ClientPanel>
+        </div>
+      ) : null}
     </ClientPage>
   );
 };

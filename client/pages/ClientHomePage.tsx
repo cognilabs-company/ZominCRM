@@ -1,6 +1,6 @@
 ﻿import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { ArrowRight, Droplets, Package, ShoppingBag, ShoppingCart, WalletCards } from 'lucide-react';
+import { ArrowRight, Droplets, Package, ShoppingBag, WalletCards } from 'lucide-react';
 import { useClientApp } from '../bootstrap/ClientAppContext';
 import { useClientCart } from '../bootstrap/ClientCartContext';
 import { useClientLanguage } from '../bootstrap/ClientLanguageContext';
@@ -17,28 +17,24 @@ export const ClientHomePage: React.FC = () => {
     {
       key: 'products',
       title: t('home.quick.products.title'),
-      description: t('home.quick.products.description'),
       to: '/app/products',
       icon: ShoppingBag,
     },
     {
       key: 'cart',
       title: t('home.quick.cart.title'),
-      description: t('home.quick.cart.description'),
       to: '/app/cart',
       icon: WalletCards,
     },
     {
       key: 'orders',
       title: t('home.quick.orders.title'),
-      description: t('home.quick.orders.description'),
       to: '/app/orders',
       icon: Package,
     },
     {
       key: 'bottles',
       title: t('home.quick.bottles.title'),
-      description: t('home.quick.bottles.description'),
       to: '/app/bottles',
       icon: Droplets,
     },
@@ -104,6 +100,24 @@ export const ClientHomePage: React.FC = () => {
         </ClientPanel>
       ) : null}
 
+      {itemsCount > 0 ? (
+        <ClientPanel className="p-5">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{t('cart.ready_title')}</p>
+              <p className="mt-1 text-sm text-slate-500">{t('cart.ready_description')}</p>
+            </div>
+            <NavLink
+              to="/app/cart"
+              className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+            >
+              {t('products.open_cart')}
+              <ArrowRight size={15} />
+            </NavLink>
+          </div>
+        </ClientPanel>
+      ) : null}
+
       <div className="grid grid-cols-1 gap-3">
         {quickActions.map((item) => (
           <NavLink key={item.key} to={item.to}>
@@ -113,27 +127,12 @@ export const ClientHomePage: React.FC = () => {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-slate-950">{item.title}</p>
-                <p className="mt-1 text-sm leading-6 text-slate-500">{item.description}</p>
               </div>
               <ArrowRight size={18} className="shrink-0 text-slate-300" />
             </ClientPanel>
           </NavLink>
         ))}
       </div>
-
-      <ClientPanel className="p-5">
-        <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-950 text-white">
-            <ShoppingCart size={20} />
-          </div>
-          <div>
-            <h2 className="text-base font-semibold text-slate-950">{t('home.checkout_flow_title')}</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-500">
-              {t('home.checkout_flow')}
-            </p>
-          </div>
-        </div>
-      </ClientPanel>
     </ClientPage>
   );
 };

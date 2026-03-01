@@ -149,6 +149,26 @@ export const ClientProductsPage: React.FC = () => {
           );
         })}
       </div>
+
+      {itemsCount > 0 ? (
+        <div className="sticky bottom-24 z-20">
+          <ClientPanel className="border-slate-950 bg-slate-950 p-4 text-white shadow-[0_18px_40px_rgba(15,23,42,0.26)]">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-white/55">{t('products.cart_ready')}</p>
+                <p className="mt-1 text-sm text-white/80">{t('products.cart')} {itemsCount}</p>
+              </div>
+              <NavLink
+                to="/app/cart"
+                className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100"
+              >
+                {t('products.open_cart')}
+                <ShoppingCart size={16} />
+              </NavLink>
+            </div>
+          </ClientPanel>
+        </div>
+      ) : null}
     </ClientPage>
   );
 };

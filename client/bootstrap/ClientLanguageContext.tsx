@@ -74,9 +74,11 @@ const translations: TranslationMap = {
   "products.no_deposit": { uz: "Depozit yo'q", ru: "Без депозита", en: "No deposit" },
   "products.available_count": { uz: "Mavjud son: {count}", ru: "В наличии: {count}", en: "Available count: {count}" },
   "products.add": { uz: "Qo'shish", ru: "Добавить", en: "Add" },
+  "products.cart_ready": { uz: "Savatchada mahsulot bor", ru: "Товары уже в корзине", en: "Cart has items" },
+  "products.open_cart": { uz: "Savatchani ochish", ru: "Открыть корзину", en: "Open cart" },
 
   "cart.title": { uz: "Savatcha", ru: "Корзина", en: "Cart" },
-  "cart.subtitle": { uz: "Yetkazib berish ma'lumotlarini shu yerda kiriting, keyin aniq depozit hisobini ko'rish uchun oldindan ko'rishga oting.", ru: "Укажите данные доставки здесь, затем перейдите к предпросмотру для точного расчета депозита.", en: "Set delivery details here, then move to preview for exact bottle deposit calculation." },
+  "cart.subtitle": { uz: "Buyurtmani davom ettirish uchun manzil va to'lov turini kiriting.", ru: "Укажите адрес и способ оплаты, чтобы продолжить заказ.", en: "Set address and payment method to continue your order." },
   "cart.preview": { uz: "Ko'rish", ru: "Предпросмотр", en: "Preview" },
   "cart.empty": { uz: "Savatcha bosh. Avval mahsulot qo'shing, keyin summa va depozitni ko'rib buyurtma yarating.", ru: "Корзина пуста. Сначала добавьте товары, затем проверьте сумму и депозит перед созданием заказа.", en: "Cart is empty. Add products first, then preview subtotal and deposit before creating an order." },
   "cart.unit_price": { uz: "Dona narxi", ru: "Цена за единицу", en: "Unit price" },
@@ -91,6 +93,9 @@ const translations: TranslationMap = {
   "cart.optional": { uz: "Ixtiyoriy", ru: "Необязательно", en: "Optional" },
   "cart.items": { uz: "Mahsulotlar", ru: "Позиции", en: "Items" },
   "cart.deposit_preview": { uz: "Ko'rishda hisoblanadi", ru: "Рассчитывается на предпросмотре", en: "Calculated on preview" },
+  "cart.ready_title": { uz: "Buyurtma tayyor", ru: "Заказ готов", en: "Order is ready" },
+  "cart.ready_description": { uz: "Mahsulotlar tanlangan. Endi ko'rish sahifasida jami summa va depozitni tekshiring.", ru: "Товары выбраны. Теперь проверьте итог и депозит на странице предпросмотра.", en: "Items are selected. Review the final amount and deposit on the preview page." },
+  "cart.continue_checkout": { uz: "Buyurtmani davom ettirish", ru: "Продолжить заказ", en: "Continue order" },
 
   "checkout.title": { uz: "Oldindan ko'rish", ru: "Предпросмотр заказа", en: "Checkout Preview" },
   "checkout.subtitle": { uz: "Buyurtma yaratishdan oldin mahsulot summasi, depozit va yakuniy to'lovni tekshiring.", ru: "Проверьте сумму товаров, депозит и итог перед созданием заказа.", en: "Preview exact product subtotal, bottle deposit, and total payable before creating the order." },
@@ -218,9 +223,9 @@ interface ClientLanguageContextValue {
 const ClientLanguageContext = React.createContext<ClientLanguageContextValue | undefined>(undefined);
 
 export const ClientLanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { client, telegramUser } = useClientApp();
+  const { client } = useClientApp();
 
-  const language = React.useMemo(() => normalizeClientLanguage(client?.preferred_language || telegramUser?.language_code || 'uz'), [client?.preferred_language, telegramUser?.language_code]);
+  const language = React.useMemo(() => normalizeClientLanguage(client?.preferred_language || 'uz'), [client?.preferred_language]);
 
   const value = React.useMemo<ClientLanguageContextValue>(() => ({
     language,

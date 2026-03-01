@@ -1,11 +1,11 @@
 ﻿import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { ArrowRight, Clock3, Package, RefreshCw, ShieldCheck, UserRound } from 'lucide-react';
+import { ArrowRight, Package, RefreshCw, ShieldCheck, UserRound } from 'lucide-react';
 import { useClientApp } from '../bootstrap/ClientAppContext';
 import { useClientLanguage } from '../bootstrap/ClientLanguageContext';
 import { ClientBottomNav } from './ClientBottomNav';
 import { ClientPanel } from './ClientPanel';
-import { formatAmount, formatDateTime, formatOrderRef, getOrderStatusLabel } from '../utils';
+import { formatAmount, formatOrderRef, getOrderStatusLabel } from '../utils';
 
 export const ClientAppLayout: React.FC = () => {
   const {
@@ -19,7 +19,6 @@ export const ClientAppLayout: React.FC = () => {
     bottleSummary,
     error,
     isAuthenticated,
-    tokenExpiresAt,
     openInTelegramUrl,
   } = useClientApp();
   const { language, t } = useClientLanguage();
@@ -27,19 +26,19 @@ export const ClientAppLayout: React.FC = () => {
   const displayName = client?.full_name || telegramUser?.first_name || telegramUser?.username || t('layout.telegram_client');
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(14,165,233,0.16),_transparent_32%),linear-gradient(180deg,#f8fafc_0%,#eef2ff_100%)] text-slate-950">
+    <div className="min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#eef2f7_100%)] text-slate-950">
       <div className="mx-auto flex min-h-screen w-full max-w-md flex-col px-4 pb-28 pt-4 md:pb-8">
         <ClientPanel className="overflow-hidden">
-          <div className="border-b border-slate-200/70 bg-[linear-gradient(135deg,#0f172a_0%,#1e293b_55%,#0f766e_100%)] px-5 py-5 text-white">
+          <div className="border-b border-slate-200/70 bg-[linear-gradient(135deg,#0f172a_0%,#172554_48%,#0f766e_100%)] px-5 py-5 text-white">
             <div className="flex items-start justify-between gap-4">
-              <div className="space-y-2">
-                <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-white/80">
+              <div className="space-y-3">
+                <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80">
                   <ShieldCheck size={14} />
                   {t('layout.badge')}
                 </div>
                 <div>
-                  <h1 className="text-2xl font-semibold tracking-tight">{t('layout.title')}</h1>
-                  <p className="mt-1 text-sm text-white/70">
+                  <h1 className="text-[30px] font-semibold tracking-tight">{t('layout.title')}</h1>
+                  <p className="mt-1 max-w-[20rem] text-sm leading-6 text-white/72">
                     {mode === 'telegram' ? t('layout.telegram_verified') : t('layout.preview_shell')}
                   </p>
                 </div>
@@ -47,7 +46,7 @@ export const ClientAppLayout: React.FC = () => {
               <button
                 type="button"
                 onClick={() => void refreshBootstrap()}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-white transition hover:bg-white/15"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-white transition hover:bg-white/15"
                 title={t('layout.refresh_title')}
               >
                 <RefreshCw size={16} />
@@ -55,15 +54,15 @@ export const ClientAppLayout: React.FC = () => {
             </div>
 
             <div className="mt-5 grid grid-cols-3 gap-3">
-              <div className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3">
+              <div className="rounded-3xl border border-white/10 bg-white/10 px-4 py-3">
                 <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">{t('layout.mode')}</p>
                 <p className="mt-1 text-sm font-medium capitalize">{t(`layout.mode.${mode}`)}</p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3">
+              <div className="rounded-3xl border border-white/10 bg-white/10 px-4 py-3">
                 <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">{t('layout.session')}</p>
                 <p className="mt-1 text-sm font-medium capitalize">{t(`layout.status.${status}`)}</p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3">
+              <div className="rounded-3xl border border-white/10 bg-white/10 px-4 py-3">
                 <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">{t('layout.deposit_held')}</p>
                 <p className="mt-1 text-sm font-medium">{formatAmount(bottleSummary?.deposit_held_total_uzs || 0, language)}</p>
               </div>
@@ -83,17 +82,14 @@ export const ClientAppLayout: React.FC = () => {
                 </p>
               </div>
 
-              <NavLink
-                to="/app/profile"
-                className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
-              >
+              <NavLink to="/app/profile" className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800">
                 {t('layout.profile')}
                 <ArrowRight size={15} />
               </NavLink>
             </div>
 
             {isAuthenticated && activeOrder ? (
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+              <div className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{t('layout.active_order')}</p>
@@ -108,13 +104,6 @@ export const ClientAppLayout: React.FC = () => {
                     <p className="mt-2 text-sm font-semibold text-slate-950">{formatAmount(activeOrder.total_amount_uzs, language)}</p>
                   </div>
                 </div>
-              </div>
-            ) : null}
-
-            {tokenExpiresAt ? (
-              <div className="inline-flex items-center gap-2 text-xs text-slate-500">
-                <Clock3 size={13} />
-                {t('layout.session_valid_until')} {formatDateTime(tokenExpiresAt, language)}
               </div>
             ) : null}
           </div>
