@@ -28,6 +28,11 @@ const MapViewport: React.FC<{ position: [number, number] }> = ({ position }) => 
 
   React.useEffect(() => {
     map.setView(position);
+    const timeout = window.setTimeout(() => {
+      map.invalidateSize();
+    }, 50);
+
+    return () => window.clearTimeout(timeout);
   }, [map, position]);
 
   return null;
@@ -131,6 +136,9 @@ export const ClientLocationPicker: React.FC<ClientLocationPickerProps> = ({
           <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#9a6b3a]">{t('cart.map_picker')}</p>
             <p className="mt-2 text-sm leading-6 text-[#5b6770]">{t('cart.map_description')}</p>
+            {selectedAddress ? (
+              <p className="mt-3 text-sm font-medium text-[#1f2933]">{selectedAddress}</p>
+            ) : null}
             {(latitude && longitude) ? (
               <p className="mt-3 text-xs text-[#7b8790]">
                 {t('cart.map_selected_coords', { lat: latitude, lng: longitude })}
@@ -192,7 +200,8 @@ export const ClientLocationPicker: React.FC<ClientLocationPickerProps> = ({
                 <Navigation size={15} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-[#1f2933]">{resolvingAddress ? t('cart.map_loading_address') : (selectedAddress || address || t('cart.delivery_address_placeholder'))}</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#9a6b3a]">{t('cart.map_selected_title')}</p>
+                <p className="mt-1 text-sm font-semibold text-[#1f2933]">{resolvingAddress ? t('cart.map_loading_address') : (selectedAddress || address || t('cart.map_selected_empty'))}</p>
                 <p className="mt-1 text-xs text-[#7b8790]">
                   {t('cart.map_selected_coords', {
                     lat: formatCoordinate(selectedPosition[0]),

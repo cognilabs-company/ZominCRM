@@ -45,6 +45,27 @@ const resolveApiBaseUrl = () => {
 
 export const API_BASE_URL = resolveApiBaseUrl();
 
+const resolveApiOrigin = () => {
+  try {
+    return new URL(API_BASE_URL).origin;
+  } catch {
+    if (typeof window !== 'undefined') {
+      return window.location.origin;
+    }
+    return '';
+  }
+};
+
+export const resolveAdminMediaUrl = (value?: string | null) => {
+  if (!value) return null;
+
+  try {
+    return new URL(value, resolveApiOrigin()).toString();
+  } catch {
+    return value;
+  }
+};
+
 // Endpoints
 export const ENDPOINTS = {
   AUTH: {

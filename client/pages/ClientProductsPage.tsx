@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Images, Minus, Plus, RefreshCw, ShoppingBag, ShoppingCart } from 'lucide-react';
-import { clientApiRequest } from '../api/clientApi';
+import { clientApiRequest, resolveClientMediaUrl } from '../api/clientApi';
 import { useClientApp } from '../bootstrap/ClientAppContext';
 import { useClientCart } from '../bootstrap/ClientCartContext';
 import { useClientLanguage } from '../bootstrap/ClientLanguageContext';
@@ -19,13 +19,13 @@ const getProductImages = (product: ClientProduct) => {
 
   if (product.image_url && !seen.has(product.image_url)) {
     seen.add(product.image_url);
-    items.push({ id: `${product.id}-primary`, url: product.image_url });
+    items.push({ id: `${product.id}-primary`, url: resolveClientMediaUrl(product.image_url) || product.image_url });
   }
 
   (product.images || []).forEach((image) => {
     if (!image.url || seen.has(image.url)) return;
     seen.add(image.url);
-    items.push({ id: image.id, url: image.url });
+    items.push({ id: image.id, url: resolveClientMediaUrl(image.url) || image.url });
   });
 
   return items;

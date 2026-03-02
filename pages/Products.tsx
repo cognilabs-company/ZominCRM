@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, ChevronLeft, ChevronRight, Edit2, Eye, ImagePlus, Images, Package, Plus, Search, Trash2, Upload, X } from 'lucide-react';
+import { AlertTriangle, ChevronLeft, ChevronRight, Edit2, Eye, Images, Package, Plus, Search, Trash2, Upload, X } from 'lucide-react';
 import { Badge } from '../components/ui/Badge';
 import { Card } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
 import { useLanguage } from '../context/LanguageContext';
 import { useToast } from '../context/ToastContext';
-import { ENDPOINTS, apiRequest } from '../services/api';
+import { ENDPOINTS, apiRequest, resolveAdminMediaUrl } from '../services/api';
 
 interface ApiProductImage {
   id: string;
@@ -56,7 +56,7 @@ const emptyForm: ProductFormState = {
 };
 
 const getPrimaryImage = (product?: Pick<ApiProduct, 'image_url' | 'images'> | null) =>
-  product?.image_url || product?.images?.[0]?.url || null;
+  resolveAdminMediaUrl(product?.image_url || product?.images?.[0]?.url || null);
 
 const getProductMedia = (product?: Pick<ApiProduct, 'image_url' | 'images'> | null) => {
   const items: ApiProductImage[] = [];
@@ -64,13 +64,13 @@ const getProductMedia = (product?: Pick<ApiProduct, 'image_url' | 'images'> | nu
 
   if (product?.image_url && !seen.has(product.image_url)) {
     seen.add(product.image_url);
-    items.push({ id: 'primary-image', url: product.image_url });
+    items.push({ id: 'primary-image', url: resolveAdminMediaUrl(product.image_url) || product.image_url });
   }
 
   (product?.images || []).forEach((image) => {
     if (!image.url || seen.has(image.url)) return;
     seen.add(image.url);
-    items.push(image);
+    items.push({ ...image, url: resolveAdminMediaUrl(image.url) || image.url });
   });
 
   return items;
@@ -210,7 +210,11 @@ const Products: React.FC = () => {
   }, [editing]);
 
   const existingGalleryImages = useMemo(
-    () => (replaceGallery ? [] : (editing?.images || []).filter((image) => !removeImageIds.includes(image.id))),
+    () =>
+      (replaceGallery ? [] : (editing?.images || []).filter((image) => !removeImageIds.includes(image.id))).map((image) => ({
+        ...image,
+        url: resolveAdminMediaUrl(image.url) || image.url,
+      })),
     [editing?.images, removeImageIds, replaceGallery]
   );
 
@@ -561,16 +565,16 @@ const Products: React.FC = () => {
               <div className="rounded-[28px] border border-light-border bg-white/80 p-5 shadow-sm dark:border-navy-700 dark:bg-navy-900/40">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Main photo', 'Главное фото', 'Asosiy rasm')}</p>
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{tr('This image is shown first in admin and WebApp.', 'Это фото показывается первым в админке и WebApp.', 'Bu rasm admin va WebAppda birinchi ko‘rinadi.')}</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Cover photo', 'Главное фото', 'Asosiy rasm')}</p>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{tr('Shown first in the catalog and client app.', 'Это фото показывается первым в админке и WebApp.', 'Bu rasm admin va WebAppda birinchi ko‘rinadi.')}</p>
                   </div>
                   <label className="cursor-pointer rounded-2xl bg-[#21404d] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1a3340]">
-                    <span className="inline-flex items-center gap-2"><Upload size={15} />{tr('Upload', 'Загрузить', 'Yuklash')}</span>
+                    <span className="inline-flex items-center gap-2"><Upload size={15} />{tr('Choose photo', 'Загрузить', 'Yuklash')}</span>
                     <input ref={primaryInputRef} type="file" accept="image/*" className="hidden" onChange={(event) => setPrimaryImageFile(event.target.files?.[0] || null)} />
                   </label>
                 </div>
                 <div className="mt-4 rounded-2xl border border-dashed border-[#d8c7b2] bg-[rgba(255,248,240,0.94)] px-4 py-3 text-sm text-[#5b6770]">
-                  {primaryImageFile ? primaryImageFile.name : tr('Choose a clean front image for the product.', 'Выберите аккуратное основное фото товара.', 'Mahsulot uchun toza asosiy rasm tanlang.')}
+                  {primaryImageFile ? primaryImageFile.name : tr('Choose a clear cover photo for the product.', 'Выберите аккуратное основное фото товара.', 'Mahsulot uchun toza asosiy rasm tanlang.')}
                 </div>
                 {primaryImageFile ? (
                   <button type="button" onClick={() => { setPrimaryImageFile(null); if (primaryInputRef.current) primaryInputRef.current.value = ''; }} className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-rose-600 transition hover:text-rose-700">
@@ -590,12 +594,20 @@ const Products: React.FC = () => {
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Gallery photos', 'Галерея', 'Galereya')}</p>
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{tr('Add extra photos for better product presentation.', 'Добавьте дополнительные фото для более сильной подачи товара.', 'Mahsulotni yaxshiroq ko‘rsatish uchun qo‘shimcha rasmlar qo‘shing.')}</p>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{tr('Add more angles if needed.', 'Добавьте дополнительные фото для более сильной подачи товара.', 'Mahsulotni yaxshiroq ko‘rsatish uchun qo‘shimcha rasmlar qo‘shing.')}</p>
                   </div>
                   <label className="cursor-pointer rounded-2xl bg-white px-4 py-2 text-sm font-semibold text-[#21404d] shadow-[0_10px_20px_rgba(33,64,77,0.12)] transition hover:bg-[#fff5ea]">
-                    <span className="inline-flex items-center gap-2"><Images size={15} />{tr('Add photos', 'Добавить фото', 'Rasm qo‘shish')}</span>
+                    <span className="inline-flex items-center gap-2"><Images size={15} />{tr('Add gallery', 'Добавить фото', 'Rasm qo‘shish')}</span>
                     <input ref={galleryInputRef} type="file" accept="image/*" multiple className="hidden" onChange={(event) => setGalleryFiles(Array.from(event.target.files || []))} />
                   </label>
+                </div>
+                <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-[#5b6770]">
+                  <span className="rounded-full bg-[rgba(255,248,240,0.94)] px-3 py-1.5 font-semibold text-[#21404d]">
+                    {existingGalleryImages.length} {tr('current', 'Ñ‚ÐµÐºÑƒÑ‰Ð¸Ñ…', 'mavjud')}
+                  </span>
+                  <span className="rounded-full bg-[rgba(236,242,255,0.94)] px-3 py-1.5 font-semibold text-[#355cbb]">
+                    {galleryFiles.length} {tr('new', 'Ð½Ð¾Ð²Ñ‹Ñ…', 'yangi')}
+                  </span>
                 </div>
                 {editing?.images?.length ? (
                   <label className="mt-4 inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
@@ -821,3 +833,4 @@ const Products: React.FC = () => {
 };
 
 export default Products;
+

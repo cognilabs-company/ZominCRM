@@ -111,11 +111,9 @@ export const ClientCartPage: React.FC = () => {
               />
             </div>
             <div className="rounded-[22px] border border-[#e7ddd0] bg-[rgba(255,248,240,0.94)] px-4 py-3 sm:col-span-2">
-              <p className="text-sm font-medium text-[#31424d]">{t('cart.map_picker')}</p>
+              <p className="text-sm font-medium text-[#31424d]">{t('cart.map_selected_title')}</p>
               <p className="mt-2 text-sm text-[#5b6770]">
-                {orderDraft.location_lat && orderDraft.location_lng
-                  ? t('cart.map_selected_coords', { lat: orderDraft.location_lat, lng: orderDraft.location_lng })
-                  : t('cart.optional')}
+                {orderDraft.location_text || t('cart.map_selected_empty')}
               </p>
             </div>
           </div>

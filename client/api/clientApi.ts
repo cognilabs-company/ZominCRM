@@ -55,6 +55,27 @@ const DEFAULT_CLIENT_API_BASE_URL = deriveClientApiBaseUrl();
 export const CLIENT_API_BASE_URL = DEFAULT_CLIENT_API_BASE_URL;
 export const CLIENT_CONFIG_URL = `${CLIENT_API_BASE_URL}/config/`;
 
+const resolveClientApiOrigin = () => {
+  try {
+    return new URL(CLIENT_API_BASE_URL).origin;
+  } catch {
+    if (typeof window !== 'undefined') {
+      return window.location.origin;
+    }
+    return '';
+  }
+};
+
+export const resolveClientMediaUrl = (value?: string | null) => {
+  if (!value) return null;
+
+  try {
+    return new URL(value, resolveClientApiOrigin()).toString();
+  } catch {
+    return value;
+  }
+};
+
 export class ClientApiError extends Error {
   status: number;
 
