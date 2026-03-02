@@ -37,6 +37,9 @@ export interface ClientProfile {
   preferred_language: ClientPreferredLanguage;
   platform: string;
   platform_user_id: string;
+  has_phone?: boolean;
+  is_platform_identity_verified?: boolean;
+  can_receive_telegram?: boolean;
   created_at?: string;
 }
 
@@ -229,6 +232,45 @@ export interface ClientOrdersListResponse {
 export interface ClientOrderDetailResponse {
   ok?: boolean;
   order?: ClientOrder;
+}
+
+export interface ClientPaymentSession {
+  id: string;
+  order_id: string;
+  provider: 'PAYME' | 'CLICK' | string;
+  amount_uzs: number;
+  status: string;
+  external_invoice_id?: string;
+  checkout_url: string;
+  expires_at?: string | null;
+  paid_at?: string | null;
+  fail_reason?: string;
+  meta?: Record<string, unknown>;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ClientPaymentAttempt {
+  id: string;
+  order_id: string;
+  expected_amount_uzs: number;
+  payer_card_last4?: string;
+  provider_hint?: string;
+  window_start?: string | null;
+  window_end?: string | null;
+  payment_waiting_reminder_sent_at?: string | null;
+  status: string;
+  matched_transaction_id?: string | null;
+  created_at?: string;
+}
+
+export interface ClientOrderPaymentOptionsResponse {
+  ok: boolean;
+  created: boolean;
+  reused: boolean;
+  order: ClientOrder;
+  sessions: Record<string, ClientPaymentSession | undefined>;
+  payment_attempt?: ClientPaymentAttempt | null;
 }
 
 export interface ClientProfileResponse {

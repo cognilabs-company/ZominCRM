@@ -144,7 +144,7 @@ interface EmptyErrorProps {
 
 export const EmptyError: React.FC<EmptyErrorProps> = ({
   title = 'Something went wrong',
-  message = 'We couldn't load this content. Please try again.',
+  message = "We couldn't load this content. Please try again.",
   onRetry,
   retryLabel
 }) => (

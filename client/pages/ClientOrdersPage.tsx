@@ -1,10 +1,14 @@
 import React from 'react';
-import { CircleDot, RefreshCw } from 'lucide-react';
+import { ArrowRight, CircleDot, RefreshCw } from 'lucide-react';
+import { NavLink } from 'react-router-dom';
 import { clientApiRequest } from '../api/clientApi';
 import { useClientApp } from '../bootstrap/ClientAppContext';
 import { useClientLanguage } from '../bootstrap/ClientLanguageContext';
+import { ClientEmptyState } from '../components/ClientEmptyState';
+import { ClientErrorPanel } from '../components/ClientErrorPanel';
 import { ClientPage } from '../components/ClientPage';
 import { ClientPanel } from '../components/ClientPanel';
+import { SkeletonOrderList } from '../components/ClientSkeleton';
 import { ClientOrder, ClientOrderDetailResponse, ClientOrdersListResponse } from '../types';
 import { formatAmount, formatDateTime, formatOrderRef, getOrderStatusClasses, getOrderStatusLabel, getPaymentMethodLabel } from '../utils';
 
@@ -91,15 +95,34 @@ export const ClientOrdersPage: React.FC = () => {
       }
     >
       {error ? (
-        <ClientPanel className="border-rose-200 bg-[rgba(255,241,240,0.95)] p-4 text-sm text-rose-700">{error}</ClientPanel>
+        <ClientErrorPanel
+          title={t('common.error_title')}
+          message={error}
+          onRetry={() => void loadOrders()}
+          retryLabel={t('orders.refresh')}
+          className="border-rose-200 bg-[rgba(255,241,240,0.95)]"
+        />
       ) : null}
 
-      {loading ? (
-        <ClientPanel className="p-5 text-sm text-[#5b6770]">{t('orders.loading')}</ClientPanel>
-      ) : null}
+      {loading ? <SkeletonOrderList /> : null}
 
       {!loading && orders.length === 0 ? (
-        <ClientPanel className="p-5 text-sm text-[#5b6770]">{t('orders.empty')}</ClientPanel>
+        <ClientPanel className="p-0">
+          <ClientEmptyState
+            title={t('orders.empty')}
+            description={t('orders.subtitle')}
+            action={
+              <button
+                type="button"
+                onClick={() => void loadOrders()}
+                className="inline-flex items-center gap-2 rounded-2xl bg-[#21404d] px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(33,64,77,0.18)] transition hover:brightness-105"
+              >
+                <RefreshCw size={15} />
+                {t('orders.refresh')}
+              </button>
+            }
+          />
+        </ClientPanel>
       ) : null}
 
       {orders.length > 0 ? (
@@ -180,9 +203,18 @@ export const ClientOrdersPage: React.FC = () => {
             ))}
           </div>
 
-          <div className="mt-5 flex items-center gap-2 text-sm text-[#5b6770]">
-            <CircleDot size={14} className="text-[#c0a07c]" />
-            {detailLoading ? t('orders.refreshing_details') : t('orders.last_updated', { value: formatDateTime(selectedOrder.updated_at, language) })}
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 text-sm text-[#5b6770]">
+            <div className="flex items-center gap-2">
+              <CircleDot size={14} className="text-[#c0a07c]" />
+              {detailLoading ? t('orders.refreshing_details') : t('orders.last_updated', { value: formatDateTime(selectedOrder.updated_at, language) })}
+            </div>
+            <NavLink
+              to={`/app/orders/${selectedOrder.id}`}
+              className="inline-flex items-center gap-2 rounded-2xl bg-[#21404d] px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(33,64,77,0.18)] transition hover:brightness-105"
+            >
+              {t('orders.open_detail')}
+              <ArrowRight size={15} />
+            </NavLink>
           </div>
         </ClientPanel>
       ) : null}

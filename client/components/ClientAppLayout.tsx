@@ -21,7 +21,7 @@ export const ClientAppLayout: React.FC = () => {
     isAuthenticated,
     openInTelegramUrl,
   } = useClientApp();
-  const { language, t } = useClientLanguage();
+  const { language, setLanguage, t } = useClientLanguage();
 
   const displayName = client?.full_name || telegramUser?.first_name || telegramUser?.username || t('layout.telegram_client');
   const depositHeld = bottleSummary?.total_deposit_held_uzs || 0;
@@ -81,6 +81,21 @@ export const ClientAppLayout: React.FC = () => {
               <p className="mt-1 text-xs text-[#5b6770]">
                 {telegramAvailable ? t('layout.telegram_detected') : t('layout.telegram_missing')}
               </p>
+              <div className="mt-4">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#9a6b3a]">{t('layout.language_label')}</p>
+                <div className="mt-2 inline-flex rounded-2xl bg-[#f3eadf] p-1">
+                  {(['uz', 'ru', 'en'] as const).map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      onClick={() => setLanguage(option)}
+                      className={`rounded-xl px-3 py-2 text-xs font-semibold transition ${language === option ? 'bg-[#21404d] text-white shadow-[0_8px_18px_rgba(33,64,77,0.20)]' : 'text-[#5b6770] hover:bg-white hover:text-[#1f2933]'}`}
+                    >
+                      {t(`language.${option}`)}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
 
             <NavLink to="/app/profile" className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#f59e0b_0%,#e76f51_100%)] px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(231,111,81,0.24)] transition hover:brightness-105">

@@ -52,12 +52,12 @@ export const ClientCheckoutPreviewPage: React.FC = () => {
         full_name: client.full_name,
         phone: client.phone,
         address: client.address,
-        preferred_language: client.preferred_language,
+        preferred_language: language,
       };
     }
 
     return payload;
-  }, [client, items, orderDraft]);
+  }, [client, items, language, orderDraft]);
 
   const loadPreview = React.useCallback(async () => {
     if (!sessionToken || !canRequestPreview) return;
@@ -90,7 +90,7 @@ export const ClientCheckoutPreviewPage: React.FC = () => {
     try {
       setSubmitting(true);
       setError(null);
-      await clientApiRequest<ClientCreateOrderResponse>(
+      const response = await clientApiRequest<ClientCreateOrderResponse>(
         '/orders/',
         {
           method: 'POST',
@@ -100,7 +100,7 @@ export const ClientCheckoutPreviewPage: React.FC = () => {
       );
       clearCart();
       await refreshBootstrap();
-      navigate('/app/orders');
+      navigate(`/app/orders/${response.order.id}`);
     } catch (createError) {
       setError(createError instanceof Error ? createError.message : t('checkout.error_create'));
     } finally {
@@ -176,7 +176,7 @@ export const ClientCheckoutPreviewPage: React.FC = () => {
                   {getOrderStatusLabel(preview.active_order.status, language)}
                 </div>
               </div>
-              <NavLink to="/app/orders" className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-[#21404d] px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(33,64,77,0.18)] transition hover:brightness-105">
+              <NavLink to={`/app/orders/${preview.active_order.id}`} className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-[#21404d] px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(33,64,77,0.18)] transition hover:brightness-105">
                 {t('checkout.open_orders')}
               </NavLink>
             </div>

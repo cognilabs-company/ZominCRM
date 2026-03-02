@@ -1,12 +1,14 @@
-﻿import React from 'react';
+import React from 'react';
 import { Droplets, Home, Package, ShoppingBag, ShoppingCart, UserRound } from 'lucide-react';
-import { ClientBottlesPage } from './pages/ClientBottlesPage';
-import { ClientCartPage } from './pages/ClientCartPage';
-import { ClientCheckoutPreviewPage } from './pages/ClientCheckoutPreviewPage';
-import { ClientHomePage } from './pages/ClientHomePage';
-import { ClientOrdersPage } from './pages/ClientOrdersPage';
-import { ClientProductsPage } from './pages/ClientProductsPage';
-import { ClientProfilePage } from './pages/ClientProfilePage';
+
+const ClientBottlesPage = React.lazy(() => import('./pages/ClientBottlesPage').then((module) => ({ default: module.ClientBottlesPage })));
+const ClientCartPage = React.lazy(() => import('./pages/ClientCartPage').then((module) => ({ default: module.ClientCartPage })));
+const ClientCheckoutPreviewPage = React.lazy(() => import('./pages/ClientCheckoutPreviewPage').then((module) => ({ default: module.ClientCheckoutPreviewPage })));
+const ClientHomePage = React.lazy(() => import('./pages/ClientHomePage').then((module) => ({ default: module.ClientHomePage })));
+const ClientOrderDetailPage = React.lazy(() => import('./pages/ClientOrderDetailPage').then((module) => ({ default: module.ClientOrderDetailPage })));
+const ClientOrdersPage = React.lazy(() => import('./pages/ClientOrdersPage').then((module) => ({ default: module.ClientOrdersPage })));
+const ClientProductsPage = React.lazy(() => import('./pages/ClientProductsPage').then((module) => ({ default: module.ClientProductsPage })));
+const ClientProfilePage = React.lazy(() => import('./pages/ClientProfilePage').then((module) => ({ default: module.ClientProfilePage })));
 
 export interface ClientRouteDefinition {
   id: string;
@@ -65,6 +67,14 @@ export const clientRouteDefinitions: ClientRouteDefinition[] = [
     icon: Package,
     showInNav: true,
     element: <ClientOrdersPage />,
+  },
+  {
+    id: 'order-detail',
+    path: 'orders/:orderId',
+    navLabelKey: 'nav.orders',
+    icon: Package,
+    showInNav: false,
+    element: <ClientOrderDetailPage />,
   },
   {
     id: 'bottles',

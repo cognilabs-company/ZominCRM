@@ -1,31 +1,34 @@
-﻿import React from 'react';
-import { HashRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
-import { ThemeProvider } from './context/ThemeContext';
-import { LanguageProvider, useLanguage } from './context/LanguageContext';
-import { AuthProvider, useAuth } from './context/AuthContext';
-import { ToastProvider } from './context/ToastContext';
+import React from 'react';
+import { HashRouter as Router, Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
-import Dashboard from './pages/Dashboard';
-import Conversations from './pages/Conversations';
-import Orders from './pages/Orders';
-import Settings from './pages/Settings';
-import AITools from './pages/AITools';
-import Products from './pages/Products';
-import Clients from './pages/Clients';
-import Leads from './pages/Leads';
-import Users from './pages/Users';
-import AICredentials from './pages/AICredentials';
-import AISettings from './pages/AISettings';
-import Login from './pages/auth/Login';
-import Forbidden from './pages/auth/Forbidden';
-import Payments from './pages/Payments';
-import Couriers from './pages/Couriers';
 import { ClientAppProvider } from './client/bootstrap/ClientAppContext';
 import { ClientCartProvider } from './client/bootstrap/ClientCartContext';
 import { ClientLanguageProvider } from './client/bootstrap/ClientLanguageContext';
-import { ClientAppLayout } from './client/components/ClientAppLayout';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { LanguageProvider, useLanguage } from './context/LanguageContext';
+import { ThemeProvider } from './context/ThemeContext';
+import { ToastProvider } from './context/ToastContext';
 import { clientRouteDefinitions } from './client/routes';
+
+const Dashboard = React.lazy(() => import('./pages/Dashboard'));
+const Conversations = React.lazy(() => import('./pages/Conversations'));
+const Orders = React.lazy(() => import('./pages/Orders'));
+const Settings = React.lazy(() => import('./pages/Settings'));
+const AITools = React.lazy(() => import('./pages/AITools'));
+const Products = React.lazy(() => import('./pages/Products'));
+const Clients = React.lazy(() => import('./pages/Clients'));
+const Leads = React.lazy(() => import('./pages/Leads'));
+const Users = React.lazy(() => import('./pages/Users'));
+const AICredentials = React.lazy(() => import('./pages/AICredentials'));
+const AISettings = React.lazy(() => import('./pages/AISettings'));
+const Login = React.lazy(() => import('./pages/auth/Login'));
+const Forbidden = React.lazy(() => import('./pages/auth/Forbidden'));
+const Payments = React.lazy(() => import('./pages/Payments'));
+const Couriers = React.lazy(() => import('./pages/Couriers'));
+const ClientAppLayout = React.lazy(() =>
+  import('./client/components/ClientAppLayout').then((module) => ({ default: module.ClientAppLayout }))
+);
 
 const normalizeInitialPath = () => {
   if (typeof window === 'undefined' || window.location.hash) {
@@ -107,82 +110,93 @@ const ProtectedLayout: React.FC = () => (
   </RequireAuth>
 );
 
+const RouteFallback: React.FC = () => (
+  <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #ece7df, #dfe6e5)' }}>
+    <div className="flex flex-col items-center gap-3">
+      <div className="h-12 w-12 rounded-2xl border-4 border-[#21404d]/20 border-t-[#21404d] animate-spin" />
+      <p className="text-sm text-[#5b6770]">Loading...</p>
+    </div>
+  </div>
+);
+
 const App: React.FC = () => {
   return (
     <ThemeProvider>
       <LanguageProvider>
         <ToastProvider>
-          <Router>
-            <Routes>
-              <Route
-                path="/app"
-                element={(
-                  <ClientAppProvider>
-                    <ClientLanguageProvider>
-                      <ClientCartProvider>
-                        <ClientAppLayout />
-                      </ClientCartProvider>
-                    </ClientLanguageProvider>
-                  </ClientAppProvider>
-                )}
-              >
-                <Route index element={<Navigate to="home" replace />} />
-                {clientRouteDefinitions.map((route) => (
-                  <React.Fragment key={route.id}>
-                    <Route path={route.path} element={route.element} />
-                  </React.Fragment>
-                ))}
-                <Route path="*" element={<Navigate to="home" replace />} />
-              </Route>
+          <React.Suspense fallback={<RouteFallback />}>
+            <Router>
+              <Routes>
+                <Route
+                  path="/app"
+                  element={(
+                    <ClientAppProvider>
+                      <ClientLanguageProvider>
+                        <ClientCartProvider>
+                          <ClientAppLayout />
+                        </ClientCartProvider>
+                      </ClientLanguageProvider>
+                    </ClientAppProvider>
+                  )}
+                >
+                  <Route index element={<Navigate to="home" replace />} />
+                  {clientRouteDefinitions.map((route) => (
+                    <React.Fragment key={route.id}>
+                      <Route path={route.path} element={route.element} />
+                    </React.Fragment>
+                  ))}
+                  <Route path="*" element={<Navigate to="home" replace />} />
+                </Route>
 
-              <Route
-                path="/*"
-                element={(
-                  <AuthProvider>
-                    <Routes>
-                      <Route path="/login" element={<Login />} />
-                      <Route path="/403" element={<Forbidden />} />
-                      <Route element={<ProtectedLayout />}>
-                        <Route path="/" element={<Navigate to="/admin-app" replace />} />
+                <Route
+                  path="/*"
+                  element={(
+                    <AuthProvider>
+                      <Routes>
+                        <Route path="/login" element={<Login />} />
+                        <Route path="/403" element={<Forbidden />} />
+                        <Route element={<ProtectedLayout />}>
+                          <Route path="/" element={<Navigate to="/admin-app" replace />} />
 
-                        <Route path="/conversations" element={<Navigate to="/admin-app/conversations" replace />} />
-                        <Route path="/conversations/:conversationId/automation" element={<Navigate to="/admin-app/ai-settings" replace />} />
-                        <Route path="/orders" element={<Navigate to="/admin-app/orders" replace />} />
-                        <Route path="/products" element={<Navigate to="/admin-app/products" replace />} />
-                        <Route path="/clients" element={<Navigate to="/admin-app/clients" replace />} />
-                        <Route path="/leads" element={<Navigate to="/admin-app/leads" replace />} />
-                        <Route path="/payments" element={<Navigate to="/admin-app/payments" replace />} />
-                        <Route path="/couriers" element={<Navigate to="/admin-app/couriers" replace />} />
-                        <Route path="/users" element={<Navigate to="/admin-app/users" replace />} />
-                        <Route path="/ai-tools" element={<Navigate to="/admin-app/ai-tools" replace />} />
-                        <Route path="/ai-credentials" element={<Navigate to="/admin-app/ai-credentials" replace />} />
-                        <Route path="/ai-settings" element={<Navigate to="/admin-app/ai-settings" replace />} />
-                        <Route path="/ai-settings/automation/:conversationId" element={<Navigate to="/admin-app/ai-settings" replace />} />
-                        <Route path="/settings" element={<Navigate to="/admin-app/settings" replace />} />
+                          <Route path="/conversations" element={<Navigate to="/admin-app/conversations" replace />} />
+                          <Route path="/conversations/:conversationId/automation" element={<Navigate to="/admin-app/ai-settings" replace />} />
+                          <Route path="/orders" element={<Navigate to="/admin-app/orders" replace />} />
+                          <Route path="/products" element={<Navigate to="/admin-app/products" replace />} />
+                          <Route path="/clients" element={<Navigate to="/admin-app/clients" replace />} />
+                          <Route path="/leads" element={<Navigate to="/admin-app/leads" replace />} />
+                          <Route path="/payments" element={<Navigate to="/admin-app/payments" replace />} />
+                          <Route path="/couriers" element={<Navigate to="/admin-app/couriers" replace />} />
+                          <Route path="/users" element={<Navigate to="/admin-app/users" replace />} />
+                          <Route path="/ai-tools" element={<Navigate to="/admin-app/ai-tools" replace />} />
+                          <Route path="/ai-credentials" element={<Navigate to="/admin-app/ai-credentials" replace />} />
+                          <Route path="/ai-settings" element={<Navigate to="/admin-app/ai-settings" replace />} />
+                          <Route path="/ai-settings/automation/:conversationId" element={<Navigate to="/admin-app/ai-settings" replace />} />
+                          <Route path="/settings" element={<Navigate to="/admin-app/settings" replace />} />
 
-                        <Route path="/admin-app" element={<RequirePermission permission="dashboard.access"><Dashboard /></RequirePermission>} />
-                        <Route path="/admin-app/conversations" element={<RequirePermission permission="crm.access"><Conversations /></RequirePermission>} />
-                        <Route path="/admin-app/conversations/:conversationId/automation" element={<Navigate to="/admin-app/ai-settings" replace />} />
-                        <Route path="/admin-app/orders" element={<RequirePermission permission="orders.access"><Orders /></RequirePermission>} />
-                        <Route path="/admin-app/products" element={<RequirePermission permission="products.access"><Products /></RequirePermission>} />
-                        <Route path="/admin-app/clients" element={<RequirePermission permission="crm.access"><Clients /></RequirePermission>} />
-                        <Route path="/admin-app/leads" element={<RequireAdmin><Leads /></RequireAdmin>} />
-                        <Route path="/admin-app/payments" element={<RequirePermission permission="payments.access"><Payments /></RequirePermission>} />
-                        <Route path="/admin-app/couriers" element={<RequirePermission permission="couriers.access"><Couriers /></RequirePermission>} />
-                        <Route path="/admin-app/users" element={<RequireAdmin><Users /></RequireAdmin>} />
-                        <Route path="/admin-app/ai-tools" element={<RequirePermission permission="ai.access"><AITools /></RequirePermission>} />
-                        <Route path="/admin-app/ai-credentials" element={<RequireAdmin><AICredentials /></RequireAdmin>} />
-                        <Route path="/admin-app/ai-settings" element={<RequirePermission permission="ai.access"><AISettings /></RequirePermission>} />
-                        <Route path="/admin-app/ai-settings/automation/:conversationId" element={<Navigate to="/admin-app/ai-settings" replace />} />
-                        <Route path="/admin-app/settings" element={<Settings />} />
-                      </Route>
-                      <Route path="*" element={<Navigate to="/app" replace />} />
-                    </Routes>
-                  </AuthProvider>
-                )}
-              />
-            </Routes>
-          </Router>
+                          <Route path="/admin-app" element={<RequirePermission permission="dashboard.access"><Dashboard /></RequirePermission>} />
+                          <Route path="/admin-app/conversations" element={<RequirePermission permission="crm.access"><Conversations /></RequirePermission>} />
+                          <Route path="/admin-app/conversations/:conversationId/automation" element={<Navigate to="/admin-app/ai-settings" replace />} />
+                          <Route path="/admin-app/orders" element={<RequirePermission permission="orders.access"><Orders /></RequirePermission>} />
+                          <Route path="/admin-app/products" element={<RequirePermission permission="products.access"><Products /></RequirePermission>} />
+                          <Route path="/admin-app/clients" element={<RequirePermission permission="crm.access"><Clients /></RequirePermission>} />
+                          <Route path="/admin-app/leads" element={<RequireAdmin><Leads /></RequireAdmin>} />
+                          <Route path="/admin-app/payments" element={<RequirePermission permission="payments.access"><Payments /></RequirePermission>} />
+                          <Route path="/admin-app/couriers" element={<RequirePermission permission="couriers.access"><Couriers /></RequirePermission>} />
+                          <Route path="/admin-app/users" element={<RequireAdmin><Users /></RequireAdmin>} />
+                          <Route path="/admin-app/ai-tools" element={<RequirePermission permission="ai.access"><AITools /></RequirePermission>} />
+                          <Route path="/admin-app/ai-credentials" element={<RequireAdmin><AICredentials /></RequireAdmin>} />
+                          <Route path="/admin-app/ai-settings" element={<RequirePermission permission="ai.access"><AISettings /></RequirePermission>} />
+                          <Route path="/admin-app/ai-settings/automation/:conversationId" element={<Navigate to="/admin-app/ai-settings" replace />} />
+                          <Route path="/admin-app/settings" element={<Settings />} />
+                        </Route>
+                        <Route path="*" element={<Navigate to="/app" replace />} />
+                      </Routes>
+                    </AuthProvider>
+                  )}
+                />
+              </Routes>
+            </Router>
+          </React.Suspense>
         </ToastProvider>
       </LanguageProvider>
     </ThemeProvider>

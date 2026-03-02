@@ -28,6 +28,7 @@ const translations: TranslationMap = {
   "layout.telegram_detected": { uz: "Telegram muhiti aniqlandi.", ru: "Контекст Telegram обнаружен.", en: "Telegram context detected." },
   "layout.telegram_missing": { uz: "Bu sinov rejimida Telegram muhiti ulanmagan.", ru: "В этом режиме предпросмотра контекст Telegram не подключен.", en: "Telegram context is not attached in this preview." },
   "layout.profile": { uz: "Profil", ru: "Профиль", en: "Profile" },
+  "layout.language_label": { uz: "Til", ru: "Язык", en: "Language" },
   "layout.active_order": { uz: "Faol buyurtma", ru: "Активный заказ", en: "Active order" },
   "layout.awaiting_delivery": { uz: "Yetkazib berish manzili kutilmoqda", ru: "Ожидаются данные доставки", en: "Awaiting delivery details" },
   "layout.session_valid_until": { uz: "Sessiya amal qilish muddati:", ru: "Сессия действует до:", en: "Session valid until" },
@@ -87,6 +88,17 @@ const translations: TranslationMap = {
   "cart.line_total": { uz: "Jami", ru: "Сумма строки", en: "Line total" },
   "cart.delivery_address": { uz: "Yetkazib berish manzili", ru: "Адрес доставки", en: "Delivery address" },
   "cart.delivery_address_placeholder": { uz: "Toliq yetkazib berish manzilini kiriting", ru: "Введите полный адрес доставки", en: "Enter full delivery address" },
+  "cart.map_picker": { uz: "Xaritadan tanlash", ru: "Выбрать на карте", en: "Choose on map" },
+  "cart.map_description": { uz: "Manzilni pin orqali tanlang. Tizim koordinatalarni backendga yuboradi.", ru: "Выберите адрес пином на карте. Координаты будут отправлены в backend.", en: "Choose the delivery point on the map. Coordinates will be sent to the backend." },
+  "cart.map_open": { uz: "Xaritani ochish", ru: "Открыть карту", en: "Open map" },
+  "cart.map_close": { uz: "Yopish", ru: "Закрыть", en: "Close" },
+  "cart.map_use_current": { uz: "Joriy joylashuv", ru: "Текущее местоположение", en: "Use current location" },
+  "cart.map_select_hint": { uz: "Pin joyini o'zgartirish uchun xaritada bosing.", ru: "Нажмите на карту, чтобы изменить точку.", en: "Tap the map to move the pin." },
+  "cart.map_confirm": { uz: "Manzilni qo'llash", ru: "Применить адрес", en: "Use this location" },
+  "cart.map_selected_coords": { uz: "Koordinatalar: {lat}, {lng}", ru: "Координаты: {lat}, {lng}", en: "Coordinates: {lat}, {lng}" },
+  "cart.map_loading_address": { uz: "Manzil aniqlanmoqda...", ru: "Определяем адрес...", en: "Resolving address..." },
+  "cart.map_geolocation_error": { uz: "Joriy joylashuvni aniqlab bo'lmadi.", ru: "Не удалось определить текущее местоположение.", en: "Failed to get current location." },
+  "cart.map_reverse_error": { uz: "Manzilni aniqlab bo'lmadi. Koordinatalar saqlanadi.", ru: "Не удалось определить адрес. Координаты сохранены.", en: "Failed to resolve address. Coordinates were still saved." },
   "cart.payment_method": { uz: "To'lov usuli", ru: "Способ оплаты", en: "Payment method" },
   "cart.delivery_time": { uz: "Yetkazib berish vaqti", ru: "Время доставки", en: "Delivery time" },
   "cart.latitude": { uz: "Kenglik", ru: "Широта", en: "Latitude" },
@@ -145,6 +157,31 @@ const translations: TranslationMap = {
   "orders.last_updated": { uz: "Oxirgi yangilanish {value}", ru: "Обновлено {value}", en: "Last updated {value}" },
   "orders.qty": { uz: "Soni {count}", ru: "Кол-во {count}", en: "Qty {count}" },
   "orders.error_load": { uz: "Buyurtmalarni yuklab bo'lmadi.", ru: "Не удалось загрузить заказы.", en: "Failed to load orders." },
+  "orders.open_detail": { uz: "Tafsilotlar", ru: "Детали", en: "Details" },
+  "orders.detail.title": { uz: "Buyurtma tafsiloti", ru: "Детали заказа", en: "Order detail" },
+  "orders.detail.subtitle": { uz: "Buyurtmaning to'liq tarkibi, holati va to'lov havolalari.", ru: "Полный состав заказа, статус и платежные ссылки.", en: "Full order contents, status, and payment links." },
+  "orders.detail.back": { uz: "Buyurtmalarga qaytish", ru: "Назад к заказам", en: "Back to orders" },
+  "orders.detail.reference": { uz: "Buyurtma raqami", ru: "Номер заказа", en: "Order reference" },
+  "orders.detail.created_at": { uz: "Yaratilgan vaqt", ru: "Создан", en: "Created at" },
+  "orders.detail.delivery_time": { uz: "So'ralgan yetkazish vaqti", ru: "Желаемая доставка", en: "Requested delivery" },
+  "orders.detail.items_title": { uz: "Buyurtma tarkibi", ru: "Состав заказа", en: "Order items" },
+  "orders.detail.items_subtitle": { uz: "Faqat shu mijozga tegishli satrlar ko'rsatiladi.", ru: "Показываются только позиции этого клиента.", en: "Only items that belong to this client order are shown." },
+  "orders.detail.error_title": { uz: "Buyurtma yuklanmadi", ru: "Заказ не загрузился", en: "Order failed to load" },
+  "orders.detail.error_load": { uz: "Buyurtma tafsilotlarini yuklab bo'lmadi.", ru: "Не удалось загрузить детали заказа.", en: "Failed to load order detail." },
+  "orders.detail.empty_title": { uz: "Buyurtma topilmadi", ru: "Заказ не найден", en: "Order not found" },
+  "orders.detail.empty_description": { uz: "Bu buyurtma mavjud emas yoki shu mijozga tegishli emas.", ru: "Этот заказ не существует или не принадлежит текущему клиенту.", en: "This order does not exist or does not belong to the current client." },
+  "orders.payment.title": { uz: "Onlayn to'lov havolalari", ru: "Ссылки для онлайн-оплаты", en: "Online payment links" },
+  "orders.payment.subtitle": { uz: "Payme va Click havolalari backend payment-options endpointi orqali olinadi.", ru: "Ссылки Payme и Click берутся через backend payment-options endpoint.", en: "Payme and Click links come from the backend payment-options endpoint." },
+  "orders.payment.load": { uz: "To'lov havolalarini olish", ru: "Получить ссылки оплаты", en: "Load payment links" },
+  "orders.payment.refresh": { uz: "Havolalarni yangilash", ru: "Обновить ссылки", en: "Refresh links" },
+  "orders.payment.loading": { uz: "Havolalar yuklanmoqda...", ru: "Загрузка ссылок...", en: "Loading links..." },
+  "orders.payment.error_title": { uz: "To'lov havolalari yuklanmadi", ru: "Платежные ссылки не загрузились", en: "Payment links failed to load" },
+  "orders.payment.error_load": { uz: "To'lov havolalarini yuklab bo'lmadi.", ru: "Не удалось загрузить платежные ссылки.", en: "Failed to load payment links." },
+  "orders.payment.expires_at": { uz: "Amal qiladi", ru: "Действует до", en: "Valid until" },
+  "orders.payment.open_provider": { uz: "{provider} ni ochish", ru: "Открыть {provider}", en: "Open {provider}" },
+  "orders.payment.window_title": { uz: "To'lov oynasi", ru: "Платежное окно", en: "Payment window" },
+  "orders.payment.window_range": { uz: "Boshlanish: {start}. Tugash: {end}.", ru: "Начало: {start}. Конец: {end}.", en: "Start: {start}. End: {end}." },
+  "orders.payment.window_status": { uz: "Holat: {status}", ru: "Статус: {status}", en: "Status: {status}" },
 
   "bottles.title": { uz: "Idishlar", ru: "Тара", en: "Bottles" },
   "bottles.subtitle": { uz: "Idish balansi, ushlab turilgan depozit va harakatlar tarixi faqat oqish rejimida.", ru: "Баланс тары, удерживаемый депозит и история движений доступны только для чтения.", en: "Read-only bottle balance, deposit held, and movement history." },
@@ -186,6 +223,12 @@ const translations: TranslationMap = {
   "profile.token_expires_at": { uz: "Token amal qilish muddati", ru: "Срок действия токена", en: "Token expires at" },
   "profile.initdata_missing": { uz: "Telegram initData sinov rejimida mavjud emas.", ru: "Telegram initData недоступен в режиме предпросмотра.", en: "Telegram initData is not available in preview mode." },
   "profile.error_load": { uz: "Profilni yuklab bo'lmadi.", ru: "Не удалось загрузить профиль.", en: "Failed to load profile." },
+  "profile.has_phone": { uz: "Telefon mavjud", ru: "Телефон есть", en: "Phone on file" },
+  "profile.identity_verified": { uz: "Platforma identifikatsiyasi tasdiqlangan", ru: "Идентичность платформы подтверждена", en: "Platform identity verified" },
+  "profile.can_receive_telegram": { uz: "Telegram qabul qila oladi", ru: "Может получать Telegram", en: "Can receive Telegram" },
+  "profile.session_status": { uz: "Sessiya holati", ru: "Статус сессии", en: "Session status" },
+  "profile.telegram_language": { uz: "Telegram tili", ru: "Язык Telegram", en: "Telegram language" },
+  "profile.platform": { uz: "Platforma", ru: "Платформа", en: "Platform" },
 
   "payment.CASH": { uz: "Naqd pul", ru: "Наличные", en: "Cash" },
   "payment.TRANSFER": { uz: "O'tkazma", ru: "Перевод", en: "Transfer" },
@@ -194,6 +237,7 @@ const translations: TranslationMap = {
   "language.uz": { uz: "O'zbekcha", ru: "Узбекский", en: "Uzbek" },
   "language.ru": { uz: "Ruscha", ru: "Русский", en: "Russian" },
   "language.en": { uz: "Inglizcha", ru: "Английский", en: "English" },
+  "common.error_title": { uz: "Xatolik yuz berdi", ru: "Произошла ошибка", en: "Something went wrong" },
 };
 
 const localeMap: Record<ClientUiLanguage, string> = {
@@ -218,19 +262,35 @@ const interpolate = (template: string, params?: TranslationParams) => {
 interface ClientLanguageContextValue {
   language: ClientUiLanguage;
   locale: string;
+  setLanguage: (language: ClientUiLanguage) => void;
   t: (key: string, params?: TranslationParams) => string;
 }
 
 const ClientLanguageContext = React.createContext<ClientLanguageContextValue | undefined>(undefined);
+const CLIENT_LANGUAGE_OVERRIDE_KEY = 'client_webapp_language_override_v1';
 
 export const ClientLanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { client } = useClientApp();
+  const { client, telegramUser } = useClientApp();
+  const [languageOverride, setLanguageOverride] = React.useState<ClientUiLanguage | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const saved = window.localStorage.getItem(CLIENT_LANGUAGE_OVERRIDE_KEY);
+    return saved ? normalizeClientLanguage(saved) : null;
+  });
 
-  const language = React.useMemo(() => normalizeClientLanguage(client?.preferred_language || 'uz'), [client?.preferred_language]);
+  const language = React.useMemo(
+    () => languageOverride || normalizeClientLanguage(client?.preferred_language || telegramUser?.language_code || 'uz'),
+    [client?.preferred_language, languageOverride, telegramUser?.language_code]
+  );
 
   const value = React.useMemo<ClientLanguageContextValue>(() => ({
     language,
     locale: localeMap[language],
+    setLanguage: (nextLanguage) => {
+      setLanguageOverride(nextLanguage);
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(CLIENT_LANGUAGE_OVERRIDE_KEY, nextLanguage);
+      }
+    },
     t: (key, params) => {
       const template = translations[key]?.[language] || translations[key]?.uz || key;
       return interpolate(template, params);

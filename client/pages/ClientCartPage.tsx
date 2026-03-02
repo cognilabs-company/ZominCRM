@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { ArrowRight, Minus, Plus } from 'lucide-react';
 import { useClientCart } from '../bootstrap/ClientCartContext';
 import { useClientLanguage } from '../bootstrap/ClientLanguageContext';
+import { ClientLocationPicker } from '../components/ClientLocationPicker';
 import { ClientPage } from '../components/ClientPage';
 import { ClientPanel } from '../components/ClientPanel';
 import { formatAmount, getPaymentMethodLabel } from '../utils';
@@ -81,6 +82,13 @@ export const ClientCartPage: React.FC = () => {
             />
           </div>
 
+          <ClientLocationPicker
+            address={orderDraft.location_text}
+            latitude={orderDraft.location_lat}
+            longitude={orderDraft.location_lng}
+            onApply={(payload) => setOrderDraft(payload)}
+          />
+
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-medium text-[#31424d]">{t('cart.payment_method')}</label>
@@ -102,25 +110,13 @@ export const ClientCartPage: React.FC = () => {
                 className="mt-2 w-full rounded-[22px] border border-[#e7ddd0] bg-[rgba(255,248,240,0.94)] px-4 py-3 text-sm text-[#1f2933] outline-none transition focus:border-[#cb7c45]"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-[#31424d]">{t('cart.latitude')}</label>
-              <input
-                type="text"
-                value={orderDraft.location_lat}
-                onChange={(event) => setOrderDraft({ location_lat: event.target.value })}
-                className="mt-2 w-full rounded-[22px] border border-[#e7ddd0] bg-[rgba(255,248,240,0.94)] px-4 py-3 text-sm text-[#1f2933] outline-none transition focus:border-[#cb7c45]"
-                placeholder={t('cart.optional')}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#31424d]">{t('cart.longitude')}</label>
-              <input
-                type="text"
-                value={orderDraft.location_lng}
-                onChange={(event) => setOrderDraft({ location_lng: event.target.value })}
-                className="mt-2 w-full rounded-[22px] border border-[#e7ddd0] bg-[rgba(255,248,240,0.94)] px-4 py-3 text-sm text-[#1f2933] outline-none transition focus:border-[#cb7c45]"
-                placeholder={t('cart.optional')}
-              />
+            <div className="rounded-[22px] border border-[#e7ddd0] bg-[rgba(255,248,240,0.94)] px-4 py-3 sm:col-span-2">
+              <p className="text-sm font-medium text-[#31424d]">{t('cart.map_picker')}</p>
+              <p className="mt-2 text-sm text-[#5b6770]">
+                {orderDraft.location_lat && orderDraft.location_lng
+                  ? t('cart.map_selected_coords', { lat: orderDraft.location_lat, lng: orderDraft.location_lng })
+                  : t('cart.optional')}
+              </p>
             </div>
           </div>
         </div>

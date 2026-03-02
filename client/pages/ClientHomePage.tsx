@@ -98,7 +98,7 @@ export const ClientHomePage: React.FC = () => {
               <p className="mt-2 text-sm leading-6 text-[#5b6770]">{activeOrder.location_text || t('home.delivery_placeholder')}</p>
             </div>
             <NavLink
-              to="/app/orders"
+              to={`/app/orders/${activeOrder.id}`}
               className="inline-flex items-center gap-2 rounded-2xl bg-[#21404d] px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(33,64,77,0.18)] transition hover:brightness-105"
             >
               {t('home.open_orders')}

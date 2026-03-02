@@ -1,12 +1,15 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Minus, Plus, ShoppingBag, ShoppingCart } from 'lucide-react';
+import { Minus, Plus, RefreshCw, ShoppingBag, ShoppingCart } from 'lucide-react';
 import { clientApiRequest } from '../api/clientApi';
 import { useClientApp } from '../bootstrap/ClientAppContext';
 import { useClientCart } from '../bootstrap/ClientCartContext';
 import { useClientLanguage } from '../bootstrap/ClientLanguageContext';
+import { ClientEmptyState } from '../components/ClientEmptyState';
+import { ClientErrorPanel } from '../components/ClientErrorPanel';
 import { ClientPage } from '../components/ClientPage';
 import { ClientPanel } from '../components/ClientPanel';
+import { SkeletonProductList } from '../components/ClientSkeleton';
 import { ClientProduct, ClientProductsResponse } from '../types';
 import { formatAmount, getAvailabilityClasses, getAvailabilityLabel } from '../utils';
 
@@ -18,30 +21,34 @@ export const ClientProductsPage: React.FC = () => {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
-  React.useEffect(() => {
+  const loadProducts = React.useCallback(async () => {
     if (!sessionToken) return;
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await clientApiRequest<ClientProductsResponse>('/products/', undefined, sessionToken);
+      setProducts(response.results || []);
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : t('products.error_load'));
+    } finally {
+      setLoading(false);
+    }
+  }, [sessionToken, t]);
 
+  React.useEffect(() => {
     let active = true;
-    const loadProducts = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await clientApiRequest<ClientProductsResponse>('/products/', undefined, sessionToken);
-        if (!active) return;
-        setProducts(response.results || []);
-      } catch (loadError) {
-        if (!active) return;
-        setError(loadError instanceof Error ? loadError.message : t('products.error_load'));
-      } finally {
-        if (active) setLoading(false);
+    const run = async () => {
+      await loadProducts();
+      if (!active) {
+        return;
       }
     };
 
-    void loadProducts();
+    void run();
     return () => {
       active = false;
     };
-  }, [sessionToken, t]);
+  }, [loadProducts]);
 
   if (!isAuthenticated && status !== 'loading') {
     return (
@@ -73,15 +80,34 @@ export const ClientProductsPage: React.FC = () => {
       }
     >
       {error ? (
-        <ClientPanel className="border-rose-200 bg-[rgba(255,241,240,0.95)] p-4 text-sm text-rose-700">{error}</ClientPanel>
+        <ClientErrorPanel
+          title={t('common.error_title')}
+          message={error}
+          onRetry={() => void loadProducts()}
+          retryLabel={t('orders.refresh')}
+          className="border-rose-200 bg-[rgba(255,241,240,0.95)]"
+        />
       ) : null}
 
-      {loading ? (
-        <ClientPanel className="p-5 text-sm text-[#5b6770]">{t('products.loading')}</ClientPanel>
-      ) : null}
+      {loading ? <SkeletonProductList /> : null}
 
       {!loading && !error && products.length === 0 ? (
-        <ClientPanel className="p-5 text-sm text-[#5b6770]">{t('products.empty')}</ClientPanel>
+        <ClientPanel className="p-0">
+          <ClientEmptyState
+            title={t('products.empty')}
+            description={t('products.subtitle')}
+            action={
+              <button
+                type="button"
+                onClick={() => void loadProducts()}
+                className="inline-flex items-center gap-2 rounded-2xl bg-[#21404d] px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(33,64,77,0.18)] transition hover:brightness-105"
+              >
+                <RefreshCw size={16} />
+                {t('orders.refresh')}
+              </button>
+            }
+          />
+        </ClientPanel>
       ) : null}
 
       <div className="grid grid-cols-1 gap-4">

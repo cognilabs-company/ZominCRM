@@ -104,6 +104,17 @@ export const getPaymentMethodLabel = (paymentMethod?: ClientPaymentMethod | stri
   return labels[paymentMethod || '']?.[language] || paymentMethod || '-';
 };
 
+export const getPaymentProviderLabel = (provider?: string | null, language: ClientUiLanguage = 'uz') => {
+  const labels: Record<string, Record<ClientUiLanguage, string>> = {
+    PAYME: { uz: 'Payme', ru: 'Payme', en: 'Payme' },
+    CLICK: { uz: 'Click', ru: 'Click', en: 'Click' },
+  };
+  return labels[provider || '']?.[language] || provider || '-';
+};
+
+export const isClientOrderTerminal = (status?: ClientOrderStatus | string | null) =>
+  status === 'DELIVERED' || status === 'CANCELED' || status === 'FAILED';
+
 export const getClientLanguageLabel = (languageCode?: string | null, language: ClientUiLanguage = 'uz') => {
   const normalized = (languageCode || '').trim().toLowerCase();
   if (normalized.startsWith('ru')) {
