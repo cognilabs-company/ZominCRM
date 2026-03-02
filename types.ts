@@ -71,6 +71,12 @@ export interface Product {
   name: string;
   sku: string;
   image_url?: string | null;
+  images?: Array<{
+    id: string;
+    url: string;
+    sort_order?: number;
+    created_at?: string;
+  }>;
   size_liters: string;
   price_uzs: number;
   count: number;

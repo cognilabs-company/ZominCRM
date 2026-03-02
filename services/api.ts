@@ -230,12 +230,13 @@ const extractApiErrorMessage = (payload: unknown, fallback: string): string => {
 // Handles envelope-style responses and plain JSON payloads.
 export async function apiRequest<T = unknown>(url: string, init?: RequestInit): Promise<T> {
   const hasBody = init?.body !== undefined && init?.body !== null;
+  const isFormDataBody = typeof FormData !== 'undefined' && init?.body instanceof FormData;
   const isPublicAuthEndpoint = url.includes('/auth/login/') || url.includes('/auth/register/');
   const res = await fetch(url, {
     ...init,
     headers: {
       ...getHeaders(!isPublicAuthEndpoint),
-      ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
+      ...(hasBody && !isFormDataBody ? { 'Content-Type': 'application/json' } : {}),
       ...(init?.headers || {}),
     },
   });

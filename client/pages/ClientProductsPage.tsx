@@ -13,6 +13,8 @@ import { SkeletonProductList } from '../components/ClientSkeleton';
 import { ClientProduct, ClientProductsResponse } from '../types';
 import { formatAmount, getAvailabilityClasses, getAvailabilityLabel } from '../utils';
 
+const getPrimaryProductImage = (product: ClientProduct) => product.image_url || product.images?.[0]?.url || null;
+
 export const ClientProductsPage: React.FC = () => {
   const { isAuthenticated, sessionToken, status, openInTelegramUrl } = useClientApp();
   const { addProduct, updateQuantity, getItemQuantity, itemsCount } = useClientCart();
@@ -114,17 +116,36 @@ export const ClientProductsPage: React.FC = () => {
         {products.map((product) => {
           const quantity = getItemQuantity(product.id);
           const unavailable = product.availability_status === 'out_of_stock' || product.count <= 0;
+          const primaryImage = getPrimaryProductImage(product);
+          const galleryCount = product.images?.length || 0;
+          const photoBadgeLabel = galleryCount > 1
+            ? `${galleryCount} ${language === 'ru' ? 'фото' : language === 'uz' ? 'foto' : 'pics'}`
+            : primaryImage
+              ? (language === 'ru' ? 'есть' : language === 'uz' ? 'tayyor' : 'ready')
+              : (language === 'ru' ? 'новый' : language === 'uz' ? 'yangi' : 'new');
+          const photoStatusText = galleryCount > 1
+            ? `${galleryCount} ${language === 'ru' ? 'фото в галерее' : language === 'uz' ? 'ta galereya rasmi' : 'gallery photos'}`
+            : primaryImage
+              ? (language === 'ru' ? 'Фото товара готово' : language === 'uz' ? 'Mahsulot rasmi tayyor' : 'Product photo ready')
+              : (language === 'ru' ? 'Фото появится здесь' : language === 'uz' ? 'Rasm shu yerda ko\'rinadi' : 'Photo will appear here');
+          const noPhotoLabel = language === 'ru' ? 'Нет фото' : language === 'uz' ? 'Rasm yoq' : 'No photo';
 
           return (
             <ClientPanel key={product.id} className="overflow-hidden p-4">
               <div className="flex items-start gap-4">
                 <div className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-[28px] bg-[linear-gradient(135deg,#21404d_0%,#3d6c77_100%)] text-white">
-                  {product.image_url ? (
-                    <img src={product.image_url} alt={product.name} className="h-full w-full object-cover" />
+                  {primaryImage ? (
+                    <img src={primaryImage} alt={product.name} className="h-full w-full object-cover" />
                   ) : (
-                    <ShoppingBag size={26} />
+                    <div className="text-center">
+                      <ShoppingBag size={24} className="mx-auto" />
+                      <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/70">{noPhotoLabel}</p>
+                    </div>
                   )}
                   <div className="absolute inset-x-0 bottom-0 h-8 bg-[linear-gradient(180deg,transparent_0%,rgba(0,0,0,0.3)_100%)]" />
+                  <div className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#21404d]">
+                    {photoBadgeLabel}
+                  </div>
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-3">
@@ -151,7 +172,10 @@ export const ClientProductsPage: React.FC = () => {
                   </div>
 
                   <div className="mt-4 flex items-center justify-between gap-3">
-                    <p className="text-sm text-[#5b6770]">{t('products.available_count', { count: product.count })}</p>
+                    <div>
+                      <p className="text-sm text-[#5b6770]">{t('products.available_count', { count: product.count })}</p>
+                      <p className="mt-1 text-xs text-[#8d99a2]">{photoStatusText}</p>
+                    </div>
                     {quantity > 0 ? (
                       <div className="inline-flex items-center gap-2 rounded-2xl bg-[#21404d] px-2 py-2 text-white shadow-[0_12px_24px_rgba(33,64,77,0.18)]">
                         <button type="button" onClick={() => updateQuantity(product.id, Math.max(0, quantity - 1))} className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 transition hover:bg-white/20 active:bg-white/25">
