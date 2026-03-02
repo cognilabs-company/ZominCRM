@@ -140,15 +140,15 @@ export const ClientCartPage: React.FC = () => {
       {hasItems ? (
         <div className="sticky bottom-24 z-20">
           <ClientPanel className="border-none bg-[linear-gradient(135deg,#21404d_0%,#3d6c77_100%)] p-4 text-white shadow-[0_24px_48px_rgba(33,64,77,0.28)]">
-            <div className="flex items-center justify-between gap-4">
-              <div className="min-w-0">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0 sm:max-w-[22rem]">
                 <p className="text-xs uppercase tracking-[0.2em] text-white/55">{t('cart.ready_title')}</p>
-                <p className="mt-1 text-sm text-white/80">{t('cart.ready_description')}</p>
+                <p className="mt-1 text-sm leading-6 text-white/80">{t('cart.ready_description')}</p>
                 <p className="mt-2 text-base font-semibold">{formatAmount(productSubtotal, language)}</p>
               </div>
               <NavLink
                 to="/app/checkout"
-                className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-[#21404d] transition hover:bg-[#fff5ea] shadow-lg hover:shadow-xl"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-[#21404d] shadow-lg transition hover:bg-[#fff5ea] hover:shadow-xl sm:w-auto sm:shrink-0"
               >
                 {t('cart.continue_checkout')}
                 <ArrowRight size={16} />

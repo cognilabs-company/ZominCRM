@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Minus, Plus, RefreshCw, ShoppingBag, ShoppingCart } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Images, Minus, Plus, RefreshCw, ShoppingBag, ShoppingCart } from 'lucide-react';
 import { clientApiRequest } from '../api/clientApi';
 import { useClientApp } from '../bootstrap/ClientAppContext';
 import { useClientCart } from '../bootstrap/ClientCartContext';
@@ -13,7 +13,198 @@ import { SkeletonProductList } from '../components/ClientSkeleton';
 import { ClientProduct, ClientProductsResponse } from '../types';
 import { formatAmount, getAvailabilityClasses, getAvailabilityLabel } from '../utils';
 
-const getPrimaryProductImage = (product: ClientProduct) => product.image_url || product.images?.[0]?.url || null;
+const getProductImages = (product: ClientProduct) => {
+  const items: Array<{ id: string; url: string }> = [];
+  const seen = new Set<string>();
+
+  if (product.image_url && !seen.has(product.image_url)) {
+    seen.add(product.image_url);
+    items.push({ id: `${product.id}-primary`, url: product.image_url });
+  }
+
+  (product.images || []).forEach((image) => {
+    if (!image.url || seen.has(image.url)) return;
+    seen.add(image.url);
+    items.push({ id: image.id, url: image.url });
+  });
+
+  return items;
+};
+
+type ProductCatalogCardProps = {
+  product: ClientProduct;
+  quantity: number;
+  unavailable: boolean;
+  language: string;
+  t: (key: string, params?: Record<string, string | number>) => string;
+  addProduct: (product: ClientProduct) => void;
+  updateQuantity: (productId: string, quantity: number) => void;
+};
+
+const ProductCatalogCard: React.FC<ProductCatalogCardProps> = ({
+  product,
+  quantity,
+  unavailable,
+  language,
+  t,
+  addProduct,
+  updateQuantity,
+}) => {
+  const media = React.useMemo(() => getProductImages(product), [product]);
+  const [activeImageIndex, setActiveImageIndex] = React.useState(0);
+  const [failedUrls, setFailedUrls] = React.useState<Record<string, boolean>>({});
+
+  React.useEffect(() => {
+    setActiveImageIndex(0);
+    setFailedUrls({});
+  }, [product.id, product.image_url, product.images]);
+
+  const galleryCount = media.length;
+  const currentImage = media[activeImageIndex];
+  const currentImageUrl = currentImage && !failedUrls[currentImage.url] ? currentImage.url : null;
+  const photoBadgeLabel =
+    galleryCount > 1
+      ? t('products.photo_badge_gallery', { count: galleryCount })
+      : currentImageUrl
+        ? t('products.photo_badge_ready')
+        : t('products.photo_badge_new');
+  const photoStatusText =
+    galleryCount > 1
+      ? t('products.photo_status_gallery', { count: galleryCount })
+      : currentImageUrl
+        ? t('products.photo_status_ready')
+        : t('products.photo_status_empty');
+
+  const shiftImage = (direction: number) => {
+    if (galleryCount < 2) return;
+    setActiveImageIndex((current) => (current + direction + galleryCount) % galleryCount);
+  };
+
+  return (
+    <ClientPanel className="overflow-hidden p-4">
+      <div className="flex items-start gap-4">
+        <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-[30px] bg-[linear-gradient(135deg,#21404d_0%,#3d6c77_100%)] text-white shadow-[0_16px_28px_rgba(33,64,77,0.18)]">
+          {currentImageUrl ? (
+            <img
+              src={currentImageUrl}
+              alt={product.name}
+              className="h-full w-full object-cover"
+              onError={() => {
+                setFailedUrls((current) => (currentImage ? { ...current, [currentImage.url]: true } : current));
+              }}
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center text-center">
+              <div>
+                <ShoppingBag size={26} className="mx-auto" />
+                <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/72">{t('products.photo_none')}</p>
+              </div>
+            </div>
+          )}
+
+          <div className="absolute inset-x-0 bottom-0 bg-[linear-gradient(180deg,transparent_0%,rgba(0,0,0,0.44)_100%)] px-2 pb-2 pt-8">
+            <div className="flex items-center justify-between gap-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/90">
+              <span>{photoBadgeLabel}</span>
+              {galleryCount > 1 ? <span>{t('products.gallery_position', { current: activeImageIndex + 1, total: galleryCount })}</span> : null}
+            </div>
+          </div>
+
+          {galleryCount > 1 ? (
+            <>
+              <button
+                type="button"
+                onClick={() => shiftImage(-1)}
+                className="absolute left-2 top-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-black/35 text-white transition hover:bg-black/55"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={() => shiftImage(1)}
+                className="absolute right-2 top-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-black/35 text-white transition hover:bg-black/55"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </>
+          ) : null}
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-base font-semibold text-[#1f2933]">{product.name}</h2>
+              <p className="mt-1 text-sm text-[#5b6770]">{product.size_liters}L · {product.sku}</p>
+            </div>
+            <span className={`inline-flex shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${getAvailabilityClasses(product.availability_status)}`}>
+              {getAvailabilityLabel(product.availability_status, language)}
+            </span>
+          </div>
+
+          <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+            <div className="rounded-[22px] bg-[rgba(255,246,236,0.95)] px-3 py-3">
+              <p className="text-xs uppercase tracking-[0.2em] text-[#9a6b3a]">{t('products.price')}</p>
+              <p className="mt-1 font-semibold text-[#1f2933]">{formatAmount(product.price_uzs, language)}</p>
+            </div>
+            <div className="rounded-[22px] bg-[rgba(232,241,238,0.95)] px-3 py-3">
+              <p className="text-xs uppercase tracking-[0.2em] text-[#40635b]">{t('products.deposit')}</p>
+              <p className="mt-1 font-semibold text-[#1f2933]">
+                {product.requires_returnable_bottle ? formatAmount(product.bottle_deposit_uzs, language) : t('products.no_deposit')}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-4 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm text-[#5b6770]">{t('products.available_count', { count: product.count })}</p>
+              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-[#8d99a2]">
+                <span>{photoStatusText}</span>
+                {galleryCount > 1 ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[#eef4ff] px-2.5 py-1 font-medium text-[#355cbb]">
+                    <Images size={12} />
+                    {t('products.gallery_hint')}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+            {quantity > 0 ? (
+              <div className="inline-flex items-center gap-2 rounded-2xl bg-[#21404d] px-2 py-2 text-white shadow-[0_12px_24px_rgba(33,64,77,0.18)]">
+                <button
+                  type="button"
+                  onClick={() => updateQuantity(product.id, Math.max(0, quantity - 1))}
+                  className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 transition hover:bg-white/20 active:bg-white/25"
+                >
+                  <Minus size={16} />
+                </button>
+                <span className="min-w-8 text-center text-sm font-semibold">{quantity}</span>
+                <button
+                  type="button"
+                  onClick={() => updateQuantity(product.id, quantity + 1)}
+                  className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 transition hover:bg-white/20 active:bg-white/25"
+                >
+                  <Plus size={16} />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => addProduct(product)}
+                disabled={unavailable}
+                className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-medium transition ${
+                  unavailable
+                    ? 'cursor-not-allowed bg-slate-200 text-slate-400'
+                    : 'bg-[linear-gradient(135deg,#f59e0b_0%,#e76f51_100%)] text-white shadow-[0_12px_24px_rgba(231,111,81,0.24)] hover:brightness-105'
+                }`}
+              >
+                <Plus size={16} />
+                {t('products.add')}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </ClientPanel>
+  );
+};
 
 export const ClientProductsPage: React.FC = () => {
   const { isAuthenticated, sessionToken, status, openInTelegramUrl } = useClientApp();
@@ -41,9 +232,7 @@ export const ClientProductsPage: React.FC = () => {
     let active = true;
     const run = async () => {
       await loadProducts();
-      if (!active) {
-        return;
-      }
+      if (!active) return;
     };
 
     void run();
@@ -116,95 +305,18 @@ export const ClientProductsPage: React.FC = () => {
         {products.map((product) => {
           const quantity = getItemQuantity(product.id);
           const unavailable = product.availability_status === 'out_of_stock' || product.count <= 0;
-          const primaryImage = getPrimaryProductImage(product);
-          const galleryCount = product.images?.length || 0;
-          const photoBadgeLabel = galleryCount > 1
-            ? `${galleryCount} ${language === 'ru' ? 'фото' : language === 'uz' ? 'foto' : 'pics'}`
-            : primaryImage
-              ? (language === 'ru' ? 'есть' : language === 'uz' ? 'tayyor' : 'ready')
-              : (language === 'ru' ? 'новый' : language === 'uz' ? 'yangi' : 'new');
-          const photoStatusText = galleryCount > 1
-            ? `${galleryCount} ${language === 'ru' ? 'фото в галерее' : language === 'uz' ? 'ta galereya rasmi' : 'gallery photos'}`
-            : primaryImage
-              ? (language === 'ru' ? 'Фото товара готово' : language === 'uz' ? 'Mahsulot rasmi tayyor' : 'Product photo ready')
-              : (language === 'ru' ? 'Фото появится здесь' : language === 'uz' ? 'Rasm shu yerda ko\'rinadi' : 'Photo will appear here');
-          const noPhotoLabel = language === 'ru' ? 'Нет фото' : language === 'uz' ? 'Rasm yoq' : 'No photo';
 
           return (
-            <ClientPanel key={product.id} className="overflow-hidden p-4">
-              <div className="flex items-start gap-4">
-                <div className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-[28px] bg-[linear-gradient(135deg,#21404d_0%,#3d6c77_100%)] text-white">
-                  {primaryImage ? (
-                    <img src={primaryImage} alt={product.name} className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="text-center">
-                      <ShoppingBag size={24} className="mx-auto" />
-                      <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/70">{noPhotoLabel}</p>
-                    </div>
-                  )}
-                  <div className="absolute inset-x-0 bottom-0 h-8 bg-[linear-gradient(180deg,transparent_0%,rgba(0,0,0,0.3)_100%)]" />
-                  <div className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#21404d]">
-                    {photoBadgeLabel}
-                  </div>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h2 className="text-base font-semibold text-[#1f2933]">{product.name}</h2>
-                      <p className="mt-1 text-sm text-[#5b6770]">{product.size_liters}L · {product.sku}</p>
-                    </div>
-                    <span className={`inline-flex shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${getAvailabilityClasses(product.availability_status)}`}>
-                      {getAvailabilityLabel(product.availability_status, language)}
-                    </span>
-                  </div>
-
-                  <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                    <div className="rounded-[22px] bg-[rgba(255,246,236,0.95)] px-3 py-3">
-                      <p className="text-xs uppercase tracking-[0.2em] text-[#9a6b3a]">{t('products.price')}</p>
-                      <p className="mt-1 font-semibold text-[#1f2933]">{formatAmount(product.price_uzs, language)}</p>
-                    </div>
-                    <div className="rounded-[22px] bg-[rgba(232,241,238,0.95)] px-3 py-3">
-                      <p className="text-xs uppercase tracking-[0.2em] text-[#40635b]">{t('products.deposit')}</p>
-                      <p className="mt-1 font-semibold text-[#1f2933]">
-                        {product.requires_returnable_bottle ? formatAmount(product.bottle_deposit_uzs, language) : t('products.no_deposit')}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-sm text-[#5b6770]">{t('products.available_count', { count: product.count })}</p>
-                      <p className="mt-1 text-xs text-[#8d99a2]">{photoStatusText}</p>
-                    </div>
-                    {quantity > 0 ? (
-                      <div className="inline-flex items-center gap-2 rounded-2xl bg-[#21404d] px-2 py-2 text-white shadow-[0_12px_24px_rgba(33,64,77,0.18)]">
-                        <button type="button" onClick={() => updateQuantity(product.id, Math.max(0, quantity - 1))} className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 transition hover:bg-white/20 active:bg-white/25">
-                          <Minus size={16} />
-                        </button>
-                        <span className="min-w-8 text-center text-sm font-semibold">{quantity}</span>
-                        <button type="button" onClick={() => updateQuantity(product.id, quantity + 1)} className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 transition hover:bg-white/20 active:bg-white/25">
-                          <Plus size={16} />
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => addProduct(product)}
-                        disabled={unavailable}
-                        className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-medium transition ${
-                          unavailable
-                            ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                            : 'bg-[linear-gradient(135deg,#f59e0b_0%,#e76f51_100%)] text-white shadow-[0_12px_24px_rgba(231,111,81,0.24)] hover:brightness-105'
-                        }`}
-                      >
-                        <Plus size={16} />
-                        {t('products.add')}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </ClientPanel>
+            <ProductCatalogCard
+              key={product.id}
+              product={product}
+              quantity={quantity}
+              unavailable={unavailable}
+              language={language}
+              t={t}
+              addProduct={addProduct}
+              updateQuantity={updateQuantity}
+            />
           );
         })}
       </div>
