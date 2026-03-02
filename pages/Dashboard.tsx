@@ -34,6 +34,13 @@ interface DashboardStatsResponse {
   bottle_deposit_refunded_uzs?: number;
   orders_trend?: unknown;
   revenue_trend?: unknown;
+  recent_activity?: Array<{
+    id: string;
+    user?: string;
+    text?: string;
+    status?: string;
+    updated_at?: string;
+  }>;
 }
 
 type DashboardFilterMode = 'weekly' | 'monthly' | 'date' | 'range';
@@ -430,7 +437,11 @@ const Dashboard: React.FC = () => {
     {
       title: tr('Product Revenue', 'Выручка по товарам', 'Mahsulot tushumi'),
       value: `${revenuePeriodValue.toLocaleString()} UZS`,
-      sub: tr('Product revenue in selected period', 'Выручка по товарам за период', 'Tanlangan davrdagi mahsulot tushumi'),
+      sub: tr(
+        `Selected period revenue. Actual today: ${(stats.revenue_today_actual ?? 0).toLocaleString()} UZS`,
+        `Выручка за период. Фактически сегодня: ${(stats.revenue_today_actual ?? 0).toLocaleString()} UZS`,
+        `Tanlangan davr tushumi. Haqiqiy bugun: ${(stats.revenue_today_actual ?? 0).toLocaleString()} UZS`
+      ),
       icon: DollarSign,
       color: 'text-green-500',
     },
@@ -661,6 +672,25 @@ const Dashboard: React.FC = () => {
           </Card>
         </div>
       )}
+
+      {stats.recent_activity && stats.recent_activity.length > 0 ? (
+        <Card title={tr('Recent Activity', 'Последняя активность', 'So‘nggi faollik')}>
+          <div className="space-y-3">
+            {stats.recent_activity.slice(0, 8).map((item) => (
+              <div key={item.id} className="flex items-start justify-between gap-4 rounded-lg border border-light-border dark:border-navy-700 bg-gray-50 dark:bg-navy-900/40 px-4 py-3">
+                <div>
+                  <p className="text-sm font-medium text-light-text dark:text-white">{item.text || '-'}</p>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{item.user || 'System'}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs font-semibold text-primary-blue dark:text-blue-300">{item.status || '-'}</p>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{item.updated_at ? new Date(item.updated_at).toLocaleString() : '-'}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      ) : null}
     </div>
   );
 };

@@ -8,7 +8,7 @@ import { ENDPOINTS, apiRequest } from '../services/api';
 import type { OrderStatus } from '../types';
 import { Edit2, Plus, Search, UserCircle2 } from 'lucide-react';
 
-type Platform = 'telegram' | 'instagram';
+type Platform = 'telegram' | 'instagram' | 'manual';
 
 interface ClientRow {
   id: string;
@@ -20,6 +20,9 @@ interface ClientRow {
   preferred_language?: 'en' | 'ru' | 'uz' | null;
   created_at: string;
   updated_at: string;
+  has_phone?: boolean;
+  is_platform_identity_verified?: boolean;
+  can_receive_telegram?: boolean;
 }
 
 interface BottleSummary {
@@ -194,7 +197,9 @@ const Clients: React.FC = () => {
   const platformLabel = (p: Platform) => (
     p === 'instagram'
       ? tr('Instagram', 'Instagram', 'Instagram')
-      : tr('Telegram', 'Telegram', 'Telegram')
+      : p === 'manual'
+        ? tr('Manual', 'Ручной', 'Qo‘lda')
+        : tr('Telegram', 'Telegram', 'Telegram')
   );
 
   const languageLabel = (lang?: ClientRow['preferred_language']) => {
@@ -418,7 +423,7 @@ const Clients: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">{c.phone || '-'}</td>
                     <td className="px-6 py-4 text-sm">
-                      <Badge variant={c.platform === 'instagram' ? 'warning' : 'info'}>{platformLabel(c.platform)}</Badge>
+                      <Badge variant={c.platform === 'instagram' ? 'warning' : c.platform === 'manual' ? 'default' : 'info'}>{platformLabel(c.platform)}</Badge>
                     </td>
                     <td className="px-6 py-4 text-sm">
                       {c.preferred_language ? (
@@ -497,7 +502,7 @@ const Clients: React.FC = () => {
               <div className="rounded-lg border border-light-border dark:border-navy-700 p-4">
                 <p className="text-xs text-gray-500">{tr('Platform', 'Platforma', 'Platforma')}</p>
                 <div className="mt-1">
-                  <Badge variant={selectedClient.platform === 'instagram' ? 'warning' : 'info'}>{platformLabel(selectedClient.platform)}</Badge>
+                  <Badge variant={selectedClient.platform === 'instagram' ? 'warning' : selectedClient.platform === 'manual' ? 'default' : 'info'}>{platformLabel(selectedClient.platform)}</Badge>
                 </div>
               </div>
               <div className="rounded-lg border border-light-border dark:border-navy-700 p-4">
@@ -509,6 +514,21 @@ const Clients: React.FC = () => {
                     <span className="text-sm text-gray-400">-</span>
                   )}
                 </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="rounded-lg border border-light-border dark:border-navy-700 p-4 bg-gray-50 dark:bg-navy-900/40">
+                <p className="text-xs text-gray-500">{tr('Has phone', 'Есть телефон', 'Telefon mavjud')}</p>
+                <p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">{selectedClient.has_phone ? tr('Yes', 'Да', 'Ha') : tr('No', 'Нет', 'Yo‘q')}</p>
+              </div>
+              <div className="rounded-lg border border-light-border dark:border-navy-700 p-4 bg-gray-50 dark:bg-navy-900/40">
+                <p className="text-xs text-gray-500">{tr('Identity verified', 'Идентичность подтверждена', 'Identifikatsiya tasdiqlangan')}</p>
+                <p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">{selectedClient.is_platform_identity_verified ? tr('Yes', 'Да', 'Ha') : tr('No', 'Нет', 'Yo‘q')}</p>
+              </div>
+              <div className="rounded-lg border border-light-border dark:border-navy-700 p-4 bg-gray-50 dark:bg-navy-900/40">
+                <p className="text-xs text-gray-500">{tr('Can receive Telegram', 'Может получать Telegram', 'Telegram qabul qila oladi')}</p>
+                <p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">{selectedClient.can_receive_telegram ? tr('Yes', 'Да', 'Ha') : tr('No', 'Нет', 'Yo‘q')}</p>
               </div>
             </div>
 
@@ -746,9 +766,10 @@ const Clients: React.FC = () => {
               <select
                 name="platform"
                 required
-                defaultValue={editing?.platform || 'telegram'}
+                defaultValue={editing?.platform || 'manual'}
                 className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white"
               >
+                <option value="manual">{tr('Manual', 'Ручной', 'Qo‘lda')}</option>
                 <option value="telegram">{tr('Telegram', 'Telegram', 'Telegram')}</option>
                 <option value="instagram">{tr('Instagram', 'Instagram', 'Instagram')}</option>
               </select>

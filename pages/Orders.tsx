@@ -17,6 +17,9 @@ interface ApiClient {
   phone: string | null;
   address?: string | null;
   preferred_language?: Language | null;
+  has_phone?: boolean;
+  is_platform_identity_verified?: boolean;
+  can_receive_telegram?: boolean;
 }
 
 interface ApiProduct {
@@ -190,7 +193,7 @@ const Orders: React.FC = () => {
   const [clientMode, setClientMode] = useState<'existing' | 'new'>('existing');
   const [selectedClientId, setSelectedClientId] = useState('');
   const [clientForm, setClientForm] = useState({ full_name: '', phone: '', username: '', address: '', preferred_language: 'uz' as Language });
-  const [orderForm, setOrderForm] = useState({ payment_method: 'CASH' as 'UNKNOWN' | 'CASH' | 'TRANSFER', location_text: '', location_lat: '', location_lng: '', delivery_time_requested: '', client_confirmed: true });
+  const [orderForm, setOrderForm] = useState({ payment_method: 'CASH' as 'UNKNOWN' | 'CASH' | 'TRANSFER', location_text: '', location_lat: '', location_lng: '', delivery_time_requested: '' });
   const [itemRows, setItemRows] = useState<CreateItemRow[]>([createItemRow()]);
   const [bottleSummary, setBottleSummary] = useState<ApiBottleSummary | null>(null);
   const [bottleBalances, setBottleBalances] = useState<ApiBottleBalance[]>([]);
@@ -412,7 +415,7 @@ const Orders: React.FC = () => {
     setClientMode('existing');
     setSelectedClientId('');
     setClientForm({ full_name: '', phone: '', username: '', address: '', preferred_language: 'uz' });
-    setOrderForm({ payment_method: 'CASH', location_text: '', location_lat: '', location_lng: '', delivery_time_requested: '', client_confirmed: true });
+    setOrderForm({ payment_method: 'CASH', location_text: '', location_lat: '', location_lng: '', delivery_time_requested: '' });
     setItemRows([createItemRow()]);
     setBottleSummary(null);
     setBottleBalances([]);
@@ -427,7 +430,14 @@ const Orders: React.FC = () => {
     try {
       setError(null);
       if (action === 'dispatch') {
-        await apiRequest(ENDPOINTS.COURIERS.DISPATCH(orderId), { method: 'POST' });
+        await apiRequest(ENDPOINTS.COURIERS.DISPATCH(orderId), {
+          method: 'POST',
+          body: JSON.stringify({
+            actor: 'admin-ui',
+            details: 'manual dispatch',
+            force_confirm: true,
+          }),
+        });
         toast.success(tr('Order dispatched to courier.', 'Заказ отправлен курьеру.', 'Buyurtma kuryerga yuborildi.'));
       } else {
         await apiRequest(ENDPOINTS.ORDERS.UPDATE_STATUS(orderId), {
@@ -473,12 +483,21 @@ const Orders: React.FC = () => {
       return;
     }
 
+    const selectedClient = clientMode === 'existing' ? clientsById[selectedClientId] : null;
+
     const payload = {
-      client: clientMode === 'existing'
-        ? { client_id: selectedClientId }
+      client: clientMode === 'existing' && selectedClient
+        ? {
+            full_name: selectedClient.full_name || '',
+            phone: selectedClient.phone || '',
+            platform: selectedClient.platform || 'manual',
+            address: selectedClient.address || '',
+            preferred_language: selectedClient.preferred_language || 'uz',
+          }
         : {
             full_name: clientForm.full_name.trim(),
             phone: clientForm.phone.trim(),
+            platform: 'manual',
             username: clientForm.username.trim(),
             address: clientForm.address.trim(),
             preferred_language: clientForm.preferred_language,
@@ -489,7 +508,6 @@ const Orders: React.FC = () => {
         location_lat: orderForm.location_lat ? Number(orderForm.location_lat) : null,
         location_lng: orderForm.location_lng ? Number(orderForm.location_lng) : null,
         delivery_time_requested: orderForm.delivery_time_requested || null,
-        client_confirmed: orderForm.client_confirmed,
       },
       items: validItems,
     };
@@ -709,6 +727,8 @@ const Orders: React.FC = () => {
                     </div>
                     <div className="rounded-lg border border-light-border dark:border-navy-700 p-4 bg-gray-50 dark:bg-navy-900/40"><p className="text-xs text-gray-500">{tr('Phone', 'Телефон', 'Telefon')}</p><p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">{selectedClient?.phone || '-'}</p></div>
                     <div className="rounded-lg border border-light-border dark:border-navy-700 p-4 bg-gray-50 dark:bg-navy-900/40"><p className="text-xs text-gray-500">{tr('Preferred language', 'Предпочтительный язык', 'Afzal til')}</p><p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">{selectedClient?.preferred_language || '-'}</p></div>
+                    <div className="rounded-lg border border-light-border dark:border-navy-700 p-4 bg-gray-50 dark:bg-navy-900/40"><p className="text-xs text-gray-500">{tr('Platform', 'Платформа', 'Platforma')}</p><p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">{selectedClient?.platform || 'manual'}</p></div>
+                    <div className="rounded-lg border border-light-border dark:border-navy-700 p-4 bg-gray-50 dark:bg-navy-900/40"><p className="text-xs text-gray-500">{tr('Identity', 'Идентичность', 'Identifikatsiya')}</p><p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">{selectedClient?.is_platform_identity_verified ? tr('Verified', 'Подтверждено', 'Tasdiqlangan') : tr('Unverified', 'Не подтверждено', 'Tasdiqlanmagan')}</p></div>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -733,7 +753,6 @@ const Orders: React.FC = () => {
                   <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Latitude</label><input type="number" step="any" value={orderForm.location_lat} onChange={(event) => setOrderForm((state) => ({ ...state, location_lat: event.target.value }))} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" /></div>
                   <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Longitude</label><input type="number" step="any" value={orderForm.location_lng} onChange={(event) => setOrderForm((state) => ({ ...state, location_lng: event.target.value }))} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" /></div>
                 </div>
-                <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"><input type="checkbox" checked={orderForm.client_confirmed} onChange={(event) => setOrderForm((state) => ({ ...state, client_confirmed: event.target.checked }))} />{tr('Client already confirmed the order', 'Клиент уже подтвердил заказ', 'Mijoz buyurtmani allaqachon tasdiqlagan')}</label>
               </div>
 
               <div className="rounded-xl border border-light-border dark:border-navy-700 p-5 space-y-4">

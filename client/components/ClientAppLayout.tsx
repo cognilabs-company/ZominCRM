@@ -25,6 +25,11 @@ export const ClientAppLayout: React.FC = () => {
 
   const displayName = client?.full_name || telegramUser?.first_name || telegramUser?.username || t('layout.telegram_client');
   const depositHeld = bottleSummary?.total_deposit_held_uzs || 0;
+  const languageOptions = [
+    { code: 'uz', flag: 'UZ', icon: '🇺🇿' },
+    { code: 'ru', flag: 'RU', icon: '🇷🇺' },
+    { code: 'en', flag: 'EN', icon: '🇺🇸' },
+  ] as const;
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(247,223,186,0.5)_0%,rgba(243,239,231,1)_34%,rgba(226,235,233,1)_100%)] text-[#1f2933]">
@@ -83,15 +88,21 @@ export const ClientAppLayout: React.FC = () => {
               </p>
               <div className="mt-4">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#9a6b3a]">{t('layout.language_label')}</p>
-                <div className="mt-2 inline-flex rounded-2xl bg-[#f3eadf] p-1">
-                  {(['uz', 'ru', 'en'] as const).map((option) => (
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                  {languageOptions.map((option) => (
                     <button
-                      key={option}
+                      key={option.code}
                       type="button"
-                      onClick={() => setLanguage(option)}
-                      className={`rounded-xl px-3 py-2 text-xs font-semibold transition ${language === option ? 'bg-[#21404d] text-white shadow-[0_8px_18px_rgba(33,64,77,0.20)]' : 'text-[#5b6770] hover:bg-white hover:text-[#1f2933]'}`}
+                      onClick={() => setLanguage(option.code)}
+                      className={`flex items-center justify-center gap-2 rounded-2xl border px-3 py-2.5 text-xs font-semibold transition ${
+                        language === option.code
+                          ? 'border-[#21404d] bg-[#21404d] text-white shadow-[0_8px_18px_rgba(33,64,77,0.20)]'
+                          : 'border-transparent bg-[#f3eadf] text-[#5b6770] hover:border-[#d9c7b4] hover:bg-white hover:text-[#1f2933]'
+                      }`}
+                      title={t(`language.${option.code}`)}
                     >
-                      {t(`language.${option}`)}
+                      <span className="text-sm leading-none">{option.icon}</span>
+                      <span>{option.flag}</span>
                     </button>
                   ))}
                 </div>

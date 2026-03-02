@@ -11,6 +11,7 @@ interface ApiProduct {
   id: string;
   name: string;
   sku: string;
+  image_url?: string | null;
   size_liters: string;
   price_uzs: number;
   count: number;
@@ -25,6 +26,7 @@ interface ApiProduct {
 const emptyForm = {
   name: '',
   sku: '',
+  image_url: '',
   size_liters: '',
   price_uzs: '0',
   count: '0',
@@ -86,6 +88,7 @@ const Products: React.FC = () => {
     setFormState({
       name: editing.name || '',
       sku: editing.sku || '',
+      image_url: editing.image_url || '',
       size_liters: editing.size_liters || '',
       price_uzs: String(editing.price_uzs ?? 0),
       count: String(editing.count ?? 0),
@@ -113,6 +116,7 @@ const Products: React.FC = () => {
     const payload = {
       name: formState.name.trim(),
       sku: formState.sku,
+      image_url: formState.image_url.trim() || null,
       size_liters: formState.size_liters.trim(),
       price_uzs: Number(formState.price_uzs || 0),
       count: Number(formState.count || 0),
@@ -248,7 +252,23 @@ const Products: React.FC = () => {
                   <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-navy-700/50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-navy-700 flex items-center justify-center text-gray-400"><Package size={20} /></div>
+                        <div className="w-12 h-12 overflow-hidden rounded-lg bg-gray-100 dark:bg-navy-700 flex items-center justify-center text-gray-400 shrink-0">
+                          {product.image_url ? (
+                            <img
+                              src={product.image_url}
+                              alt={product.name}
+                              className="h-full w-full object-cover"
+                              onError={(event) => {
+                                event.currentTarget.style.display = 'none';
+                                const fallback = event.currentTarget.nextElementSibling as HTMLElement | null;
+                                if (fallback) fallback.style.display = 'flex';
+                              }}
+                            />
+                          ) : null}
+                          <div className={`h-full w-full items-center justify-center ${product.image_url ? 'hidden' : 'flex'}`}>
+                            <Package size={20} />
+                          </div>
+                        </div>
                         <div>
                           <p className="text-sm font-medium text-gray-900 dark:text-white">{product.name}</p>
                           <p className="text-xs text-gray-500">{product.id.slice(0, 8)}</p>
@@ -304,6 +324,10 @@ const Products: React.FC = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">SKU</label>
               <input value={formState.sku} onChange={(event) => setFormState((current) => ({ ...current, sku: event.target.value }))} placeholder={tr('Leave empty to auto-generate', 'Оставьте пустым для автогенерации', 'Avto yaratish uchun bo\'sh qoldiring')} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Image URL', 'URL изображения', 'Rasm URL')}</label>
+              <input value={formState.image_url} onChange={(event) => setFormState((current) => ({ ...current, image_url: event.target.value }))} placeholder="https://cdn.example.com/product.png" className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Size liters', 'Объем (литр)', 'Hajmi (litr)')}</label>

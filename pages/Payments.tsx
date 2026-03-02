@@ -14,10 +14,12 @@ type PaymentsTab = 'transactions' | 'attempts' | 'ambiguous';
 interface ApiPaymentAttempt {
   id: string;
   order_id: string;
-  amount_uzs: number;
+  expected_amount_uzs: number;
   status: string;
   payer_card_last4?: string | null;
   provider_hint?: string | null;
+  window_start?: string | null;
+  window_end?: string | null;
   payment_waiting_reminder_sent_at?: string | null;
   created_at: string;
 }
@@ -53,7 +55,7 @@ interface AmbiguousQueueItem {
     total_amount_uzs?: number;
   };
   latest_audit?: {
-    status?: string | null;
+    decision?: string | null;
     reason?: string | null;
   } | null;
   candidate_transactions?: ApiTransaction[];
@@ -588,7 +590,7 @@ const Payments: React.FC = () => {
                         <p className="text-xs font-mono text-gray-500">{(att.order_id || '').slice(0, 8) || '-'}</p>
                         <p className="text-xs text-gray-400">{formatDateTime(att.created_at, locale)}</p>
                       </td>
-                      <td className="px-6 py-4 text-sm font-semibold text-gray-900 dark:text-white">{formatAmount(att.amount_uzs)}</td>
+                      <td className="px-6 py-4 text-sm font-semibold text-gray-900 dark:text-white">{formatAmount(att.expected_amount_uzs)}</td>
                       <td className="px-6 py-4">
                         <Badge variant={statusBadge(att.status || '')}>
                           {fieldValue(att.status)}
@@ -642,7 +644,7 @@ const Payments: React.FC = () => {
                         <p className="text-xs text-gray-500 font-mono">{(row.order?.id || '').slice(0, 8) || '-'}</p>
                       </td>
                       <td className="px-6 py-4">
-                        <p className="text-sm font-semibold">{formatAmount(row.payment_attempt?.amount_uzs)}</p>
+                        <p className="text-sm font-semibold">{formatAmount(row.payment_attempt?.expected_amount_uzs)}</p>
                         <div className="mt-1">
                           <Badge variant={statusBadge(row.payment_attempt?.status || 'NEEDS_ADMIN')}>
                             {fieldValue(row.payment_attempt?.status || 'NEEDS_ADMIN')}
@@ -658,7 +660,7 @@ const Payments: React.FC = () => {
                           <div className="text-sm text-gray-700 dark:text-gray-200">
                             <div className="inline-flex items-center gap-1">
                               <AlertTriangle size={14} className="text-amber-500" />
-                              <span>{fieldValue(row.latest_audit.status)}</span>
+                              <span>{fieldValue(row.latest_audit.decision)}</span>
                             </div>
                             <p className="text-xs text-gray-500 mt-1">{fieldValue(row.latest_audit.reason)}</p>
                           </div>

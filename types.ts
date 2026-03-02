@@ -19,7 +19,7 @@ export interface NavItem {
 
 // --- CORE ENUMS ---
 
-export type Platform = 'telegram' | 'instagram';
+export type Platform = 'telegram' | 'instagram' | 'manual';
 
 export type ConversationChannel = 'telegram' | 'instagram';
 
@@ -41,7 +41,7 @@ export type OrderStatus =
 
 export type PaymentMethod = 'UNKNOWN' | 'CASH' | 'TRANSFER';
 
-export type PaymentProvider = 'UZCARD' | 'HUMO';
+export type PaymentProvider = 'PAYME' | 'CLICK';
 
 export type CourierEventType = 'BROADCASTED' | 'ACCEPTED' | 'REJECTED' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'PROBLEM';
 
@@ -70,6 +70,7 @@ export interface Product {
   id: string;
   name: string;
   sku: string;
+  image_url?: string | null;
   size_liters: string;
   price_uzs: number;
   count: number;
