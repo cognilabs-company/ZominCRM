@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { ArrowRight, Minus, Plus } from 'lucide-react';
 import { useClientCart } from '../bootstrap/ClientCartContext';
@@ -18,10 +18,10 @@ export const ClientCartPage: React.FC = () => {
       subtitle={t('cart.subtitle')}
       action={
         <NavLink
-          to="/app/checkout-preview"
-          className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-medium transition ${
-            hasItems 
-              ? 'bg-slate-950 text-white hover:bg-slate-800 active:bg-slate-900 shadow-md hover:shadow-lg' 
+          to="/app/checkout"
+          className={`inline-flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium transition ${
+            hasItems
+              ? 'bg-[linear-gradient(135deg,#21404d_0%,#3d6c77_100%)] text-white shadow-[0_12px_24px_rgba(33,64,77,0.18)] hover:brightness-105'
               : 'bg-slate-200 text-slate-400 cursor-not-allowed pointer-events-none'
           }`}
           aria-disabled={!hasItems}
@@ -32,25 +32,25 @@ export const ClientCartPage: React.FC = () => {
       }
     >
       {items.length === 0 ? (
-        <ClientPanel className="p-5 text-sm text-slate-500">
+        <ClientPanel className="p-5 text-sm text-[#5b6770]">
           {t('cart.empty')}
         </ClientPanel>
       ) : (
         <div className="grid gap-3">
           {items.map((item) => (
-            <ClientPanel key={item.product_id} className="p-4">
+            <ClientPanel key={item.product_id} className="overflow-hidden p-4">
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
-                  <h2 className="text-sm font-semibold text-slate-950">{item.name}</h2>
-                  <p className="mt-1 text-sm text-slate-500">{item.size_liters}L · {item.sku}</p>
-                  <p className="mt-2 text-sm text-slate-500">{t('cart.unit_price')} {formatAmount(item.unit_price_uzs, language)}</p>
+                  <h2 className="text-sm font-semibold text-[#1f2933]">{item.name}</h2>
+                  <p className="mt-1 text-sm text-[#5b6770]">{item.size_liters}L · {item.sku}</p>
+                  <p className="mt-2 text-sm text-[#5b6770]">{t('cart.unit_price')} {formatAmount(item.unit_price_uzs, language)}</p>
                 </div>
-                <button type="button" onClick={() => removeProduct(item.product_id)} className="rounded-2xl bg-rose-50 px-3 py-2 text-sm font-medium text-rose-600 transition hover:bg-rose-100 active:bg-rose-200" title="Remove from cart">
+                <button type="button" onClick={() => removeProduct(item.product_id)} className="rounded-2xl bg-[rgba(255,241,240,0.95)] px-3 py-2 text-sm font-medium text-rose-600 transition hover:bg-rose-100 active:bg-rose-200" title="Remove from cart">
                   {t('cart.remove')}
                 </button>
               </div>
               <div className="mt-4 flex items-center justify-between gap-3">
-                <div className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-2 py-2 text-white shadow-md">
+                <div className="inline-flex items-center gap-2 rounded-2xl bg-[#21404d] px-2 py-2 text-white shadow-[0_12px_24px_rgba(33,64,77,0.18)]">
                   <button type="button" onClick={() => updateQuantity(item.product_id, item.quantity - 1)} className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 transition hover:bg-white/20 active:bg-white/25" aria-label="Decrease quantity">
                     <Minus size={16} />
                   </button>
@@ -60,8 +60,8 @@ export const ClientCartPage: React.FC = () => {
                   </button>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{t('cart.line_total')}</p>
-                  <p className="mt-1 text-sm font-semibold text-slate-950">{formatAmount(item.unit_price_uzs * item.quantity, language)}</p>
+                  <p className="text-xs uppercase tracking-[0.2em] text-[#9a6b3a]">{t('cart.line_total')}</p>
+                  <p className="mt-1 text-sm font-semibold text-[#1f2933]">{formatAmount(item.unit_price_uzs * item.quantity, language)}</p>
                 </div>
               </div>
             </ClientPanel>
@@ -72,53 +72,53 @@ export const ClientCartPage: React.FC = () => {
       <ClientPanel className="p-5">
         <div className="grid gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700">{t('cart.delivery_address')}</label>
+            <label className="block text-sm font-medium text-[#31424d]">{t('cart.delivery_address')}</label>
             <textarea
               value={orderDraft.location_text}
               onChange={(event) => setOrderDraft({ location_text: event.target.value })}
-              className="mt-2 h-24 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-950 outline-none focus:border-slate-400"
+              className="mt-2 h-24 w-full rounded-[22px] border border-[#e7ddd0] bg-[rgba(255,248,240,0.94)] px-4 py-3 text-sm text-[#1f2933] outline-none transition focus:border-[#cb7c45]"
               placeholder={t('cart.delivery_address_placeholder')}
             />
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-slate-700">{t('cart.payment_method')}</label>
+              <label className="block text-sm font-medium text-[#31424d]">{t('cart.payment_method')}</label>
               <select
                 value={orderDraft.payment_method}
                 onChange={(event) => setOrderDraft({ payment_method: event.target.value as 'CASH' | 'TRANSFER' })}
-                className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-950 outline-none focus:border-slate-400"
+                className="mt-2 w-full rounded-[22px] border border-[#e7ddd0] bg-[rgba(255,248,240,0.94)] px-4 py-3 text-sm text-[#1f2933] outline-none transition focus:border-[#cb7c45]"
               >
                 <option value="CASH">{getPaymentMethodLabel('CASH', language)}</option>
                 <option value="TRANSFER">{getPaymentMethodLabel('TRANSFER', language)}</option>
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700">{t('cart.delivery_time')}</label>
+              <label className="block text-sm font-medium text-[#31424d]">{t('cart.delivery_time')}</label>
               <input
                 type="datetime-local"
                 value={orderDraft.delivery_time_requested}
                 onChange={(event) => setOrderDraft({ delivery_time_requested: event.target.value })}
-                className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-950 outline-none focus:border-slate-400"
+                className="mt-2 w-full rounded-[22px] border border-[#e7ddd0] bg-[rgba(255,248,240,0.94)] px-4 py-3 text-sm text-[#1f2933] outline-none transition focus:border-[#cb7c45]"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700">{t('cart.latitude')}</label>
+              <label className="block text-sm font-medium text-[#31424d]">{t('cart.latitude')}</label>
               <input
                 type="text"
                 value={orderDraft.location_lat}
                 onChange={(event) => setOrderDraft({ location_lat: event.target.value })}
-                className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-950 outline-none focus:border-slate-400"
+                className="mt-2 w-full rounded-[22px] border border-[#e7ddd0] bg-[rgba(255,248,240,0.94)] px-4 py-3 text-sm text-[#1f2933] outline-none transition focus:border-[#cb7c45]"
                 placeholder={t('cart.optional')}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700">{t('cart.longitude')}</label>
+              <label className="block text-sm font-medium text-[#31424d]">{t('cart.longitude')}</label>
               <input
                 type="text"
                 value={orderDraft.location_lng}
                 onChange={(event) => setOrderDraft({ location_lng: event.target.value })}
-                className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-950 outline-none focus:border-slate-400"
+                className="mt-2 w-full rounded-[22px] border border-[#e7ddd0] bg-[rgba(255,248,240,0.94)] px-4 py-3 text-sm text-[#1f2933] outline-none transition focus:border-[#cb7c45]"
                 placeholder={t('cart.optional')}
               />
             </div>
@@ -127,23 +127,23 @@ export const ClientCartPage: React.FC = () => {
       </ClientPanel>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <ClientPanel className="p-4">
-          <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{t('cart.items')}</p>
-          <p className="mt-2 text-xl font-semibold text-slate-950">{itemsCount}</p>
+        <ClientPanel className="bg-[linear-gradient(135deg,rgba(255,248,238,0.96)_0%,rgba(247,237,224,0.92)_100%)] p-4">
+          <p className="text-xs uppercase tracking-[0.2em] text-[#9a6b3a]">{t('cart.items')}</p>
+          <p className="mt-2 text-xl font-semibold text-[#1f2933]">{itemsCount}</p>
         </ClientPanel>
-        <ClientPanel className="p-4">
-          <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{t('checkout.product_subtotal')}</p>
-          <p className="mt-2 text-xl font-semibold text-slate-950">{formatAmount(productSubtotal, language)}</p>
+        <ClientPanel className="bg-[linear-gradient(135deg,rgba(233,243,239,0.96)_0%,rgba(224,236,233,0.92)_100%)] p-4">
+          <p className="text-xs uppercase tracking-[0.2em] text-[#40635b]">{t('checkout.product_subtotal')}</p>
+          <p className="mt-2 text-xl font-semibold text-[#1f2933]">{formatAmount(productSubtotal, language)}</p>
         </ClientPanel>
-        <ClientPanel className="p-4">
-          <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{t('checkout.deposit')}</p>
-          <p className="mt-2 text-xl font-semibold text-slate-950">{t('cart.deposit_preview')}</p>
+        <ClientPanel className="bg-[linear-gradient(135deg,rgba(235,240,244,0.94)_0%,rgba(226,232,240,0.92)_100%)] p-4">
+          <p className="text-xs uppercase tracking-[0.2em] text-[#5a6d7c]">{t('checkout.deposit')}</p>
+          <p className="mt-2 text-xl font-semibold text-[#1f2933]">{t('cart.deposit_preview')}</p>
         </ClientPanel>
       </div>
 
       {hasItems ? (
         <div className="sticky bottom-24 z-20">
-          <ClientPanel className="border-slate-950 bg-slate-950 p-4 text-white shadow-[0_18px_40px_rgba(15,23,42,0.26)]">
+          <ClientPanel className="border-none bg-[linear-gradient(135deg,#21404d_0%,#3d6c77_100%)] p-4 text-white shadow-[0_24px_48px_rgba(33,64,77,0.28)]">
             <div className="flex items-center justify-between gap-4">
               <div className="min-w-0">
                 <p className="text-xs uppercase tracking-[0.2em] text-white/55">{t('cart.ready_title')}</p>
@@ -151,8 +151,8 @@ export const ClientCartPage: React.FC = () => {
                 <p className="mt-2 text-base font-semibold">{formatAmount(productSubtotal, language)}</p>
               </div>
               <NavLink
-                to="/app/checkout-preview"
-                className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100 active:bg-slate-200 shadow-lg hover:shadow-xl"
+                to="/app/checkout"
+                className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-[#21404d] transition hover:bg-[#fff5ea] shadow-lg hover:shadow-xl"
               >
                 {t('cart.continue_checkout')}
                 <ArrowRight size={16} />

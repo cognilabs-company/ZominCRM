@@ -10,6 +10,7 @@ const translations: TranslationMap = {
   "nav.home": { uz: "Bosh sahifa", ru: "Главная", en: "Home" },
   "nav.products": { uz: "Mahsulotlar", ru: "Товары", en: "Products" },
   "nav.cart": { uz: "Savatcha", ru: "Корзина", en: "Cart" },
+  "nav.checkout": { uz: "Buyurtma", ru: "Оформление", en: "Checkout" },
   "nav.preview": { uz: "Ko'rish", ru: "Предпросмотр", en: "Preview" },
   "nav.orders": { uz: "Buyurtmalar", ru: "Заказы", en: "Orders" },
   "nav.bottles": { uz: "Idishlar", ru: "Тара", en: "Bottles" },

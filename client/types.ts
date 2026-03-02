@@ -37,20 +37,21 @@ export interface ClientProfile {
   preferred_language: ClientPreferredLanguage;
   platform: string;
   platform_user_id: string;
+  created_at?: string;
 }
 
 export interface ClientBottleSummary {
-  client_id: string;
   total_outstanding_bottles_count: number;
-  deposit_held_total_uzs: number;
-  total_deposit_charged_uzs: number;
-  total_deposit_refunded_uzs: number;
+  total_deposit_held_uzs: number;
 }
 
 export interface ClientOrderItem {
+  id?: string;
+  order_id?: string;
   product_id: string;
   product_name: string;
   product_size_liters?: string | number | null;
+  product_available_count?: number | null;
   quantity: number;
   unit_price_uzs: number;
   line_total_uzs: number;
@@ -59,10 +60,15 @@ export interface ClientOrderItem {
   bottle_deposit_charge_quantity?: number;
   bottle_deposit_total_uzs?: number;
   already_covered_bottle_count?: number;
+  status?: boolean;
+  created_at?: string;
 }
 
 export interface ClientOrder {
   id: string;
+  client_id?: string;
+  lead_id?: string | null;
+  courier_id?: string | null;
   status: ClientOrderStatus;
   payment_method: ClientPaymentMethod;
   product_subtotal_uzs?: number;
@@ -75,6 +81,7 @@ export interface ClientOrder {
   client_confirmed_at?: string | null;
   created_at: string;
   updated_at: string;
+  items_count?: number;
   items?: ClientOrderItem[];
 }
 
@@ -82,6 +89,7 @@ export interface ClientProduct {
   id: string;
   name: string;
   sku: string;
+  image_url?: string | null;
   size_liters: string;
   price_uzs: number;
   count: number;
@@ -96,10 +104,7 @@ export interface ClientBottleBalance {
   client_id: string;
   product_id: string;
   product_name: string;
-  product_sku: string;
-  product_size_liters: string;
-  requires_returnable_bottle: boolean;
-  bottle_deposit_uzs: number;
+  product_size_liters?: string | null;
   outstanding_bottles_count: number;
   deposit_held_uzs: number;
   total_deposit_charged_uzs: number;
@@ -109,23 +114,14 @@ export interface ClientBottleBalance {
 
 export interface ClientBottleMovement {
   id: string;
-  client_id: string;
-  product_id: string;
-  product_name: string;
-  product_sku: string;
-  product_size_liters: string;
-  order_id?: string | null;
-  movement_type: 'ORDER_DELIVERED' | 'REFUND' | 'MANUAL_ADJUST' | string;
-  order_quantity?: number | null;
-  bottles_delta: number;
+  movement_type: 'DELIVERY' | 'REFUND' | 'MANUAL_ADJUST' | string;
+  quantity: number;
   deposit_delta_uzs: number;
-  balance_before_count: number;
-  balance_after_count: number;
-  deposit_before_uzs: number;
-  deposit_after_uzs: number;
-  actor?: string | null;
-  note?: string | null;
   created_at: string;
+  product_id?: string;
+  product_name?: string;
+  product_size_liters?: string | null;
+  order_id?: string | null;
 }
 
 export interface ClientBootstrapResponse {

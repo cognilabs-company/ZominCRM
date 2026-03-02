@@ -43,9 +43,17 @@ export const clientRouteDefinitions: ClientRouteDefinition[] = [
     element: <ClientCartPage />,
   },
   {
+    id: 'checkout',
+    path: 'checkout',
+    navLabelKey: 'nav.checkout',
+    icon: Package,
+    showInNav: false,
+    element: <ClientCheckoutPreviewPage />,
+  },
+  {
     id: 'checkout-preview',
     path: 'checkout-preview',
-    navLabelKey: 'nav.preview',
+    navLabelKey: 'nav.checkout',
     icon: Package,
     showInNav: false,
     element: <ClientCheckoutPreviewPage />,

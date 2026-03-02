@@ -1,7 +1,7 @@
 import React from 'react';
 
 export const ClientPanel: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
-  <section className={`rounded-[26px] border border-slate-200/85 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.06)] ${className}`}>
+  <section className={`rounded-[30px] border border-white/70 bg-[rgba(255,252,247,0.88)] shadow-[0_24px_60px_rgba(58,44,28,0.10)] backdrop-blur-xl ${className}`}>
     {children}
   </section>
 );

@@ -87,6 +87,7 @@ export const getAvailabilityClasses = (status?: string | null) => {
 
 export const getMovementLabel = (movementType?: string | null, language: ClientUiLanguage = 'uz') => {
   const labels: Record<string, Record<ClientUiLanguage, string>> = {
+    DELIVERY: { uz: 'Yetkazib berish', ru: 'Доставка', en: 'Delivery' },
     ORDER_DELIVERED: { uz: 'Buyurtma yetkazildi', ru: 'Заказ доставлен', en: 'Order delivered' },
     REFUND: { uz: 'Qaytarildi', ru: 'Возврат', en: 'Refund' },
     MANUAL_ADJUST: { uz: 'Qo\'lda tuzatish', ru: 'Ручная корректировка', en: 'Manual adjust' },

@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { Minus, Plus, ShoppingBag, ShoppingCart } from 'lucide-react';
 import { clientApiRequest } from '../api/clientApi';
@@ -47,9 +47,9 @@ export const ClientProductsPage: React.FC = () => {
     return (
       <ClientPage title={t('products.title')} subtitle={t('products.unauth_subtitle')}>
         <ClientPanel className="p-5">
-          <p className="text-sm leading-6 text-slate-500">{t('products.unauth_description')}</p>
+          <p className="text-sm leading-6 text-[#5b6770]">{t('products.unauth_description')}</p>
           {openInTelegramUrl ? (
-            <a href={openInTelegramUrl} className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800">
+            <a href={openInTelegramUrl} className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#f59e0b_0%,#e76f51_100%)] px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(231,111,81,0.24)] transition hover:brightness-105">
               {t('home.open_in_telegram_cta')}
             </a>
           ) : null}
@@ -65,7 +65,7 @@ export const ClientProductsPage: React.FC = () => {
       action={
         <NavLink
           to="/app/cart"
-          className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 active:bg-slate-900 shadow-md hover:shadow-lg"
+          className="inline-flex items-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#21404d_0%,#3d6c77_100%)] px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(33,64,77,0.18)] transition hover:brightness-105"
         >
           <ShoppingCart size={16} />
           {t('products.cart')} {itemsCount ? `(${itemsCount})` : ''}
@@ -73,56 +73,61 @@ export const ClientProductsPage: React.FC = () => {
       }
     >
       {error ? (
-        <ClientPanel className="border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{error}</ClientPanel>
+        <ClientPanel className="border-rose-200 bg-[rgba(255,241,240,0.95)] p-4 text-sm text-rose-700">{error}</ClientPanel>
       ) : null}
 
       {loading ? (
-        <ClientPanel className="p-5 text-sm text-slate-500">{t('products.loading')}</ClientPanel>
+        <ClientPanel className="p-5 text-sm text-[#5b6770]">{t('products.loading')}</ClientPanel>
       ) : null}
 
       {!loading && !error && products.length === 0 ? (
-        <ClientPanel className="p-5 text-sm text-slate-500">{t('products.empty')}</ClientPanel>
+        <ClientPanel className="p-5 text-sm text-[#5b6770]">{t('products.empty')}</ClientPanel>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-3">
+      <div className="grid grid-cols-1 gap-4">
         {products.map((product) => {
           const quantity = getItemQuantity(product.id);
           const unavailable = product.availability_status === 'out_of_stock' || product.count <= 0;
 
           return (
-            <ClientPanel key={product.id} className="p-4">
+            <ClientPanel key={product.id} className="overflow-hidden p-4">
               <div className="flex items-start gap-4">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-slate-950 text-white">
-                  <ShoppingBag size={22} />
+                <div className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-[28px] bg-[linear-gradient(135deg,#21404d_0%,#3d6c77_100%)] text-white">
+                  {product.image_url ? (
+                    <img src={product.image_url} alt={product.name} className="h-full w-full object-cover" />
+                  ) : (
+                    <ShoppingBag size={26} />
+                  )}
+                  <div className="absolute inset-x-0 bottom-0 h-8 bg-[linear-gradient(180deg,transparent_0%,rgba(0,0,0,0.3)_100%)]" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <h2 className="text-base font-semibold text-slate-950">{product.name}</h2>
-                      <p className="mt-1 text-sm text-slate-500">{product.size_liters}L · {product.sku}</p>
+                      <h2 className="text-base font-semibold text-[#1f2933]">{product.name}</h2>
+                      <p className="mt-1 text-sm text-[#5b6770]">{product.size_liters}L · {product.sku}</p>
                     </div>
-                    <span className={`inline-flex shrink-0 rounded-full px-3 py-1 text-xs font-medium ${getAvailabilityClasses(product.availability_status)}`}>
+                    <span className={`inline-flex shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${getAvailabilityClasses(product.availability_status)}`}>
                       {getAvailabilityLabel(product.availability_status, language)}
                     </span>
                   </div>
 
                   <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                    <div className="rounded-2xl bg-slate-100 px-3 py-2">
-                      <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{t('products.price')}</p>
-                      <p className="mt-1 font-semibold text-slate-950">{formatAmount(product.price_uzs, language)}</p>
+                    <div className="rounded-[22px] bg-[rgba(255,246,236,0.95)] px-3 py-3">
+                      <p className="text-xs uppercase tracking-[0.2em] text-[#9a6b3a]">{t('products.price')}</p>
+                      <p className="mt-1 font-semibold text-[#1f2933]">{formatAmount(product.price_uzs, language)}</p>
                     </div>
-                    <div className="rounded-2xl bg-slate-100 px-3 py-2">
-                      <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{t('products.deposit')}</p>
-                      <p className="mt-1 font-semibold text-slate-950">
+                    <div className="rounded-[22px] bg-[rgba(232,241,238,0.95)] px-3 py-3">
+                      <p className="text-xs uppercase tracking-[0.2em] text-[#40635b]">{t('products.deposit')}</p>
+                      <p className="mt-1 font-semibold text-[#1f2933]">
                         {product.requires_returnable_bottle ? formatAmount(product.bottle_deposit_uzs, language) : t('products.no_deposit')}
                       </p>
                     </div>
                   </div>
 
                   <div className="mt-4 flex items-center justify-between gap-3">
-                    <p className="text-sm text-slate-500">{t('products.available_count', { count: product.count })}</p>
+                    <p className="text-sm text-[#5b6770]">{t('products.available_count', { count: product.count })}</p>
                     {quantity > 0 ? (
-                      <div className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-2 py-2 text-white shadow-md">
+                      <div className="inline-flex items-center gap-2 rounded-2xl bg-[#21404d] px-2 py-2 text-white shadow-[0_12px_24px_rgba(33,64,77,0.18)]">
                         <button type="button" onClick={() => updateQuantity(product.id, Math.max(0, quantity - 1))} className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 transition hover:bg-white/20 active:bg-white/25">
                           <Minus size={16} />
                         </button>
@@ -139,7 +144,7 @@ export const ClientProductsPage: React.FC = () => {
                         className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-medium transition ${
                           unavailable
                             ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                            : 'bg-slate-950 text-white hover:bg-slate-800 active:bg-slate-900 shadow-md hover:shadow-lg'
+                            : 'bg-[linear-gradient(135deg,#f59e0b_0%,#e76f51_100%)] text-white shadow-[0_12px_24px_rgba(231,111,81,0.24)] hover:brightness-105'
                         }`}
                       >
                         <Plus size={16} />
@@ -156,7 +161,7 @@ export const ClientProductsPage: React.FC = () => {
 
       {itemsCount > 0 ? (
         <div className="sticky bottom-24 z-20">
-          <ClientPanel className="border-slate-950 bg-slate-950 p-4 text-white shadow-[0_18px_40px_rgba(15,23,42,0.26)]">
+          <ClientPanel className="border-none bg-[linear-gradient(135deg,#21404d_0%,#3d6c77_100%)] p-4 text-white shadow-[0_24px_48px_rgba(33,64,77,0.28)]">
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-white/55">{t('products.cart_ready')}</p>
@@ -164,7 +169,7 @@ export const ClientProductsPage: React.FC = () => {
               </div>
               <NavLink
                 to="/app/cart"
-                className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100"
+                className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-[#21404d] transition hover:bg-[#fff5ea]"
               >
                 {t('products.open_cart')}
                 <ShoppingCart size={16} />
@@ -176,4 +181,3 @@ export const ClientProductsPage: React.FC = () => {
     </ClientPage>
   );
 };
-

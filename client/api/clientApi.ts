@@ -89,8 +89,7 @@ export async function clientApiRequest<T = unknown>(path: string, init?: Request
   const shouldSetJsonContentType =
     hasBody &&
     !(body instanceof FormData) &&
-    !(body instanceof URLSearchParams) &&
-    typeof body !== 'string';
+    !(body instanceof URLSearchParams);
   const headers: Record<string, string> = {
     ...(shouldSetJsonContentType ? { 'Content-Type': 'application/json' } : {}),
     ...(init?.headers as Record<string, string> | undefined),
