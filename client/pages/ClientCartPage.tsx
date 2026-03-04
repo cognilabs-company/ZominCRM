@@ -1,5 +1,5 @@
-import React from 'react';
-import { NavLink } from 'react-router-dom';
+﻿import React from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowRight, Minus, Plus } from 'lucide-react';
 import { useClientCart } from '../bootstrap/ClientCartContext';
 import { useClientLanguage } from '../bootstrap/ClientLanguageContext';
@@ -9,17 +9,25 @@ import { ClientPanel } from '../components/ClientPanel';
 import { formatAmount, getPaymentMethodLabel } from '../utils';
 
 export const ClientCartPage: React.FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const { items, itemsCount, orderDraft, productSubtotal, updateQuantity, removeProduct, setOrderDraft } = useClientCart();
   const { language, t } = useClientLanguage();
   const hasItems = itemsCount > 0;
+
+  const goToCheckout = React.useCallback(() => {
+    if (!hasItems) return;
+    navigate('/app/checkout', { state: { from: location.pathname } });
+  }, [hasItems, location.pathname, navigate]);
 
   return (
     <ClientPage
       title={t('cart.title')}
       subtitle={t('cart.subtitle')}
       action={
-        <NavLink
-          to="/app/checkout"
+        <button
+          type="button"
+          onClick={goToCheckout}
           className={`inline-flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium transition ${
             hasItems
               ? 'bg-[linear-gradient(135deg,#21404d_0%,#3d6c77_100%)] text-white shadow-[0_12px_24px_rgba(33,64,77,0.18)] hover:brightness-105'
@@ -29,9 +37,24 @@ export const ClientCartPage: React.FC = () => {
         >
           {t('cart.preview')}
           <ArrowRight size={15} />
-        </NavLink>
+        </button>
       }
     >
+      <div className="grid grid-cols-3 gap-2">
+        <ClientPanel className="p-3 text-center">
+          <p className="text-[11px] uppercase tracking-[0.18em] text-[#9a6b3a]">1</p>
+          <p className="mt-1 text-xs font-semibold text-[#1f2933]">{t('nav.products')}</p>
+        </ClientPanel>
+        <ClientPanel className="border-[#21404d]/20 bg-[rgba(233,243,239,0.96)] p-3 text-center">
+          <p className="text-[11px] uppercase tracking-[0.18em] text-[#40635b]">2</p>
+          <p className="mt-1 text-xs font-semibold text-[#1f2933]">{t('nav.cart')}</p>
+        </ClientPanel>
+        <ClientPanel className="p-3 text-center opacity-70">
+          <p className="text-[11px] uppercase tracking-[0.18em] text-[#5a6d7c]">3</p>
+          <p className="mt-1 text-xs font-semibold text-[#1f2933]">{t('nav.checkout')}</p>
+        </ClientPanel>
+      </div>
+
       {items.length === 0 ? (
         <ClientPanel className="p-5 text-sm text-[#5b6770]">
           {t('cart.empty')}
@@ -43,7 +66,7 @@ export const ClientCartPage: React.FC = () => {
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
                   <h2 className="text-sm font-semibold text-[#1f2933]">{item.name}</h2>
-                  <p className="mt-1 text-sm text-[#5b6770]">{item.size_liters}L · {item.sku}</p>
+                  <p className="mt-1 text-sm text-[#5b6770]">{item.size_liters}L / {item.sku}</p>
                   <p className="mt-2 text-sm text-[#5b6770]">{t('cart.unit_price')} {formatAmount(item.unit_price_uzs, language)}</p>
                 </div>
                 <button type="button" onClick={() => removeProduct(item.product_id)} className="rounded-2xl bg-[rgba(255,241,240,0.95)] px-3 py-2 text-sm font-medium text-rose-600 transition hover:bg-rose-100 active:bg-rose-200" title="Remove from cart">
@@ -144,13 +167,14 @@ export const ClientCartPage: React.FC = () => {
                 <p className="mt-1 text-sm leading-6 text-white/80">{t('cart.ready_description')}</p>
                 <p className="mt-2 text-base font-semibold">{formatAmount(productSubtotal, language)}</p>
               </div>
-              <NavLink
-                to="/app/checkout"
+              <button
+                type="button"
+                onClick={goToCheckout}
                 className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-[#21404d] shadow-lg transition hover:bg-[#fff5ea] hover:shadow-xl sm:w-auto sm:shrink-0"
               >
                 {t('cart.continue_checkout')}
                 <ArrowRight size={16} />
-              </NavLink>
+              </button>
             </div>
           </ClientPanel>
         </div>

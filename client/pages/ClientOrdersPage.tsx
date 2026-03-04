@@ -1,6 +1,6 @@
 import React from 'react';
 import { ArrowRight, CircleDot, RefreshCw } from 'lucide-react';
-import { NavLink } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { clientApiRequest } from '../api/clientApi';
 import { useClientApp } from '../bootstrap/ClientAppContext';
 import { useClientLanguage } from '../bootstrap/ClientLanguageContext';
@@ -13,6 +13,7 @@ import { ClientOrder, ClientOrderDetailResponse, ClientOrdersListResponse } from
 import { formatAmount, formatDateTime, formatOrderRef, getOrderStatusClasses, getOrderStatusLabel, getPaymentMethodLabel } from '../utils';
 
 export const ClientOrdersPage: React.FC = () => {
+  const navigate = useNavigate();
   const { sessionToken, isAuthenticated, activeOrder, openInTelegramUrl } = useClientApp();
   const { language, t } = useClientLanguage();
   const [orders, setOrders] = React.useState<ClientOrder[]>([]);
@@ -192,7 +193,7 @@ export const ClientOrdersPage: React.FC = () => {
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="text-sm font-semibold text-[#1f2933]">{item.product_name}</p>
-                    <p className="mt-1 text-sm text-[#5b6770]">{item.product_size_liters || '-'}L · {t('orders.qty', { count: item.quantity })}</p>
+                    <p className="mt-1 text-sm text-[#5b6770]">{item.product_size_liters || '-'}L / {t('orders.qty', { count: item.quantity })}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-semibold text-[#1f2933]">{formatAmount(item.line_total_uzs, language)}</p>
@@ -208,13 +209,14 @@ export const ClientOrdersPage: React.FC = () => {
               <CircleDot size={14} className="text-[#c0a07c]" />
               {detailLoading ? t('orders.refreshing_details') : t('orders.last_updated', { value: formatDateTime(selectedOrder.updated_at, language) })}
             </div>
-            <NavLink
-              to={`/app/orders/${selectedOrder.id}`}
+            <button
+              type="button"
+              onClick={() => navigate(`/app/orders/${selectedOrder.id}`)}
               className="inline-flex items-center gap-2 rounded-2xl bg-[#21404d] px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(33,64,77,0.18)] transition hover:brightness-105"
             >
               {t('orders.open_detail')}
               <ArrowRight size={15} />
-            </NavLink>
+            </button>
           </div>
         </ClientPanel>
       ) : null}

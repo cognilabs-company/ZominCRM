@@ -1,5 +1,5 @@
-import React from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+﻿import React from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { AlertTriangle, ArrowLeft, CheckCircle2, ReceiptText } from 'lucide-react';
 import { clientApiRequest } from '../api/clientApi';
 import { useClientApp } from '../bootstrap/ClientAppContext';
@@ -12,6 +12,7 @@ import { formatAmount, formatDateTime, formatOrderRef, getOrderStatusClasses, ge
 
 export const ClientCheckoutPreviewPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated, sessionToken, refreshBootstrap, client } = useClientApp();
   const { items, orderDraft, clearCart } = useClientCart();
   const { language, t } = useClientLanguage();
@@ -108,6 +109,10 @@ export const ClientCheckoutPreviewPage: React.FC = () => {
     }
   };
 
+  const goBackToCart = () => {
+    navigate('/app/cart', { state: { from: location.pathname } });
+  };
+
   if (!isAuthenticated) {
     return (
       <ClientPage title={t('checkout.title')} subtitle={t('checkout.unauth_subtitle')}>
@@ -129,10 +134,10 @@ export const ClientCheckoutPreviewPage: React.FC = () => {
       <ClientPage title={t('checkout.title')} subtitle={t('checkout.address_required_subtitle')}>
         <ClientPanel className="p-5">
           <p className="text-sm leading-6 text-[#5b6770]">{t('checkout.address_required_description')}</p>
-          <NavLink to="/app/cart" className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-[#21404d] px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(33,64,77,0.18)] transition hover:brightness-105">
+          <button type="button" onClick={goBackToCart} className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-[#21404d] px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(33,64,77,0.18)] transition hover:brightness-105">
             <ArrowLeft size={15} />
             {t('checkout.back_to_cart')}
-          </NavLink>
+          </button>
         </ClientPanel>
       </ClientPage>
     );
@@ -143,15 +148,31 @@ export const ClientCheckoutPreviewPage: React.FC = () => {
       title={t('checkout.title')}
       subtitle={t('checkout.subtitle')}
       action={
-        <NavLink
-          to="/app/cart"
+        <button
+          type="button"
+          onClick={goBackToCart}
           className="inline-flex items-center gap-2 rounded-2xl border border-[#d9cdbd] bg-[rgba(255,248,240,0.94)] px-4 py-3 text-sm font-semibold text-[#31424d] transition hover:bg-white"
         >
           <ArrowLeft size={15} />
           {t('checkout.back_to_cart')}
-        </NavLink>
+        </button>
       }
     >
+      <div className="grid grid-cols-3 gap-2">
+        <ClientPanel className="p-3 text-center opacity-70">
+          <p className="text-[11px] uppercase tracking-[0.18em] text-[#9a6b3a]">1</p>
+          <p className="mt-1 text-xs font-semibold text-[#1f2933]">{t('nav.products')}</p>
+        </ClientPanel>
+        <ClientPanel className="p-3 text-center opacity-70">
+          <p className="text-[11px] uppercase tracking-[0.18em] text-[#40635b]">2</p>
+          <p className="mt-1 text-xs font-semibold text-[#1f2933]">{t('nav.cart')}</p>
+        </ClientPanel>
+        <ClientPanel className="border-[#21404d]/20 bg-[rgba(235,240,244,0.94)] p-3 text-center">
+          <p className="text-[11px] uppercase tracking-[0.18em] text-[#5a6d7c]">3</p>
+          <p className="mt-1 text-xs font-semibold text-[#1f2933]">{t('nav.checkout')}</p>
+        </ClientPanel>
+      </div>
+
       {error ? (
         <ClientPanel className="border-rose-200 bg-[rgba(255,241,240,0.95)] p-4 text-sm text-rose-700">{error}</ClientPanel>
       ) : null}
@@ -176,9 +197,9 @@ export const ClientCheckoutPreviewPage: React.FC = () => {
                   {getOrderStatusLabel(preview.active_order.status, language)}
                 </div>
               </div>
-              <NavLink to={`/app/orders/${preview.active_order.id}`} className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-[#21404d] px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(33,64,77,0.18)] transition hover:brightness-105">
+              <button type="button" onClick={() => navigate(`/app/orders/${preview.active_order!.id}`)} className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-[#21404d] px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(33,64,77,0.18)] transition hover:brightness-105">
                 {t('checkout.open_orders')}
-              </NavLink>
+              </button>
             </div>
           </div>
         </ClientPanel>
@@ -201,29 +222,13 @@ export const ClientCheckoutPreviewPage: React.FC = () => {
             </ClientPanel>
           </div>
 
-          {preview.bottle_summary ? (
-            <ClientPanel className="p-5">
-              <h2 className="text-base font-semibold text-[#1f2933]">{t('checkout.coverage_summary')}</h2>
-              <div className="mt-4 grid grid-cols-2 gap-3">
-                <div className="rounded-[24px] bg-[rgba(255,248,240,0.94)] px-4 py-3">
-                  <p className="text-xs uppercase tracking-[0.2em] text-[#9a6b3a]">{t('checkout.outstanding_bottles')}</p>
-                  <p className="mt-2 text-xl font-semibold text-[#1f2933]">{preview.bottle_summary.total_outstanding_bottles_count}</p>
-                </div>
-                <div className="rounded-[24px] bg-[rgba(232,241,238,0.95)] px-4 py-3">
-                  <p className="text-xs uppercase tracking-[0.2em] text-[#40635b]">{t('checkout.deposit_held')}</p>
-                  <p className="mt-2 text-xl font-semibold text-[#1f2933]">{formatAmount(preview.bottle_summary.total_deposit_held_uzs, language)}</p>
-                </div>
-              </div>
-            </ClientPanel>
-          ) : null}
-
           <div className="grid gap-3">
             {preview.preview.items.map((item) => (
               <ClientPanel key={`${item.product_id}-${item.product_name}`} className="p-4">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h2 className="text-sm font-semibold text-[#1f2933]">{item.product_name}</h2>
-                    <p className="mt-1 text-sm text-[#5b6770]">{item.product_size_liters || '-'}L · {t('orders.qty', { count: item.quantity })}</p>
+                    <p className="mt-1 text-sm text-[#5b6770]">{item.product_size_liters || '-'}L / {t('orders.qty', { count: item.quantity })}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-semibold text-[#1f2933]">{formatAmount(item.line_total_uzs, language)}</p>
@@ -232,7 +237,7 @@ export const ClientCheckoutPreviewPage: React.FC = () => {
                 </div>
                 {item.requires_returnable_bottle ? (
                   <div className="mt-4 rounded-[24px] bg-[rgba(255,248,240,0.94)] px-4 py-3 text-sm text-[#5b6770]">
-                    {t('checkout.covered_bottles', { count: item.already_covered_bottle_count || 0 })} · {t('checkout.deposit_charge_qty', { count: item.bottle_deposit_charge_quantity || 0 })}
+                    {t('checkout.covered_bottles', { count: item.already_covered_bottle_count || 0 })} / {t('checkout.deposit_charge_qty', { count: item.bottle_deposit_charge_quantity || 0 })}
                   </div>
                 ) : null}
               </ClientPanel>

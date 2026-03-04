@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Images, Minus, Plus, RefreshCw, ShoppingBag, ShoppingCart } from 'lucide-react';
 import { clientApiRequest, resolveClientMediaUrl } from '../api/clientApi';
 import { useClientApp } from '../bootstrap/ClientAppContext';
@@ -214,6 +214,7 @@ const ProductCatalogCard: React.FC<ProductCatalogCardProps> = ({
 };
 
 export const ClientProductsPage: React.FC = () => {
+  const navigate = useNavigate();
   const { isAuthenticated, sessionToken, status, openInTelegramUrl } = useClientApp();
   const { addProduct, updateQuantity, getItemQuantity, itemsCount } = useClientCart();
   const { language, t } = useClientLanguage();
@@ -268,13 +269,14 @@ export const ClientProductsPage: React.FC = () => {
       title={t('products.title')}
       subtitle={t('products.subtitle')}
       action={
-        <NavLink
-          to="/app/cart"
+        <button
+          type="button"
+          onClick={() => navigate('/app/cart')}
           className="inline-flex items-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#21404d_0%,#3d6c77_100%)] px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(33,64,77,0.18)] transition hover:brightness-105"
         >
           <ShoppingCart size={16} />
           {t('products.cart')} {itemsCount ? `(${itemsCount})` : ''}
-        </NavLink>
+        </button>
       }
     >
       {error ? (
@@ -336,13 +338,14 @@ export const ClientProductsPage: React.FC = () => {
                 <p className="text-xs uppercase tracking-[0.2em] text-white/55">{t('products.cart_ready')}</p>
                 <p className="mt-1 text-sm text-white/80">{t('products.cart')} {itemsCount}</p>
               </div>
-              <NavLink
-                to="/app/cart"
+              <button
+                type="button"
+                onClick={() => navigate('/app/cart')}
                 className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-[#21404d] transition hover:bg-[#fff5ea]"
               >
                 {t('products.open_cart')}
                 <ShoppingCart size={16} />
-              </NavLink>
+              </button>
             </div>
           </ClientPanel>
         </div>

@@ -139,11 +139,6 @@ export const ClientLocationPicker: React.FC<ClientLocationPickerProps> = ({
             {selectedAddress ? (
               <p className="mt-3 text-sm font-medium text-[#1f2933]">{selectedAddress}</p>
             ) : null}
-            {(latitude && longitude) ? (
-              <p className="mt-3 text-xs text-[#7b8790]">
-                {t('cart.map_selected_coords', { lat: latitude, lng: longitude })}
-              </p>
-            ) : null}
           </div>
           <button
             type="button"

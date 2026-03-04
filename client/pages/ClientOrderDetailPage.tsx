@@ -1,6 +1,6 @@
 import React from 'react';
 import { ArrowLeft, ExternalLink, RefreshCw, WalletCards } from 'lucide-react';
-import { NavLink, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { clientApiRequest } from '../api/clientApi';
 import { useClientApp } from '../bootstrap/ClientAppContext';
 import { useClientLanguage } from '../bootstrap/ClientLanguageContext';
@@ -36,6 +36,7 @@ const openPaymentLink = (url: string) => {
 };
 
 export const ClientOrderDetailPage: React.FC = () => {
+  const navigate = useNavigate();
   const { orderId } = useParams<{ orderId: string }>();
   const { isAuthenticated, sessionToken, openInTelegramUrl } = useClientApp();
   const { language, t } = useClientLanguage();
@@ -118,13 +119,14 @@ export const ClientOrderDetailPage: React.FC = () => {
       title={t('orders.detail.title')}
       subtitle={t('orders.detail.subtitle')}
       action={
-        <NavLink
-          to="/app/orders"
+        <button
+          type="button"
+          onClick={() => navigate('/app/orders')}
           className="inline-flex items-center gap-2 rounded-2xl border border-[#d9cdbd] bg-[rgba(255,248,240,0.94)] px-4 py-3 text-sm font-semibold text-[#31424d] transition hover:bg-white"
         >
           <ArrowLeft size={15} />
           {t('orders.detail.back')}
-        </NavLink>
+        </button>
       }
     >
       {error ? (
@@ -145,13 +147,14 @@ export const ClientOrderDetailPage: React.FC = () => {
             title={t('orders.detail.empty_title')}
             description={t('orders.detail.empty_description')}
             action={
-              <NavLink
-                to="/app/orders"
+              <button
+                type="button"
+                onClick={() => navigate('/app/orders')}
                 className="inline-flex items-center gap-2 rounded-2xl bg-[#21404d] px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(33,64,77,0.18)] transition hover:brightness-105"
               >
                 <ArrowLeft size={15} />
                 {t('orders.detail.back')}
-              </NavLink>
+              </button>
             }
           />
         </ClientPanel>

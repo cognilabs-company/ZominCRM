@@ -1,5 +1,5 @@
-import React from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+﻿import React from 'react';
+import { Outlet, useNavigate } from 'react-router-dom';
 import { ArrowRight, Compass, Package, RefreshCw, ShieldCheck, Sparkles, UserRound } from 'lucide-react';
 import { useClientApp } from '../bootstrap/ClientAppContext';
 import { useClientLanguage } from '../bootstrap/ClientLanguageContext';
@@ -7,7 +7,47 @@ import { ClientBottomNav } from './ClientBottomNav';
 import { ClientPanel } from './ClientPanel';
 import { formatAmount, formatOrderRef, getOrderStatusLabel } from '../utils';
 
+const FlagIcon: React.FC<{ code: 'uz' | 'ru' | 'en' }> = ({ code }) => {
+  if (code === 'uz') {
+    return (
+      <svg viewBox="0 0 24 16" className="h-4 w-6 overflow-hidden rounded-[4px] shadow-sm" aria-hidden="true">
+        <rect width="24" height="16" fill="#ffffff" />
+        <rect width="24" height="5" y="0" fill="#23a9e1" />
+        <rect width="24" height="1" y="5" fill="#d64045" />
+        <rect width="24" height="5" y="6" fill="#ffffff" />
+        <rect width="24" height="1" y="11" fill="#d64045" />
+        <rect width="24" height="5" y="12" fill="#34a853" />
+        <rect width="6" height="5" y="0" fill="#1f4d8f" />
+        <circle cx="3" cy="2.5" r="1.2" fill="#ffffff" />
+        <circle cx="3.4" cy="2.5" r="1.0" fill="#1f4d8f" />
+      </svg>
+    );
+  }
+
+  if (code === 'ru') {
+    return (
+      <svg viewBox="0 0 24 16" className="h-4 w-6 overflow-hidden rounded-[4px] shadow-sm" aria-hidden="true">
+        <rect width="24" height="16" fill="#ffffff" />
+        <rect width="24" height="5.333" y="5.333" fill="#2458d3" />
+        <rect width="24" height="5.334" y="10.666" fill="#d64045" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 24 16" className="h-4 w-6 overflow-hidden rounded-[4px] shadow-sm" aria-hidden="true">
+      <rect width="24" height="16" fill="#b22234" />
+      <rect width="24" height="2" y="2" fill="#ffffff" />
+      <rect width="24" height="2" y="6" fill="#ffffff" />
+      <rect width="24" height="2" y="10" fill="#ffffff" />
+      <rect width="24" height="2" y="14" fill="#ffffff" />
+      <rect width="10" height="8" fill="#3c3b6e" />
+    </svg>
+  );
+};
+
 export const ClientAppLayout: React.FC = () => {
+  const navigate = useNavigate();
   const {
     status,
     mode,
@@ -26,9 +66,9 @@ export const ClientAppLayout: React.FC = () => {
   const displayName = client?.full_name || telegramUser?.first_name || telegramUser?.username || t('layout.telegram_client');
   const depositHeld = bottleSummary?.total_deposit_held_uzs || 0;
   const languageOptions = [
-    { code: 'uz', flag: 'UZ', icon: '🇺🇿' },
-    { code: 'ru', flag: 'RU', icon: '🇷🇺' },
-    { code: 'en', flag: 'EN', icon: '🇺🇸' },
+    { code: 'uz' },
+    { code: 'ru' },
+    { code: 'en' },
   ] as const;
 
   return (
@@ -94,25 +134,28 @@ export const ClientAppLayout: React.FC = () => {
                       key={option.code}
                       type="button"
                       onClick={() => setLanguage(option.code)}
-                      className={`flex items-center justify-center gap-2 rounded-2xl border px-3 py-2.5 text-xs font-semibold transition ${
+                      className={`flex items-center justify-center rounded-2xl border px-3 py-2.5 text-xs font-semibold transition ${
                         language === option.code
                           ? 'border-[#21404d] bg-[#21404d] text-white shadow-[0_8px_18px_rgba(33,64,77,0.20)]'
                           : 'border-transparent bg-[#f3eadf] text-[#5b6770] hover:border-[#d9c7b4] hover:bg-white hover:text-[#1f2933]'
                       }`}
                       title={t(`language.${option.code}`)}
                     >
-                      <span className="text-sm leading-none">{option.icon}</span>
-                      <span>{option.flag}</span>
+                      <FlagIcon code={option.code} />
                     </button>
                   ))}
                 </div>
               </div>
             </div>
 
-            <NavLink to="/app/profile" className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#f59e0b_0%,#e76f51_100%)] px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(231,111,81,0.24)] transition hover:brightness-105">
+            <button
+              type="button"
+              onClick={() => navigate('/app/profile')}
+              className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#f59e0b_0%,#e76f51_100%)] px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(231,111,81,0.24)] transition hover:brightness-105"
+            >
               {t('layout.profile')}
               <ArrowRight size={15} />
-            </NavLink>
+            </button>
           </div>
 
           {isAuthenticated && activeOrder ? (
@@ -179,7 +222,7 @@ export const ClientAppLayout: React.FC = () => {
 
         <div className="pointer-events-none mt-6 flex items-center justify-center gap-2 pb-2 text-[11px] font-medium uppercase tracking-[0.28em] text-[#9ba7ae]">
           <Sparkles size={12} />
-          Telegram Client Surface
+          Zomin Suv
         </div>
       </div>
 
