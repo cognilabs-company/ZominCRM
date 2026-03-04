@@ -71,9 +71,11 @@ export interface Product {
   name: string;
   sku: string;
   image_url?: string | null;
+  image_thumb_url?: string | null;
   images?: Array<{
     id: string;
     url: string;
+    thumb_url?: string | null;
     sort_order?: number;
     created_at?: string;
   }>;

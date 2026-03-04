@@ -10,6 +10,7 @@ import { ENDPOINTS, apiRequest, resolveAdminMediaUrl } from '../services/api';
 interface ApiProductImage {
   id: string;
   url: string;
+  thumb_url?: string | null;
   sort_order?: number;
   created_at?: string | null;
 }
@@ -19,6 +20,7 @@ interface ApiProduct {
   name: string;
   sku: string;
   image_url?: string | null;
+  image_thumb_url?: string | null;
   images?: ApiProductImage[];
   size_liters: string;
   price_uzs: number;
@@ -55,8 +57,14 @@ const emptyForm: ProductFormState = {
   is_active: true,
 };
 
-const getPrimaryImage = (product?: Pick<ApiProduct, 'image_url' | 'images'> | null) =>
-  resolveAdminMediaUrl(product?.image_url || product?.images?.[0]?.url || null);
+const getPrimaryImage = (product?: Pick<ApiProduct, 'image_url' | 'image_thumb_url' | 'images'> | null) =>
+  resolveAdminMediaUrl(
+    product?.image_thumb_url ||
+      product?.images?.[0]?.thumb_url ||
+      product?.image_url ||
+      product?.images?.[0]?.url ||
+      null
+  );
 
 const getProductMedia = (product?: Pick<ApiProduct, 'image_url' | 'images'> | null) => {
   const items: ApiProductImage[] = [];
@@ -70,14 +78,18 @@ const getProductMedia = (product?: Pick<ApiProduct, 'image_url' | 'images'> | nu
   (product?.images || []).forEach((image) => {
     if (!image.url || seen.has(image.url)) return;
     seen.add(image.url);
-    items.push({ ...image, url: resolveAdminMediaUrl(image.url) || image.url });
+    items.push({
+      ...image,
+      url: resolveAdminMediaUrl(image.url) || image.url,
+      thumb_url: resolveAdminMediaUrl(image.thumb_url || image.url) || image.thumb_url || image.url,
+    });
   });
 
   return items;
 };
 
 const ProductThumbnail: React.FC<{
-  product?: Pick<ApiProduct, 'name' | 'size_liters' | 'image_url' | 'images'> | null;
+  product?: Pick<ApiProduct, 'name' | 'size_liters' | 'image_url' | 'image_thumb_url' | 'images'> | null;
   fallbackLabel: string;
   badgeLabel?: string | null;
   className?: string;
@@ -87,7 +99,7 @@ const ProductThumbnail: React.FC<{
 
   useEffect(() => {
     setImageFailed(false);
-  }, [product?.image_url, product?.images]);
+  }, [product?.image_url, product?.image_thumb_url, product?.images]);
 
   return (
     <div className={`relative overflow-hidden border border-white/70 bg-[linear-gradient(145deg,#21404d_0%,#3d6c77_58%,#d9a25f_100%)] shadow-[0_12px_24px_rgba(33,64,77,0.16)] ${className}`}>
@@ -214,6 +226,7 @@ const Products: React.FC = () => {
       (replaceGallery ? [] : (editing?.images || []).filter((image) => !removeImageIds.includes(image.id))).map((image) => ({
         ...image,
         url: resolveAdminMediaUrl(image.url) || image.url,
+        thumb_url: resolveAdminMediaUrl(image.thumb_url || image.url) || image.thumb_url || image.url,
       })),
     [editing?.images, removeImageIds, replaceGallery]
   );
@@ -628,7 +641,7 @@ const Products: React.FC = () => {
                 <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
                   {existingGalleryImages.map((image) => (
                     <div key={image.id} className="group relative overflow-hidden rounded-2xl border border-light-border bg-gray-50 shadow-sm dark:border-navy-700 dark:bg-navy-800">
-                      <img src={image.url} alt={formState.name || 'Gallery image'} className="h-24 w-full object-cover" />
+                      <img src={image.thumb_url || image.url} alt={formState.name || 'Gallery image'} className="h-24 w-full object-cover" />
                       <button type="button" onClick={() => setRemoveImageIds((current) => current.includes(image.id) ? current : [...current, image.id])} className="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition group-hover:opacity-100">
                         <X size={14} />
                       </button>
@@ -760,7 +773,7 @@ const Products: React.FC = () => {
                   <div className="grid grid-cols-4 gap-3 sm:grid-cols-5">
                     {detailMedia.map((image, index) => (
                       <button key={`${image.id}-${index}`} type="button" onClick={() => setDetailIndex(index)} className={`overflow-hidden rounded-2xl border transition ${index === detailIndex ? 'border-[#21404d] shadow-[0_10px_20px_rgba(33,64,77,0.14)]' : 'border-light-border hover:border-[#21404d]/40'}`}>
-                        <img src={image.url} alt={`${detailProduct.name} ${index + 1}`} className="h-20 w-full object-cover" />
+                        <img src={image.thumb_url || image.url} alt={`${detailProduct.name} ${index + 1}`} className="h-20 w-full object-cover" />
                       </button>
                     ))}
                   </div>

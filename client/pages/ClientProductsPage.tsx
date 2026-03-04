@@ -17,15 +17,17 @@ const getProductImages = (product: ClientProduct) => {
   const items: Array<{ id: string; url: string }> = [];
   const seen = new Set<string>();
 
-  if (product.image_url && !seen.has(product.image_url)) {
-    seen.add(product.image_url);
-    items.push({ id: `${product.id}-primary`, url: resolveClientMediaUrl(product.image_url) || product.image_url });
+  const primaryImage = product.image_thumb_url || product.image_url;
+  if (primaryImage && !seen.has(primaryImage)) {
+    seen.add(primaryImage);
+    items.push({ id: `${product.id}-primary`, url: resolveClientMediaUrl(primaryImage) || primaryImage });
   }
 
   (product.images || []).forEach((image) => {
-    if (!image.url || seen.has(image.url)) return;
-    seen.add(image.url);
-    items.push({ id: image.id, url: resolveClientMediaUrl(image.url) || image.url });
+    const nextUrl = image.thumb_url || image.url;
+    if (!nextUrl || seen.has(nextUrl)) return;
+    seen.add(nextUrl);
+    items.push({ id: image.id, url: resolveClientMediaUrl(nextUrl) || nextUrl });
   });
 
   return items;
@@ -57,7 +59,7 @@ const ProductCatalogCard: React.FC<ProductCatalogCardProps> = ({
   React.useEffect(() => {
     setActiveImageIndex(0);
     setFailedUrls({});
-  }, [product.id, product.image_url, product.images]);
+  }, [product.id, product.image_thumb_url, product.image_url, product.images]);
 
   const galleryCount = media.length;
   const currentImage = media[activeImageIndex];
