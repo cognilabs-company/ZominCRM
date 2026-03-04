@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AlertTriangle, ChevronLeft, ChevronRight, Edit2, Eye, Images, Package, Plus, Search, Trash2, Upload, X } from 'lucide-react';
 import { Badge } from '../components/ui/Badge';
 import { Card } from '../components/ui/Card';
@@ -148,7 +148,7 @@ const Products: React.FC = () => {
       const response = await apiRequest<{ results?: ApiProduct[] }>(`${ENDPOINTS.PRODUCTS.LIST_CREATE}${query}`);
       setProducts(response.results || []);
     } catch (loadError) {
-      const message = loadError instanceof Error ? loadError.message : tr('Failed to load products', 'Не удалось загрузить товары', 'Mahsulotlarni yuklab bo\'lmadi');
+      const message = loadError instanceof Error ? loadError.message : tr('Failed to load products', 'ÐÐµ ÑƒÐ´Ð°Ð»Ð¾ÑÑŒ Ð·Ð°Ð³Ñ€ÑƒÐ·Ð¸Ñ‚ÑŒ Ñ‚Ð¾Ð²Ð°Ñ€Ñ‹', 'Mahsulotlarni yuklab bo\'lmadi');
       setError(message);
       toast.error(message);
     } finally {
@@ -287,9 +287,9 @@ const Products: React.FC = () => {
   };
 
   const availabilityBadge = (status: ApiProduct['availability_status']) => {
-    if (status === 'in_stock') return <Badge variant="success">{tr('In stock', 'В наличии', 'Mavjud')}</Badge>;
-    if (status === 'low_stock') return <Badge variant="warning">{tr('Low stock', 'Мало осталось', 'Kam qolgan')}</Badge>;
-    return <Badge variant="error">{tr('Out of stock', 'Нет в наличии', 'Tugagan')}</Badge>;
+    if (status === 'in_stock') return <Badge variant="success">{tr('In stock', 'Ð’ Ð½Ð°Ð»Ð¸Ñ‡Ð¸Ð¸', 'Mavjud')}</Badge>;
+    if (status === 'low_stock') return <Badge variant="warning">{tr('Low stock', 'ÐœÐ°Ð»Ð¾ Ð¾ÑÑ‚Ð°Ð»Ð¾ÑÑŒ', 'Kam qolgan')}</Badge>;
+    return <Badge variant="error">{tr('Out of stock', 'ÐÐµÑ‚ Ð² Ð½Ð°Ð»Ð¸Ñ‡Ð¸Ð¸', 'Tugagan')}</Badge>;
   };
 
   const handleSearch = (event: React.FormEvent) => {
@@ -348,9 +348,9 @@ const Products: React.FC = () => {
 
       closeEditor();
       await loadProducts();
-      toast.success(editing ? tr('Product updated.', 'Товар обновлен.', 'Mahsulot yangilandi.') : tr('Product created.', 'Товар создан.', 'Mahsulot yaratildi.'));
+      toast.success(editing ? tr('Product updated.', 'Ð¢Ð¾Ð²Ð°Ñ€ Ð¾Ð±Ð½Ð¾Ð²Ð»ÐµÐ½.', 'Mahsulot yangilandi.') : tr('Product created.', 'Ð¢Ð¾Ð²Ð°Ñ€ ÑÐ¾Ð·Ð´Ð°Ð½.', 'Mahsulot yaratildi.'));
     } catch (saveError) {
-      const message = saveError instanceof Error ? saveError.message : tr('Failed to save product', 'Не удалось сохранить товар', 'Mahsulotni saqlab bo\'lmadi');
+      const message = saveError instanceof Error ? saveError.message : tr('Failed to save product', 'ÐÐµ ÑƒÐ´Ð°Ð»Ð¾ÑÑŒ ÑÐ¾Ñ…Ñ€Ð°Ð½Ð¸Ñ‚ÑŒ Ñ‚Ð¾Ð²Ð°Ñ€', 'Mahsulotni saqlab bo\'lmadi');
       setError(message);
       toast.error(message);
     } finally {
@@ -359,7 +359,7 @@ const Products: React.FC = () => {
   };
 
   const handleDeactivate = async (product: ApiProduct) => {
-    if (!window.confirm(tr(`Deactivate "${product.name}"?`, `Деактивировать "${product.name}"?`, `"${product.name}" mahsulotini nofaol qilinsinmi?`))) return;
+    if (!window.confirm(tr(`Deactivate "${product.name}"?`, `Ð”ÐµÐ°ÐºÑ‚Ð¸Ð²Ð¸Ñ€Ð¾Ð²Ð°Ñ‚ÑŒ "${product.name}"?`, `"${product.name}" mahsulotini nofaol qilinsinmi?`))) return;
 
     try {
       await apiRequest(ENDPOINTS.PRODUCTS.DETAIL(product.id), {
@@ -367,9 +367,9 @@ const Products: React.FC = () => {
         body: JSON.stringify({ is_active: false }),
       });
       await loadProducts();
-      toast.success(tr('Product deactivated.', 'Товар деактивирован.', 'Mahsulot nofaol qilindi.'));
+      toast.success(tr('Product deactivated.', 'Ð¢Ð¾Ð²Ð°Ñ€ Ð´ÐµÐ°ÐºÑ‚Ð¸Ð²Ð¸Ñ€Ð¾Ð²Ð°Ð½.', 'Mahsulot nofaol qilindi.'));
     } catch (deactivateError) {
-      const message = deactivateError instanceof Error ? deactivateError.message : tr('Failed to deactivate product', 'Не удалось деактивировать товар', 'Mahsulotni nofaol qilib bo\'lmadi');
+      const message = deactivateError instanceof Error ? deactivateError.message : tr('Failed to deactivate product', 'ÐÐµ ÑƒÐ´Ð°Ð»Ð¾ÑÑŒ Ð´ÐµÐ°ÐºÑ‚Ð¸Ð²Ð¸Ñ€Ð¾Ð²Ð°Ñ‚ÑŒ Ñ‚Ð¾Ð²Ð°Ñ€', 'Mahsulotni nofaol qilib bo\'lmadi');
       setError(message);
       toast.error(message);
     }
@@ -396,7 +396,7 @@ const Products: React.FC = () => {
           <p className="mt-2 max-w-2xl text-sm text-gray-500 dark:text-gray-400">
             {tr(
               'Manage products, stock, and photos in one clean workspace.',
-              'Управляйте товарами, остатками и фото в одном рабочем пространстве.',
+              'Ð£Ð¿Ñ€Ð°Ð²Ð»ÑÐ¹Ñ‚Ðµ Ñ‚Ð¾Ð²Ð°Ñ€Ð°Ð¼Ð¸, Ð¾ÑÑ‚Ð°Ñ‚ÐºÐ°Ð¼Ð¸ Ð¸ Ñ„Ð¾Ñ‚Ð¾ Ð² Ð¾Ð´Ð½Ð¾Ð¼ Ñ€Ð°Ð±Ð¾Ñ‡ÐµÐ¼ Ð¿Ñ€Ð¾ÑÑ‚Ñ€Ð°Ð½ÑÑ‚Ð²Ðµ.',
               'Mahsulotlar, qoldiq va rasmlarni bitta toza oynada boshqaring.'
             )}
           </p>
@@ -409,19 +409,19 @@ const Products: React.FC = () => {
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <Card className="bg-[linear-gradient(135deg,rgba(255,247,237,0.94)_0%,rgba(255,255,255,1)_100%)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#9a6b3a]">{tr('Catalog size', 'Размер каталога', 'Katalog hajmi')}</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#9a6b3a]">{tr('Catalog size', 'Ð Ð°Ð·Ð¼ÐµÑ€ ÐºÐ°Ñ‚Ð°Ð»Ð¾Ð³Ð°', 'Katalog hajmi')}</p>
           <p className="mt-3 text-3xl font-semibold text-[#1f2933]">{products.length}</p>
-          <p className="mt-2 text-sm text-[#5b6770]">{tr('Total products in the catalog.', 'Всего товаров в каталоге.', 'Katalogdagi jami mahsulotlar.')}</p>
+          <p className="mt-2 text-sm text-[#5b6770]">{tr('Total products in the catalog.', 'Ð’ÑÐµÐ³Ð¾ Ñ‚Ð¾Ð²Ð°Ñ€Ð¾Ð² Ð² ÐºÐ°Ñ‚Ð°Ð»Ð¾Ð³Ðµ.', 'Katalogdagi jami mahsulotlar.')}</p>
         </Card>
         <Card className="bg-[linear-gradient(135deg,rgba(232,241,238,0.94)_0%,rgba(255,255,255,1)_100%)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#40635b]">{tr('Active / low stock', 'Активные / мало', 'Faol / kam')}</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#40635b]">{tr('Active / low stock', 'ÐÐºÑ‚Ð¸Ð²Ð½Ñ‹Ðµ / Ð¼Ð°Ð»Ð¾', 'Faol / kam')}</p>
           <p className="mt-3 text-3xl font-semibold text-[#1f2933]">{productStats.active} / {productStats.lowStock}</p>
-          <p className="mt-2 text-sm text-[#5b6770]">{tr('Quick view of availability and stock risk.', 'Быстрый обзор доступности и риска по остаткам.', 'Mavjudlik va qoldiq xavfi bo‘yicha tezkor ko‘rinish.')}</p>
+          <p className="mt-2 text-sm text-[#5b6770]">{tr('Quick view of availability and stock risk.', 'Ð‘Ñ‹ÑÑ‚Ñ€Ñ‹Ð¹ Ð¾Ð±Ð·Ð¾Ñ€ Ð´Ð¾ÑÑ‚ÑƒÐ¿Ð½Ð¾ÑÑ‚Ð¸ Ð¸ Ñ€Ð¸ÑÐºÐ° Ð¿Ð¾ Ð¾ÑÑ‚Ð°Ñ‚ÐºÐ°Ð¼.', 'Mavjudlik va qoldiq xavfi boâ€˜yicha tezkor koâ€˜rinish.')}</p>
         </Card>
         <Card className="bg-[linear-gradient(135deg,rgba(236,242,255,0.94)_0%,rgba(255,255,255,1)_100%)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#355cbb]">{tr('Photo coverage', 'Фото-покрытие', 'Rasm qamrovi')}</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#355cbb]">{tr('Photo coverage', 'Ð¤Ð¾Ñ‚Ð¾-Ð¿Ð¾ÐºÑ€Ñ‹Ñ‚Ð¸Ðµ', 'Rasm qamrovi')}</p>
           <p className="mt-3 text-3xl font-semibold text-[#1f2933]">{productStats.withPhotos}</p>
-          <p className="mt-2 text-sm text-[#5b6770]">{tr('Products that already have a visible photo.', 'Товары, у которых уже есть видимое фото.', 'Rasmi allaqachon mavjud mahsulotlar.')}</p>
+          <p className="mt-2 text-sm text-[#5b6770]">{tr('Products that already have a visible photo.', 'Ð¢Ð¾Ð²Ð°Ñ€Ñ‹, Ñƒ ÐºÐ¾Ñ‚Ð¾Ñ€Ñ‹Ñ… ÑƒÐ¶Ðµ ÐµÑÑ‚ÑŒ Ð²Ð¸Ð´Ð¸Ð¼Ð¾Ðµ Ñ„Ð¾Ñ‚Ð¾.', 'Rasmi allaqachon mavjud mahsulotlar.')}</p>
         </Card>
       </div>
 
@@ -431,15 +431,15 @@ const Products: React.FC = () => {
         <form onSubmit={handleSearch} className="border-b border-light-border bg-white p-4 dark:border-navy-700 dark:bg-navy-800">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div>
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Products catalog', 'Каталог товаров', 'Mahsulotlar katalogi')}</p>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Products catalog', 'ÐšÐ°Ñ‚Ð°Ð»Ð¾Ð³ Ñ‚Ð¾Ð²Ð°Ñ€Ð¾Ð²', 'Mahsulotlar katalogi')}</p>
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                {tr('Cleaner cards in the list, full details on open.', 'В списке только главное, полные детали внутри.', 'Ro‘yxatda faqat kerakli ma’lumot, to‘liq tafsilot ichkarida.')}
+                {tr('Cleaner cards in the list, full details on open.', 'Ð’ ÑÐ¿Ð¸ÑÐºÐµ Ñ‚Ð¾Ð»ÑŒÐºÐ¾ Ð³Ð»Ð°Ð²Ð½Ð¾Ðµ, Ð¿Ð¾Ð»Ð½Ñ‹Ðµ Ð´ÐµÑ‚Ð°Ð»Ð¸ Ð²Ð½ÑƒÑ‚Ñ€Ð¸.', 'Roâ€˜yxatda faqat kerakli maâ€™lumot, toâ€˜liq tafsilot ichkarida.')}
               </p>
             </div>
             <div className="flex flex-col gap-3 md:flex-row md:items-center">
               <label className="inline-flex items-center gap-2 rounded-lg border border-light-border bg-gray-50 px-3 py-2 text-sm text-gray-700 dark:border-navy-600 dark:bg-navy-900 dark:text-gray-300">
                 <input type="checkbox" checked={onlyLowStock} onChange={(event) => setOnlyLowStock(event.target.checked)} />
-                {tr('Low stock only', 'Только с низким остатком', 'Faqat kam qolganlar')}
+                {tr('Low stock only', 'Ð¢Ð¾Ð»ÑŒÐºÐ¾ Ñ Ð½Ð¸Ð·ÐºÐ¸Ð¼ Ð¾ÑÑ‚Ð°Ñ‚ÐºÐ¾Ð¼', 'Faqat kam qolganlar')}
               </label>
               <div className="relative min-w-[18rem]">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
@@ -457,71 +457,81 @@ const Products: React.FC = () => {
 
         <div className="p-4">
           {loading ? (
-            <div className="py-12 text-center text-sm text-gray-500">{tr('Loading products...', 'Загрузка товаров...', 'Mahsulotlar yuklanmoqda...')}</div>
+            <div className="py-12 text-center text-sm text-gray-500">{tr('Loading products...', 'Ð—Ð°Ð³Ñ€ÑƒÐ·ÐºÐ° Ñ‚Ð¾Ð²Ð°Ñ€Ð¾Ð²...', 'Mahsulotlar yuklanmoqda...')}</div>
           ) : products.length === 0 ? (
-            <div className="py-12 text-center text-sm text-gray-500">{tr('No products found.', 'Товары не найдены.', 'Mahsulotlar topilmadi.')}</div>
+            <div className="py-12 text-center text-sm text-gray-500">{tr('No products found.', 'Ð¢Ð¾Ð²Ð°Ñ€Ñ‹ Ð½Ðµ Ð½Ð°Ð¹Ð´ÐµÐ½Ñ‹.', 'Mahsulotlar topilmadi.')}</div>
           ) : (
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
               {products.map((product) => {
                 const mediaCount = getProductMedia(product).length;
 
                 return (
-                  <div key={product.id} className="overflow-hidden rounded-[28px] border border-light-border bg-white p-4 shadow-[0_18px_38px_rgba(33,64,77,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_44px_rgba(33,64,77,0.12)] dark:border-navy-700 dark:bg-navy-800">
-                    <div className="flex items-start gap-4">
-                      <button type="button" onClick={() => openDetail(product)} className="text-left">
-                        <ProductThumbnail product={product} fallbackLabel={tr('No photo', 'Нет фото', 'Rasm yo‘q')} badgeLabel={mediaCount ? String(mediaCount) : null} />
+                  <div key={product.id} className="overflow-hidden rounded-[28px] border border-light-border bg-white shadow-[0_18px_38px_rgba(33,64,77,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_44px_rgba(33,64,77,0.12)] dark:border-navy-700 dark:bg-navy-800">
+                    <div className="flex h-full flex-col">
+                      <button type="button" onClick={() => openDetail(product)} className="block w-full text-left">
+                        <ProductThumbnail
+                          product={product}
+                          fallbackLabel={tr('No photo', 'Нет фото', 'Rasm yo‘q')}
+                          badgeLabel={mediaCount ? String(mediaCount) : null}
+                          className="h-52 w-full rounded-none rounded-t-[28px] border-0"
+                        />
                       </button>
 
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <button type="button" onClick={() => openDetail(product)} className="text-left text-base font-semibold text-gray-900 transition hover:text-primary-blue dark:text-white">
+                      <div className="min-w-0 flex-1 space-y-4 p-5">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <button type="button" onClick={() => openDetail(product)} className="text-left text-xl font-semibold text-gray-900 transition hover:text-primary-blue dark:text-white">
                               {product.name}
                             </button>
                             <p className="mt-1 text-sm text-gray-500">{product.size_liters}L</p>
                           </div>
-                          <div className="flex flex-wrap items-center justify-end gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
                             {availabilityBadge(product.availability_status)}
                             {product.is_active === false ? <Badge variant="default">{tr('Inactive', 'Неактивный', 'Nofaol')}</Badge> : null}
                           </div>
                         </div>
 
-                        <div className="mt-4 grid grid-cols-2 gap-3">
-                          <div className="rounded-2xl bg-[rgba(255,246,236,0.95)] px-3 py-3">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="rounded-2xl bg-[rgba(255,246,236,0.95)] px-4 py-3">
                             <p className="text-[11px] uppercase tracking-[0.18em] text-[#9a6b3a]">{t('price')}</p>
-                            <p className="mt-1 text-sm font-semibold text-[#1f2933]">{product.price_uzs.toLocaleString()} UZS</p>
+                            <p className="mt-2 text-lg font-semibold text-[#1f2933]">{product.price_uzs.toLocaleString()} UZS</p>
                           </div>
-                          <div className="rounded-2xl bg-[rgba(232,241,238,0.95)] px-3 py-3">
+                          <div className="rounded-2xl bg-[rgba(232,241,238,0.95)] px-4 py-3">
                             <p className="text-[11px] uppercase tracking-[0.18em] text-[#40635b]">{t('stock')}</p>
-                            <p className="mt-1 text-sm font-semibold text-[#1f2933]">{product.count}</p>
+                            <p className="mt-2 text-lg font-semibold text-[#1f2933]">{product.count}</p>
                           </div>
                         </div>
 
-                        <div className="mt-4 flex items-center justify-between gap-3">
-                          <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
-                            <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 font-semibold ${mediaCount ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'}`}>
-                              <Images size={12} />
-                              {mediaCount ? tr(`${mediaCount} media`, `${mediaCount} медиа`, `${mediaCount} media`) : tr('No media', 'Нет медиа', 'Media yo‘q')}
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                          <span
+                            className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 font-semibold ${
+                              mediaCount
+                                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300'
+                                : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+                            }`}
+                          >
+                            <Images size={12} />
+                            {mediaCount ? tr(`${mediaCount} media`, `${mediaCount} медиа`, `${mediaCount} media`) : tr('No media', 'Нет медиа', 'Media yo‘q')}
+                          </span>
+                          {product.requires_returnable_bottle ? (
+                            <span className="inline-flex items-center rounded-full bg-amber-50 px-3 py-1.5 font-semibold text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
+                              {product.bottle_deposit_uzs.toLocaleString()} UZS
                             </span>
-                            {product.requires_returnable_bottle ? (
-                              <span className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-1 font-semibold text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
-                                {product.bottle_deposit_uzs.toLocaleString()} UZS
-                              </span>
-                            ) : null}
-                          </div>
-                          <div className="flex gap-2">
-                            <button type="button" onClick={() => openDetail(product)} className="inline-flex items-center gap-1 rounded-xl border border-light-border px-3 py-2 text-sm font-medium text-gray-700 transition hover:border-primary-blue hover:text-primary-blue dark:border-navy-600 dark:text-gray-200">
-                              <Eye size={15} />
-                              {tr('Open', 'Открыть', 'Ochish')}
-                            </button>
-                            <button type="button" onClick={() => openEdit(product)} className="inline-flex items-center gap-1 rounded-xl bg-[#21404d] px-3 py-2 text-sm font-medium text-white transition hover:brightness-105">
-                              <Edit2 size={15} />
-                              {tr('Edit', 'Изменить', 'Tahrirlash')}
-                            </button>
-                            <button type="button" onClick={() => void handleDeactivate(product)} className="inline-flex items-center justify-center rounded-xl bg-rose-50 px-3 py-2 text-rose-600 transition hover:bg-rose-100 dark:bg-rose-950/20 dark:text-rose-300">
-                              <Trash2 size={15} />
-                            </button>
-                          </div>
+                          ) : null}
+                        </div>
+
+                        <div className="flex flex-wrap gap-2">
+                          <button type="button" onClick={() => openDetail(product)} className="inline-flex min-w-[112px] items-center justify-center gap-2 rounded-xl border border-light-border px-4 py-3 text-sm font-medium text-gray-700 transition hover:border-primary-blue hover:text-primary-blue dark:border-navy-600 dark:text-gray-200">
+                            <Eye size={15} />
+                            {tr('Open', 'Открыть', 'Ochish')}
+                          </button>
+                          <button type="button" onClick={() => openEdit(product)} className="inline-flex min-w-[132px] items-center justify-center gap-2 rounded-xl bg-[#21404d] px-4 py-3 text-sm font-medium text-white transition hover:brightness-105">
+                            <Edit2 size={15} />
+                            {tr('Edit', 'Изменить', 'Tahrirlash')}
+                          </button>
+                          <button type="button" onClick={() => void handleDeactivate(product)} className="inline-flex items-center justify-center rounded-xl bg-rose-50 px-4 py-3 text-rose-600 transition hover:bg-rose-100 dark:bg-rose-950/20 dark:text-rose-300">
+                            <Trash2 size={15} />
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -536,7 +546,7 @@ const Products: React.FC = () => {
       <Modal
         isOpen={isEditorOpen}
         onClose={closeEditor}
-        title={editing ? tr('Edit Product', 'Редактировать товар', 'Mahsulotni tahrirlash') : tr('Add New Product', 'Добавить товар', 'Yangi mahsulot qo‘shish')}
+        title={editing ? tr('Edit Product', 'Ð ÐµÐ´Ð°ÐºÑ‚Ð¸Ñ€Ð¾Ð²Ð°Ñ‚ÑŒ Ñ‚Ð¾Ð²Ð°Ñ€', 'Mahsulotni tahrirlash') : tr('Add New Product', 'Ð”Ð¾Ð±Ð°Ð²Ð¸Ñ‚ÑŒ Ñ‚Ð¾Ð²Ð°Ñ€', 'Yangi mahsulot qoâ€˜shish')}
         footer={null}
         maxWidthClass="max-w-5xl"
       >
@@ -551,13 +561,13 @@ const Products: React.FC = () => {
                     <div className="absolute inset-0 flex items-center justify-center text-white">
                       <div className="text-center">
                         <Package size={34} className="mx-auto" />
-                        <p className="mt-3 text-xs font-semibold uppercase tracking-[0.22em] text-white/72">{tr('Upload a product photo', 'Загрузите фото товара', 'Mahsulot rasmini yuklang')}</p>
+                        <p className="mt-3 text-xs font-semibold uppercase tracking-[0.22em] text-white/72">{tr('Upload a product photo', 'Ð—Ð°Ð³Ñ€ÑƒÐ·Ð¸Ñ‚Ðµ Ñ„Ð¾Ñ‚Ð¾ Ñ‚Ð¾Ð²Ð°Ñ€Ð°', 'Mahsulot rasmini yuklang')}</p>
                       </div>
                     </div>
                   )}
                   <div className="absolute inset-x-0 bottom-0 bg-[linear-gradient(180deg,transparent_0%,rgba(0,0,0,0.66)_100%)] px-5 pb-5 pt-12 text-white">
-                    <p className="text-lg font-semibold">{formState.name || tr('New product', 'Новый товар', 'Yangi mahsulot')}</p>
-                    <p className="mt-1 text-sm text-white/76">{formState.size_liters || '-'}L · {(existingGalleryImages.length + galleryFiles.length) || 0} {tr('photos', 'фото', 'rasm')}</p>
+                    <p className="text-lg font-semibold">{formState.name || tr('New product', 'ÐÐ¾Ð²Ñ‹Ð¹ Ñ‚Ð¾Ð²Ð°Ñ€', 'Yangi mahsulot')}</p>
+                    <p className="mt-1 text-sm text-white/76">{formState.size_liters || '-'}L Â· {(existingGalleryImages.length + galleryFiles.length) || 0} {tr('photos', 'Ñ„Ð¾Ñ‚Ð¾', 'rasm')}</p>
                   </div>
                 </div>
               </div>
@@ -565,27 +575,27 @@ const Products: React.FC = () => {
               <div className="rounded-[28px] border border-light-border bg-white/80 p-5 shadow-sm dark:border-navy-700 dark:bg-navy-900/40">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Cover photo', 'Главное фото', 'Asosiy rasm')}</p>
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{tr('Shown first in the catalog and client app.', 'Это фото показывается первым в админке и WebApp.', 'Bu rasm admin va WebAppda birinchi ko‘rinadi.')}</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Cover photo', 'Ð“Ð»Ð°Ð²Ð½Ð¾Ðµ Ñ„Ð¾Ñ‚Ð¾', 'Asosiy rasm')}</p>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{tr('Shown first in the catalog and client app.', 'Ð­Ñ‚Ð¾ Ñ„Ð¾Ñ‚Ð¾ Ð¿Ð¾ÐºÐ°Ð·Ñ‹Ð²Ð°ÐµÑ‚ÑÑ Ð¿ÐµÑ€Ð²Ñ‹Ð¼ Ð² Ð°Ð´Ð¼Ð¸Ð½ÐºÐµ Ð¸ WebApp.', 'Bu rasm admin va WebAppda birinchi koâ€˜rinadi.')}</p>
                   </div>
                   <label className="cursor-pointer rounded-2xl bg-[#21404d] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1a3340]">
-                    <span className="inline-flex items-center gap-2"><Upload size={15} />{tr('Choose photo', 'Загрузить', 'Yuklash')}</span>
+                    <span className="inline-flex items-center gap-2"><Upload size={15} />{tr('Choose photo', 'Ð—Ð°Ð³Ñ€ÑƒÐ·Ð¸Ñ‚ÑŒ', 'Yuklash')}</span>
                     <input ref={primaryInputRef} type="file" accept="image/*" className="hidden" onChange={(event) => setPrimaryImageFile(event.target.files?.[0] || null)} />
                   </label>
                 </div>
                 <div className="mt-4 rounded-2xl border border-dashed border-[#d8c7b2] bg-[rgba(255,248,240,0.94)] px-4 py-3 text-sm text-[#5b6770]">
-                  {primaryImageFile ? primaryImageFile.name : tr('Choose a clear cover photo for the product.', 'Выберите аккуратное основное фото товара.', 'Mahsulot uchun toza asosiy rasm tanlang.')}
+                  {primaryImageFile ? primaryImageFile.name : tr('Choose a clear cover photo for the product.', 'Ð’Ñ‹Ð±ÐµÑ€Ð¸Ñ‚Ðµ Ð°ÐºÐºÑƒÑ€Ð°Ñ‚Ð½Ð¾Ðµ Ð¾ÑÐ½Ð¾Ð²Ð½Ð¾Ðµ Ñ„Ð¾Ñ‚Ð¾ Ñ‚Ð¾Ð²Ð°Ñ€Ð°.', 'Mahsulot uchun toza asosiy rasm tanlang.')}
                 </div>
                 {primaryImageFile ? (
                   <button type="button" onClick={() => { setPrimaryImageFile(null); if (primaryInputRef.current) primaryInputRef.current.value = ''; }} className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-rose-600 transition hover:text-rose-700">
                     <X size={14} />
-                    {tr('Remove selected file', 'Убрать выбранный файл', 'Tanlangan faylni olib tashlash')}
+                    {tr('Remove selected file', 'Ð£Ð±Ñ€Ð°Ñ‚ÑŒ Ð²Ñ‹Ð±Ñ€Ð°Ð½Ð½Ñ‹Ð¹ Ñ„Ð°Ð¹Ð»', 'Tanlangan faylni olib tashlash')}
                   </button>
                 ) : null}
                 {editing && getPrimaryImage(editing) ? (
                   <label className="mt-3 inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                     <input type="checkbox" checked={removeImage} onChange={(event) => setRemoveImage(event.target.checked)} />
-                    {tr('Remove current main photo on save', 'Удалить текущее фото при сохранении', 'Saqlashda joriy asosiy rasmni olib tashlash')}
+                    {tr('Remove current main photo on save', 'Ð£Ð´Ð°Ð»Ð¸Ñ‚ÑŒ Ñ‚ÐµÐºÑƒÑ‰ÐµÐµ Ñ„Ð¾Ñ‚Ð¾ Ð¿Ñ€Ð¸ ÑÐ¾Ñ…Ñ€Ð°Ð½ÐµÐ½Ð¸Ð¸', 'Saqlashda joriy asosiy rasmni olib tashlash')}
                   </label>
                 ) : null}
               </div>
@@ -593,26 +603,26 @@ const Products: React.FC = () => {
               <div className="rounded-[28px] border border-light-border bg-white/80 p-5 shadow-sm dark:border-navy-700 dark:bg-navy-900/40">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Gallery photos', 'Галерея', 'Galereya')}</p>
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{tr('Add more angles if needed.', 'Добавьте дополнительные фото для более сильной подачи товара.', 'Mahsulotni yaxshiroq ko‘rsatish uchun qo‘shimcha rasmlar qo‘shing.')}</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Gallery photos', 'Ð“Ð°Ð»ÐµÑ€ÐµÑ', 'Galereya')}</p>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{tr('Add more angles if needed.', 'Ð”Ð¾Ð±Ð°Ð²ÑŒÑ‚Ðµ Ð´Ð¾Ð¿Ð¾Ð»Ð½Ð¸Ñ‚ÐµÐ»ÑŒÐ½Ñ‹Ðµ Ñ„Ð¾Ñ‚Ð¾ Ð´Ð»Ñ Ð±Ð¾Ð»ÐµÐµ ÑÐ¸Ð»ÑŒÐ½Ð¾Ð¹ Ð¿Ð¾Ð´Ð°Ñ‡Ð¸ Ñ‚Ð¾Ð²Ð°Ñ€Ð°.', 'Mahsulotni yaxshiroq koâ€˜rsatish uchun qoâ€˜shimcha rasmlar qoâ€˜shing.')}</p>
                   </div>
                   <label className="cursor-pointer rounded-2xl bg-white px-4 py-2 text-sm font-semibold text-[#21404d] shadow-[0_10px_20px_rgba(33,64,77,0.12)] transition hover:bg-[#fff5ea]">
-                    <span className="inline-flex items-center gap-2"><Images size={15} />{tr('Add gallery', 'Добавить фото', 'Rasm qo‘shish')}</span>
+                    <span className="inline-flex items-center gap-2"><Images size={15} />{tr('Add gallery', 'Ð”Ð¾Ð±Ð°Ð²Ð¸Ñ‚ÑŒ Ñ„Ð¾Ñ‚Ð¾', 'Rasm qoâ€˜shish')}</span>
                     <input ref={galleryInputRef} type="file" accept="image/*" multiple className="hidden" onChange={(event) => setGalleryFiles(Array.from(event.target.files || []))} />
                   </label>
                 </div>
                 <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-[#5b6770]">
                   <span className="rounded-full bg-[rgba(255,248,240,0.94)] px-3 py-1.5 font-semibold text-[#21404d]">
-                    {existingGalleryImages.length} {tr('current', 'Ñ‚ÐµÐºÑƒÑ‰Ð¸Ñ…', 'mavjud')}
+                    {existingGalleryImages.length} {tr('current', 'Ã‘â€šÃÂµÃÂºÃ‘Æ’Ã‘â€°ÃÂ¸Ã‘â€¦', 'mavjud')}
                   </span>
                   <span className="rounded-full bg-[rgba(236,242,255,0.94)] px-3 py-1.5 font-semibold text-[#355cbb]">
-                    {galleryFiles.length} {tr('new', 'Ð½Ð¾Ð²Ñ‹Ñ…', 'yangi')}
+                    {galleryFiles.length} {tr('new', 'ÃÂ½ÃÂ¾ÃÂ²Ã‘â€¹Ã‘â€¦', 'yangi')}
                   </span>
                 </div>
                 {editing?.images?.length ? (
                   <label className="mt-4 inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                     <input type="checkbox" checked={replaceGallery} onChange={(event) => { setReplaceGallery(event.target.checked); if (event.target.checked) setRemoveImageIds([]); }} />
-                    {tr('Replace full gallery on save', 'Полностью заменить галерею при сохранении', 'Saqlashda galereyani to‘liq almashtirish')}
+                    {tr('Replace full gallery on save', 'ÐŸÐ¾Ð»Ð½Ð¾ÑÑ‚ÑŒÑŽ Ð·Ð°Ð¼ÐµÐ½Ð¸Ñ‚ÑŒ Ð³Ð°Ð»ÐµÑ€ÐµÑŽ Ð¿Ñ€Ð¸ ÑÐ¾Ñ…Ñ€Ð°Ð½ÐµÐ½Ð¸Ð¸', 'Saqlashda galereyani toâ€˜liq almashtirish')}
                   </label>
                 ) : null}
                 <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -634,7 +644,7 @@ const Products: React.FC = () => {
                   ))}
                   {!existingGalleryImages.length && !galleryPreviewUrls.length ? (
                     <div className="col-span-full rounded-2xl border border-dashed border-light-border bg-gray-50 px-4 py-6 text-center text-sm text-gray-500 dark:border-navy-700 dark:bg-navy-900/40">
-                      {tr('No gallery photos yet.', 'Пока нет фото галереи.', 'Hali galereya rasmlari yo‘q.')}
+                      {tr('No gallery photos yet.', 'ÐŸÐ¾ÐºÐ° Ð½ÐµÑ‚ Ñ„Ð¾Ñ‚Ð¾ Ð³Ð°Ð»ÐµÑ€ÐµÐ¸.', 'Hali galereya rasmlari yoâ€˜q.')}
                     </div>
                   ) : null}
                 </div>
@@ -643,7 +653,7 @@ const Products: React.FC = () => {
 
             <section className="space-y-5">
               <div className="rounded-[28px] border border-light-border bg-white/80 p-5 shadow-sm dark:border-navy-700 dark:bg-navy-900/40">
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Product details', 'Детали товара', 'Mahsulot tafsilotlari')}</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Product details', 'Ð”ÐµÑ‚Ð°Ð»Ð¸ Ñ‚Ð¾Ð²Ð°Ñ€Ð°', 'Mahsulot tafsilotlari')}</p>
                 <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="md:col-span-2">
                     <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{t('product_name')}</label>
@@ -651,10 +661,10 @@ const Products: React.FC = () => {
                   </div>
                   <div>
                     <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">SKU</label>
-                    <input value={formState.sku} onChange={(event) => setFormState((current) => ({ ...current, sku: event.target.value }))} placeholder={tr('Leave empty to auto-generate', 'Оставьте пустым для автогенерации', 'Avto yaratish uchun bosh qoldiring')} className="w-full rounded-lg border border-light-border bg-gray-50 px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary-blue dark:border-navy-600 dark:bg-navy-900 dark:text-white" />
+                    <input value={formState.sku} onChange={(event) => setFormState((current) => ({ ...current, sku: event.target.value }))} placeholder={tr('Leave empty to auto-generate', 'ÐžÑÑ‚Ð°Ð²ÑŒÑ‚Ðµ Ð¿ÑƒÑÑ‚Ñ‹Ð¼ Ð´Ð»Ñ Ð°Ð²Ñ‚Ð¾Ð³ÐµÐ½ÐµÑ€Ð°Ñ†Ð¸Ð¸', 'Avto yaratish uchun bosh qoldiring')} className="w-full rounded-lg border border-light-border bg-gray-50 px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary-blue dark:border-navy-600 dark:bg-navy-900 dark:text-white" />
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{tr('Size liters', 'Объем (литр)', 'Hajmi (litr)')}</label>
+                    <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{tr('Size liters', 'ÐžÐ±ÑŠÐµÐ¼ (Ð»Ð¸Ñ‚Ñ€)', 'Hajmi (litr)')}</label>
                     <input value={formState.size_liters} onChange={(event) => setFormState((current) => ({ ...current, size_liters: event.target.value }))} required className="w-full rounded-lg border border-light-border bg-gray-50 px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary-blue dark:border-navy-600 dark:bg-navy-900 dark:text-white" />
                   </div>
                   <div>
@@ -666,11 +676,11 @@ const Products: React.FC = () => {
                     <input type="number" min="0" value={formState.count} onChange={(event) => setFormState((current) => ({ ...current, count: event.target.value }))} required className="w-full rounded-lg border border-light-border bg-gray-50 px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary-blue dark:border-navy-600 dark:bg-navy-900 dark:text-white" />
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{tr('Min threshold', 'Минимальный порог', 'Minimal chegara')}</label>
+                    <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{tr('Min threshold', 'ÐœÐ¸Ð½Ð¸Ð¼Ð°Ð»ÑŒÐ½Ñ‹Ð¹ Ð¿Ð¾Ñ€Ð¾Ð³', 'Minimal chegara')}</label>
                     <input type="number" min="0" value={formState.min_stock_threshold} onChange={(event) => setFormState((current) => ({ ...current, min_stock_threshold: event.target.value }))} required className="w-full rounded-lg border border-light-border bg-gray-50 px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary-blue dark:border-navy-600 dark:bg-navy-900 dark:text-white" />
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{tr('Bottle deposit (UZS)', 'Депозит за тару (UZS)', 'Idish depoziti (UZS)')}</label>
+                    <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{tr('Bottle deposit (UZS)', 'Ð”ÐµÐ¿Ð¾Ð·Ð¸Ñ‚ Ð·Ð° Ñ‚Ð°Ñ€Ñƒ (UZS)', 'Idish depoziti (UZS)')}</label>
                     <input type="number" min="0" value={formState.bottle_deposit_uzs} onChange={(event) => setFormState((current) => ({ ...current, bottle_deposit_uzs: event.target.value }))} disabled={!formState.requires_returnable_bottle} className="w-full rounded-lg border border-light-border bg-gray-50 px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary-blue disabled:opacity-50 dark:border-navy-600 dark:bg-navy-900 dark:text-white" />
                   </div>
                 </div>
@@ -679,17 +689,17 @@ const Products: React.FC = () => {
               <div className="rounded-[28px] border border-light-border bg-white/80 p-5 shadow-sm dark:border-navy-700 dark:bg-navy-900/40">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Visibility and bottle settings', 'Видимость и тара', 'Ko‘rinish va idish sozlamalari')}</p>
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{tr('Keep availability and bottle rules aligned with the real product.', 'Держите доступность и правила тары в соответствии с реальным товаром.', 'Mavjudlik va idish qoidalarini real mahsulotga mos tuting.')}</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Visibility and bottle settings', 'Ð’Ð¸Ð´Ð¸Ð¼Ð¾ÑÑ‚ÑŒ Ð¸ Ñ‚Ð°Ñ€Ð°', 'Koâ€˜rinish va idish sozlamalari')}</p>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{tr('Keep availability and bottle rules aligned with the real product.', 'Ð”ÐµÑ€Ð¶Ð¸Ñ‚Ðµ Ð´Ð¾ÑÑ‚ÑƒÐ¿Ð½Ð¾ÑÑ‚ÑŒ Ð¸ Ð¿Ñ€Ð°Ð²Ð¸Ð»Ð° Ñ‚Ð°Ñ€Ñ‹ Ð² ÑÐ¾Ð¾Ñ‚Ð²ÐµÑ‚ÑÑ‚Ð²Ð¸Ð¸ Ñ Ñ€ÐµÐ°Ð»ÑŒÐ½Ñ‹Ð¼ Ñ‚Ð¾Ð²Ð°Ñ€Ð¾Ð¼.', 'Mavjudlik va idish qoidalarini real mahsulotga mos tuting.')}</p>
                   </div>
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                     <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                       <input type="checkbox" checked={formState.requires_returnable_bottle} onChange={(event) => setFormState((current) => ({ ...current, requires_returnable_bottle: event.target.checked, bottle_deposit_uzs: event.target.checked ? current.bottle_deposit_uzs : '0' }))} />
-                      {tr('Requires returnable bottle', 'Требует возвратную тару', 'Qaytariladigan idish talab qiladi')}
+                      {tr('Requires returnable bottle', 'Ð¢Ñ€ÐµÐ±ÑƒÐµÑ‚ Ð²Ð¾Ð·Ð²Ñ€Ð°Ñ‚Ð½ÑƒÑŽ Ñ‚Ð°Ñ€Ñƒ', 'Qaytariladigan idish talab qiladi')}
                     </label>
                     <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                       <input type="checkbox" checked={formState.is_active} onChange={(event) => setFormState((current) => ({ ...current, is_active: event.target.checked }))} />
-                      {tr('Active', 'Активный', 'Faol')}
+                      {tr('Active', 'ÐÐºÑ‚Ð¸Ð²Ð½Ñ‹Ð¹', 'Faol')}
                     </label>
                   </div>
                 </div>
@@ -700,7 +710,7 @@ const Products: React.FC = () => {
           <div className="flex justify-end gap-3 border-t border-light-border pt-4 dark:border-navy-700">
             <button type="button" onClick={closeEditor} className="rounded-lg px-4 py-2 text-sm text-gray-600 transition hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-navy-700">{t('cancel')}</button>
             <button disabled={saving} type="submit" className="rounded-lg bg-primary-blue px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-600 disabled:opacity-50">
-              {saving ? tr('Saving...', 'Сохранение...', 'Saqlanmoqda...') : t('save')}
+              {saving ? tr('Saving...', 'Ð¡Ð¾Ñ…Ñ€Ð°Ð½ÐµÐ½Ð¸Ðµ...', 'Saqlanmoqda...') : t('save')}
             </button>
           </div>
         </form>
@@ -709,7 +719,7 @@ const Products: React.FC = () => {
       <Modal
         isOpen={Boolean(detailProduct)}
         onClose={closeDetail}
-        title={detailProduct?.name || tr('Product detail', 'Детали товара', 'Mahsulot tafsiloti')}
+        title={detailProduct?.name || tr('Product detail', 'Ð”ÐµÑ‚Ð°Ð»Ð¸ Ñ‚Ð¾Ð²Ð°Ñ€Ð°', 'Mahsulot tafsiloti')}
         footer={null}
         maxWidthClass="max-w-5xl"
       >
@@ -725,7 +735,7 @@ const Products: React.FC = () => {
                       <div className="absolute inset-0 flex items-center justify-center text-white">
                         <div className="text-center">
                           <Package size={36} className="mx-auto" />
-                          <p className="mt-3 text-xs font-semibold uppercase tracking-[0.22em] text-white/72">{tr('No product photo', 'Нет фото товара', 'Mahsulot rasmi yo‘q')}</p>
+                          <p className="mt-3 text-xs font-semibold uppercase tracking-[0.22em] text-white/72">{tr('No product photo', 'ÐÐµÑ‚ Ñ„Ð¾Ñ‚Ð¾ Ñ‚Ð¾Ð²Ð°Ñ€Ð°', 'Mahsulot rasmi yoâ€˜q')}</p>
                         </div>
                       </div>
                     )}
@@ -741,7 +751,7 @@ const Products: React.FC = () => {
                     ) : null}
                     <div className="absolute inset-x-0 bottom-0 bg-[linear-gradient(180deg,transparent_0%,rgba(0,0,0,0.66)_100%)] px-5 pb-5 pt-10 text-white">
                       <p className="text-lg font-semibold">{detailProduct.name}</p>
-                      <p className="mt-1 text-sm text-white/76">{detailProduct.size_liters}L · {detailMedia.length || 0} {tr('photos', 'фото', 'rasm')}</p>
+                      <p className="mt-1 text-sm text-white/76">{detailProduct.size_liters}L Â· {detailMedia.length || 0} {tr('photos', 'Ñ„Ð¾Ñ‚Ð¾', 'rasm')}</p>
                     </div>
                   </div>
                 </div>
@@ -763,7 +773,7 @@ const Products: React.FC = () => {
                     <p className="mt-2 text-base font-semibold text-[#1f2933]">{detailProduct.sku || '-'}</p>
                   </Card>
                   <Card className="bg-[linear-gradient(135deg,rgba(236,242,255,0.96)_0%,rgba(255,255,255,1)_100%)]">
-                    <p className="text-xs uppercase tracking-[0.2em] text-[#355cbb]">{tr('Updated', 'Обновлено', 'Yangilangan')}</p>
+                    <p className="text-xs uppercase tracking-[0.2em] text-[#355cbb]">{tr('Updated', 'ÐžÐ±Ð½Ð¾Ð²Ð»ÐµÐ½Ð¾', 'Yangilangan')}</p>
                     <p className="mt-2 text-base font-semibold text-[#1f2933]">{formatUpdatedAt(detailProduct.updated_at)}</p>
                   </Card>
                 </div>
@@ -782,25 +792,25 @@ const Products: React.FC = () => {
                 <Card className="space-y-4">
                   <div className="flex flex-wrap items-center gap-2">
                     {availabilityBadge(detailProduct.availability_status)}
-                    {detailProduct.is_active === false ? <Badge variant="default">{tr('Inactive', 'Неактивный', 'Nofaol')}</Badge> : null}
-                    {detailProduct.requires_returnable_bottle ? <Badge variant="info">{tr('Returnable bottle', 'Возвратная тара', 'Qaytariladigan idish')}</Badge> : <Badge variant="default">{tr('No bottle deposit', 'Без залога за тару', 'Idish depozitisiz')}</Badge>}
+                    {detailProduct.is_active === false ? <Badge variant="default">{tr('Inactive', 'ÐÐµÐ°ÐºÑ‚Ð¸Ð²Ð½Ñ‹Ð¹', 'Nofaol')}</Badge> : null}
+                    {detailProduct.requires_returnable_bottle ? <Badge variant="info">{tr('Returnable bottle', 'Ð’Ð¾Ð·Ð²Ñ€Ð°Ñ‚Ð½Ð°Ñ Ñ‚Ð°Ñ€Ð°', 'Qaytariladigan idish')}</Badge> : <Badge variant="default">{tr('No bottle deposit', 'Ð‘ÐµÐ· Ð·Ð°Ð»Ð¾Ð³Ð° Ð·Ð° Ñ‚Ð°Ñ€Ñƒ', 'Idish depozitisiz')}</Badge>}
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <p className="text-gray-500">{tr('Size', 'Объем', 'Hajm')}</p>
+                      <p className="text-gray-500">{tr('Size', 'ÐžÐ±ÑŠÐµÐ¼', 'Hajm')}</p>
                       <p className="mt-1 font-semibold text-[#1f2933]">{detailProduct.size_liters}L</p>
                     </div>
                     <div>
-                      <p className="text-gray-500">{tr('Min threshold', 'Минимальный порог', 'Minimal chegara')}</p>
+                      <p className="text-gray-500">{tr('Min threshold', 'ÐœÐ¸Ð½Ð¸Ð¼Ð°Ð»ÑŒÐ½Ñ‹Ð¹ Ð¿Ð¾Ñ€Ð¾Ð³', 'Minimal chegara')}</p>
                       <p className="mt-1 font-semibold text-[#1f2933]">{detailProduct.min_stock_threshold}</p>
                     </div>
                     <div>
-                      <p className="text-gray-500">{tr('Bottle deposit', 'Депозит за тару', 'Idish depoziti')}</p>
-                      <p className="mt-1 font-semibold text-[#1f2933]">{detailProduct.requires_returnable_bottle ? `${detailProduct.bottle_deposit_uzs.toLocaleString()} UZS` : tr('Not required', 'Не требуется', 'Talab qilinmaydi')}</p>
+                      <p className="text-gray-500">{tr('Bottle deposit', 'Ð”ÐµÐ¿Ð¾Ð·Ð¸Ñ‚ Ð·Ð° Ñ‚Ð°Ñ€Ñƒ', 'Idish depoziti')}</p>
+                      <p className="mt-1 font-semibold text-[#1f2933]">{detailProduct.requires_returnable_bottle ? `${detailProduct.bottle_deposit_uzs.toLocaleString()} UZS` : tr('Not required', 'ÐÐµ Ñ‚Ñ€ÐµÐ±ÑƒÐµÑ‚ÑÑ', 'Talab qilinmaydi')}</p>
                     </div>
                     <div>
-                      <p className="text-gray-500">{tr('Photos', 'Фото', 'Rasmlar')}</p>
+                      <p className="text-gray-500">{tr('Photos', 'Ð¤Ð¾Ñ‚Ð¾', 'Rasmlar')}</p>
                       <p className="mt-1 font-semibold text-[#1f2933]">{detailMedia.length}</p>
                     </div>
                   </div>
@@ -809,11 +819,11 @@ const Products: React.FC = () => {
                 <div className="flex gap-3">
                   <button type="button" onClick={() => { closeDetail(); openEdit(detailProduct); }} className="inline-flex items-center gap-2 rounded-2xl bg-[#21404d] px-4 py-3 text-sm font-semibold text-white transition hover:brightness-105">
                     <Edit2 size={16} />
-                    {tr('Edit product', 'Изменить товар', 'Mahsulotni tahrirlash')}
+                    {tr('Edit product', 'Ð˜Ð·Ð¼ÐµÐ½Ð¸Ñ‚ÑŒ Ñ‚Ð¾Ð²Ð°Ñ€', 'Mahsulotni tahrirlash')}
                   </button>
                   <button type="button" onClick={() => void handleDeactivate(detailProduct)} className="inline-flex items-center gap-2 rounded-2xl bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-600 transition hover:bg-rose-100 dark:bg-rose-950/20 dark:text-rose-300">
                     <Trash2 size={16} />
-                    {tr('Deactivate', 'Деактивировать', 'Nofaol qilish')}
+                    {tr('Deactivate', 'Ð”ÐµÐ°ÐºÑ‚Ð¸Ð²Ð¸Ñ€Ð¾Ð²Ð°Ñ‚ÑŒ', 'Nofaol qilish')}
                   </button>
                 </div>
               </div>
@@ -825,7 +835,7 @@ const Products: React.FC = () => {
       <Card className="border-amber-200 bg-amber-50/70 dark:border-amber-800/40 dark:bg-navy-800">
         <div className="flex items-start gap-3">
           <AlertTriangle className="mt-0.5 text-amber-500" size={18} />
-          <p className="text-xs text-amber-800 dark:text-amber-200">{tr('Product deletion endpoint is not present. Delete now deactivates the product with is_active=false via PATCH /products/{id}/.', 'Эндпоинта удаления товара нет. Удаление теперь деактивирует товар через PATCH /products/{id}/ с is_active=false.', 'Mahsulotni o‘chirish endpointi yo‘q. O‘chirish tugmasi endi PATCH /products/{id}/ orqali is_active=false qilib nofaol qiladi.')}</p>
+          <p className="text-xs text-amber-800 dark:text-amber-200">{tr('Product deletion endpoint is not present. Delete now deactivates the product with is_active=false via PATCH /products/{id}/.', 'Ð­Ð½Ð´Ð¿Ð¾Ð¸Ð½Ñ‚Ð° ÑƒÐ´Ð°Ð»ÐµÐ½Ð¸Ñ Ñ‚Ð¾Ð²Ð°Ñ€Ð° Ð½ÐµÑ‚. Ð£Ð´Ð°Ð»ÐµÐ½Ð¸Ðµ Ñ‚ÐµÐ¿ÐµÑ€ÑŒ Ð´ÐµÐ°ÐºÑ‚Ð¸Ð²Ð¸Ñ€ÑƒÐµÑ‚ Ñ‚Ð¾Ð²Ð°Ñ€ Ñ‡ÐµÑ€ÐµÐ· PATCH /products/{id}/ Ñ is_active=false.', 'Mahsulotni oâ€˜chirish endpointi yoâ€˜q. Oâ€˜chirish tugmasi endi PATCH /products/{id}/ orqali is_active=false qilib nofaol qiladi.')}</p>
         </div>
       </Card>
     </div>
@@ -833,4 +843,5 @@ const Products: React.FC = () => {
 };
 
 export default Products;
+
 
