@@ -164,16 +164,16 @@ const Payments: React.FC = () => {
   }, []);
 
   const getOrderStatusLabel = useCallback((status: OrderStatus) => {
-    if (status === 'NEW_LEAD') return tr('New lead', 'Novyy lid', 'Yangi lid');
-    if (status === 'INFO_COLLECTED') return tr('Info collected', 'Dannye sobrany', "Malumot yigilgan");
-    if (status === 'PAYMENT_PENDING') return tr('Payment pending', 'Ozhidayet oplaty', "Tolov kutilmoqda");
-    if (status === 'PAYMENT_CONFIRMED') return tr('Payment confirmed', 'Oplata podtverzhdena', "Tolov tasdiqlangan");
-    if (status === 'DISPATCHED') return tr('Dispatched', 'Otpravlen', 'Yuborilgan');
-    if (status === 'ASSIGNED') return tr('Assigned', 'Naznachen', 'Biriktirilgan');
-    if (status === 'OUT_FOR_DELIVERY') return tr('Out for delivery', 'V dostavke', 'Yetkazib berishda');
-    if (status === 'DELIVERED') return tr('Delivered', 'Dostavlen', 'Yetkazildi');
-    if (status === 'CANCELED') return tr('Canceled', 'Otmenen', 'Bekor qilingan');
-    return tr('Failed', 'Neudachno', 'Muvaffaqiyatsiz');
+    if (status === 'NEW_LEAD') return tr('New lead', 'New lead', 'Yangi lid');
+    if (status === 'INFO_COLLECTED') return tr('Info collected', 'Info collected', "Malumot yigilgan");
+    if (status === 'PAYMENT_PENDING') return tr('Payment pending', 'Payment pending', "To\'lov kutilmoqda");
+    if (status === 'PAYMENT_CONFIRMED') return tr('Payment confirmed', 'Payment confirmed', "Tolov tasdiqlangan");
+    if (status === 'DISPATCHED') return tr('Dispatched', 'Dispatched', 'Yuborilgan');
+    if (status === 'ASSIGNED') return tr('Assigned', 'Assigned', 'Biriktirilgan');
+    if (status === 'OUT_FOR_DELIVERY') return tr('Out for delivery', 'Out for delivery', 'Yetkazib berishda');
+    if (status === 'DELIVERED') return tr('Delivered', 'Delivered', 'Yetkazildi');
+    if (status === 'CANCELED') return tr('Canceled', 'Canceled', 'Bekor qilingan');
+    return tr('Failed', 'Failed', 'Muvaffaqiyatsiz');
   }, [tr]);
 
   const openOrderPage = useCallback((orderId?: string | null) => {
@@ -194,7 +194,7 @@ const Payments: React.FC = () => {
     } catch (error) {
       const message = error instanceof Error
         ? error.message
-        : tr('Failed to load available orders.', 'Ne udalos zagruzit dostupnye zakazy.', 'Mavjud buyurtmalarni yuklab bolmadi.');
+        : tr('Failed to load available orders.', 'Failed to load available orders.', 'Mavjud buyurtmalarni yuklab bolmadi.');
       setAttachOrders([]);
       setAttachError(message);
     } finally {
@@ -205,22 +205,22 @@ const Payments: React.FC = () => {
   const getAttachErrorMessage = useCallback((error: unknown) => {
     if (error instanceof ApiError) {
       if (error.code === 'E-ORD-004') {
-        return tr('Only transfer orders can be attached to a transaction.', 'K tranzaktsii mozhno privyazat tolko zakaz s TRANSFER.', 'Tranzaksiyaga faqat TRANSFER buyurtmani boglash mumkin.');
+        return tr('Only transfer orders can be attached to a transaction.', 'Only transfer orders can be attached to a transaction.', 'Tranzaksiyaga faqat TRANSFER buyurtmani boglash mumkin.');
       }
       if (error.code === 'E-PAY-003') {
-        return tr('This transaction is already linked to another order.', 'Eta tranzaktsiya uzhe privyazana k drugomu zakazu.', 'Bu tranzaksiya allaqachon boshqa buyurtmaga boglangan.');
+        return tr('This transaction is already linked to another order.', 'This transaction is already linked to another order.', 'Bu tranzaksiya allaqachon boshqa buyurtmaga boglangan.');
       }
       if (error.code === 'E-ORD-001') {
-        return tr('Order was not found.', 'Zakaz ne nayden.', 'Buyurtma topilmadi.');
+        return tr('Order was not found.', 'Order was not found.', 'Buyurtma topilmadi.');
       }
       if (error.code === 'E-PAY-005') {
-        return tr('Transaction was not found.', 'Tranzaktsiya ne naydena.', 'Tranzaksiya topilmadi.');
+        return tr('Transaction was not found.', 'Transaction was not found.', 'Tranzaksiya topilmadi.');
       }
       if (error.code === 'E-PAY-006') {
-        return tr('Validation failed for manual attach. Check amount, transaction success, or existing links.', 'Ruchnaya privyazka ne proshla proverku. Proverte summu, status tranzaktsii ili uzhe sushchestvuyushchie svyazi.', 'Qolda boglash tekshiruvdan otmadi. Summani, tranzaksiya holatini yoki mavjud boglanishlarni tekshiring.');
+        return tr('Validation failed for manual attach. Check amount, transaction success, or existing links.', 'Validation failed for manual attach. Check amount, transaction success, or existing links.', 'Qolda boglash tekshiruvdan otmadi. Summani, tranzaksiya holatini yoki mavjud boglanishlarni tekshiring.');
       }
     }
-    return error instanceof Error ? error.message : tr('Failed to attach transaction to order.', 'Ne udalos privyazat tranzaktsiyu k zakazu.', 'Tranzaksiyani buyurtmaga boglab bolmadi.');
+    return error instanceof Error ? error.message : tr('Failed to attach transaction to order.', 'Failed to attach transaction to order.', 'Tranzaksiyani buyurtmaga boglab bolmadi.');
   }, [tr]);
 
   const openAttachModal = useCallback((tx: ApiTransaction) => {
@@ -253,7 +253,7 @@ const Payments: React.FC = () => {
         setAmbiguousQueue(res.results || []);
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : tr('Failed to load payments data', 'Ne udalos zagruzit platezhnye dannye', "Tolov malumotlarini yuklab bolmadi"));
+      toast.error(e instanceof Error ? e.message : tr('Failed to load payments data', 'Failed to load payments data', "Tolov malumotlarini yuklab bolmadi"));
     } finally {
       setLoading(false);
     }
@@ -263,7 +263,7 @@ const Payments: React.FC = () => {
     if (!attachTransaction) return;
     const orderId = attachOrderId.trim();
     if (!orderId) {
-      const message = tr('Enter order ID first.', 'Snachala ukazhite ID zakaza.', 'Avval buyurtma ID ni kiriting.');
+      const message = tr('Enter order ID first.', 'Enter order ID first.', 'Avval buyurtma ID ni kiriting.');
       setAttachError(message);
       toast.warning(message);
       return;
@@ -280,7 +280,7 @@ const Payments: React.FC = () => {
       }
 
       closeAttachModal();
-      toast.success(tr('Transaction attached to order.', 'Tranzaktsiya privyazana k zakazu.', 'Tranzaksiya buyurtmaga boglandi.'));
+      toast.success(tr('Transaction attached to order.', 'Transaction attached to order.', 'Tranzaksiya buyurtmaga boglandi.'));
       await loadTabData();
     };
 
@@ -321,13 +321,13 @@ const Payments: React.FC = () => {
       setMatchingId(tx.id);
       const res = await apiRequest<{ result?: string }>(ENDPOINTS.PAYMENTS.TRANSACTION_MATCH(tx.id), { method: 'POST' });
       if (res.result === 'matched') {
-        toast.success(tr('Matched successfully', 'Uspeshno svyazano', 'Muvaffaqiyatli boglandi'));
+        toast.success(tr('Matched successfully', 'Matched successfully', "Muvaffaqiyatli bog\'landi"));
       } else {
-        toast.warning(tr('No match found', 'Sovpadenie ne naydeno', 'Moslik topilmadi'));
+        toast.warning(tr('No match found', 'No match found', 'Moslik topilmadi'));
       }
       await loadTabData();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : tr('Failed to match transaction', 'Ne udalos svyazat tranzaktsiyu', 'Tranzaksiyani boglab bolmadi'));
+      toast.error(e instanceof Error ? e.message : tr('Failed to match transaction', 'Failed to match transaction', 'Tranzaksiyani boglab bolmadi'));
     } finally {
       setMatchingId(null);
     }
@@ -342,7 +342,7 @@ const Payments: React.FC = () => {
       const count = Number(res.due_count ?? res.count ?? (Array.isArray(res.results) ? res.results.length : 0));
       toast.success(tr(`Preview ready: ${count} due reminders`, `Predprosmotr gotov: ${count}`, `Korish tayyor: ${count}`));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : tr('Failed to preview reminders', 'Ne udalos predprosmotret napominaniya', 'Eslatmalarni korib bolmadi'));
+      toast.error(e instanceof Error ? e.message : tr('Failed to preview reminders', 'Failed to preview reminders', 'Eslatmalarni korib bolmadi'));
     } finally {
       setRemindersBusy(null);
     }
@@ -362,7 +362,7 @@ const Payments: React.FC = () => {
       toast.success(tr(`Done: sent ${summary.sent || 0}, skipped ${summary.skipped || 0}`, `Gotovo: ${summary.sent || 0}/${summary.skipped || 0}`, `Bajarildi: ${summary.sent || 0}/${summary.skipped || 0}`));
       await loadTabData();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : tr('Failed to run reminders', 'Ne udalos zapustit napominaniya', 'Eslatmalarni ishga tushirib bolmadi'));
+      toast.error(e instanceof Error ? e.message : tr('Failed to run reminders', 'Failed to run reminders', 'Eslatmalarni ishga tushirib bolmadi'));
     } finally {
       setRemindersBusy(null);
     }
@@ -373,22 +373,22 @@ const Payments: React.FC = () => {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-light-text dark:text-white">{t('nav_payments')}</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">{tr('Transactions, attempts, reminders and ambiguous queue', 'Tranzaktsii, popytki, napominaniya', 'Tranzaksiyalar, urinishlar, eslatmalar')}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{tr('Transactions, attempts, reminders and ambiguous queue', 'Transactions, attempts, reminders and ambiguous queue', 'Tranzaksiyalar, urinishlar, eslatmalar')}</p>
         </div>
         <button onClick={loadTabData} disabled={loading} className="inline-flex items-center gap-2 px-3 py-2 bg-white dark:bg-navy-800 border border-light-border dark:border-navy-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-navy-700 transition disabled:opacity-60">
           <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-          <span className="text-sm">{tr('Refresh', 'Obnovit', 'Yangilash')}</span>
+          <span className="text-sm">{tr('Refresh', 'Refresh', 'Yangilash')}</span>
         </button>
       </div>
 
       <Card className="space-y-4">
         <div className="flex items-center gap-2 text-sm font-semibold text-gray-800 dark:text-gray-100">
           <PlayCircle size={16} className="text-primary-blue" />
-          <span>{tr('Transfer reminders operations', 'Operatsii napominaniy', 'Otkazma eslatmalari amallari')}</span>
+          <span>{tr('Transfer reminders operations', 'Transfer reminders operations', 'Otkazma eslatmalari amallari')}</span>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <label className="flex flex-col gap-1 text-sm">
-            <span className="text-gray-600 dark:text-gray-300">{tr('Delay minutes', 'Zaderzhka (min)', 'Kechikish (daq)')}</span>
+            <span className="text-gray-600 dark:text-gray-300">{tr('Delay minutes', 'Delay minutes', 'Kechikish (daq)')}</span>
             <input
               type="number"
               min={1}
@@ -399,7 +399,7 @@ const Payments: React.FC = () => {
             />
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="text-gray-600 dark:text-gray-300">{tr('Run limit', 'Limit zapuska', 'Ishga tushirish limiti')}</span>
+            <span className="text-gray-600 dark:text-gray-300">{tr('Run limit', 'Run limit', 'Ishga tushirish limiti')}</span>
             <input
               type="number"
               min={1}
@@ -412,30 +412,30 @@ const Payments: React.FC = () => {
           <div className="flex items-end gap-2">
             <button onClick={previewReminders} disabled={remindersBusy !== null} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-light-border dark:border-navy-600 bg-white dark:bg-navy-900 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-navy-800 disabled:opacity-60">
               <Eye size={15} />
-              {remindersBusy === 'preview' ? tr('Previewing...', 'Predprosmotr...', 'Korib chiqilmoqda...') : tr('Preview', 'Predprosmotr', 'Korish')}
+              {remindersBusy === 'preview' ? tr('Previewing...', 'Previewing...', 'Korib chiqilmoqda...') : tr('Preview', 'Preview', 'Korish')}
             </button>
             <button onClick={runReminders} disabled={remindersBusy !== null} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-primary-blue bg-primary-blue text-white hover:bg-blue-700 disabled:opacity-60">
               <PlayCircle size={15} />
-              {remindersBusy === 'run' ? tr('Running...', 'Zapusk...', 'Ishga tushmoqda...') : tr('Run now', 'Zapustit', 'Hozir ishga tushirish')}
+              {remindersBusy === 'run' ? tr('Running...', 'Running...', 'Ishga tushmoqda...') : tr('Run now', 'Run now', 'Hozir ishga tushirish')}
             </button>
           </div>
         </div>
         {reminderPreview && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="rounded-lg border border-light-border dark:border-navy-700 p-3 bg-gray-50 dark:bg-navy-900/40">
-              <p className="text-xs text-gray-500">{tr('Processed', 'Obrabotano', 'Qayta ishlangan')}</p>
+              <p className="text-xs text-gray-500">{tr('Processed', 'Processed', 'Qayta ishlangan')}</p>
               <p className="text-lg font-semibold">{reminderPreview.summary?.processed ?? 0}</p>
             </div>
             <div className="rounded-lg border border-light-border dark:border-navy-700 p-3 bg-gray-50 dark:bg-navy-900/40">
-              <p className="text-xs text-gray-500">{tr('Sent', 'Otpravleno', 'Yuborilgan')}</p>
+              <p className="text-xs text-gray-500">{tr('Sent', 'Sent', 'Yuborilgan')}</p>
               <p className="text-lg font-semibold text-green-600">{reminderPreview.summary?.sent ?? 0}</p>
             </div>
             <div className="rounded-lg border border-light-border dark:border-navy-700 p-3 bg-gray-50 dark:bg-navy-900/40">
-              <p className="text-xs text-gray-500">{tr('Skipped', 'Propushcheno', "Otkazib yuborilgan")}</p>
+              <p className="text-xs text-gray-500">{tr('Skipped', 'Skipped', "O\'tkazib yuborilgan")}</p>
               <p className="text-lg font-semibold text-amber-600">{reminderPreview.summary?.skipped ?? 0}</p>
             </div>
             <div className="rounded-lg border border-light-border dark:border-navy-700 p-3 bg-gray-50 dark:bg-navy-900/40">
-              <p className="text-xs text-gray-500">{tr('Errors', 'Oshibki', 'Xatolar')}</p>
+              <p className="text-xs text-gray-500">{tr('Errors', 'Errors', 'Xatolar')}</p>
               <p className="text-lg font-semibold text-red-600">{reminderPreview.summary?.errors?.length ?? 0}</p>
             </div>
           </div>
@@ -444,9 +444,9 @@ const Payments: React.FC = () => {
 
       <div className="flex gap-4 border-b border-light-border dark:border-navy-700">
         {[
-          { key: 'transactions', label: tr('Transactions', 'Tranzaktsii', 'Tranzaksiyalar') },
-          { key: 'attempts', label: tr('Payment Attempts', 'Popytki oplaty', "Tolov urinishlari") },
-          { key: 'ambiguous', label: tr('Ambiguous Queue', 'Spornaia ochered', 'Noaniq navbat') },
+          { key: 'transactions', label: tr('Transactions', 'Transactions', 'Tranzaksiyalar') },
+          { key: 'attempts', label: tr('Payment Attempts', 'Payment Attempts', "Tolov urinishlari") },
+          { key: 'ambiguous', label: tr('Ambiguous Queue', 'Ambiguous Queue', 'Noaniq navbat') },
         ].map((item) => (
           <button
             key={item.key}
@@ -468,18 +468,18 @@ const Payments: React.FC = () => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-gray-50 dark:bg-navy-900/50 text-xs uppercase text-gray-500 dark:text-gray-400 border-b border-light-border dark:border-navy-700">
-                  <th className="px-6 py-4 font-semibold">{tr('Provider', 'Provayder', 'Provayder')}</th>
-                  <th className="px-6 py-4 font-semibold">{tr('Amount', 'Summa', 'Summa')}</th>
-                  <th className="px-6 py-4 font-semibold">{tr('Occurred', 'Vremya', 'Vaqt')}</th>
-                  <th className="px-6 py-4 font-semibold">{tr('Link', 'Svyaz', 'Boglanish')}</th>
-                  <th className="px-6 py-4 font-semibold text-right">{tr('Action', 'Deystvie', 'Amal')}</th>
+                  <th className="px-6 py-4 font-semibold">{tr('Provider', 'Provider', 'Provayder')}</th>
+                  <th className="px-6 py-4 font-semibold">{tr('Amount', 'Amount', 'Summa')}</th>
+                  <th className="px-6 py-4 font-semibold">{tr('Occurred', 'Occurred', 'Vaqt')}</th>
+                  <th className="px-6 py-4 font-semibold">{tr('Link', 'Link', 'Boglanish')}</th>
+                  <th className="px-6 py-4 font-semibold text-right">{tr('Action', 'Action', 'Amal')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-light-border dark:divide-navy-700">
                 {loading && transactions.length === 0 ? (
-                  <tr><td colSpan={5} className="py-10 text-center text-gray-500">{tr('Loading...', 'Zagruzka...', 'Yuklanmoqda...')}</td></tr>
+                  <tr><td colSpan={5} className="py-10 text-center text-gray-500">{tr('Loading...', 'Loading...', 'Yuklanmoqda...')}</td></tr>
                 ) : transactions.length === 0 ? (
-                  <tr><td colSpan={5} className="py-10 text-center text-gray-500">{tr('No transactions found', 'Tranzaktsii ne naydeny', 'Tranzaksiya topilmadi')}</td></tr>
+                  <tr><td colSpan={5} className="py-10 text-center text-gray-500">{tr('No transactions found', 'No transactions found', 'Tranzaksiya topilmadi')}</td></tr>
                 ) : (
                   transactions.map((tx) => (
                     <tr key={tx.id} onClick={() => setSelectedTransaction(tx)} className="hover:bg-gray-50 dark:hover:bg-navy-700/50 transition-colors cursor-pointer">
@@ -500,7 +500,7 @@ const Payments: React.FC = () => {
                         {tx.linked_order_id ? (
                           <div className="flex flex-col items-start gap-1.5">
                             <Badge variant="success" className="flex w-max items-center gap-1">
-                              <CheckCircle size={14} /> {tr('Linked to order', 'Privyazano k zakazu', "Buyurtmaga boglangan")}
+                              <CheckCircle size={14} /> {tr('Linked to order', 'Linked to order', "Buyurtmaga boglangan")}
                             </Badge>
                             <button
                               type="button"
@@ -514,7 +514,7 @@ const Payments: React.FC = () => {
                             </button>
                           </div>
                         ) : (
-                          <Badge variant="warning">{tr('Unlinked', 'Ne svyazano', "Boglanmagan")}</Badge>
+                          <Badge variant="warning">{tr('Unlinked', 'Unlinked', "Bog\'lanmagan")}</Badge>
                         )}
                       </td>
                       <td className="px-6 py-4 text-right">
@@ -527,7 +527,7 @@ const Payments: React.FC = () => {
                             className="inline-flex items-center gap-1 text-gray-600 dark:text-gray-300 hover:text-primary-blue text-sm font-medium"
                           >
                             <Info size={14} />
-                            {tr('Details', 'Detalno', 'Batafsil')}
+                            {tr('Details', 'Details', 'Batafsil')}
                           </button>
                           <button
                             onClick={(e) => {
@@ -538,8 +538,8 @@ const Payments: React.FC = () => {
                           >
                             <Link2 size={14} />
                             {tx.linked_order_id
-                              ? tr('Change order', 'Izmenit zakaz', 'Buyurtmani ozgartirish')
-                              : tr('Attach order', 'Privyazat zakaz', 'Buyurtmani boglash')}
+                              ? tr('Change order', 'Change order', 'Buyurtmani ozgartirish')
+                              : tr('Attach order', 'Attach order', 'Buyurtmani boglash')}
                           </button>
                           {!tx.linked_order_id && (
                             <>
@@ -552,7 +552,7 @@ const Payments: React.FC = () => {
                                 className="inline-flex items-center gap-1 text-primary-blue dark:text-blue-300 hover:text-blue-700 dark:hover:text-blue-200 text-sm font-medium disabled:opacity-50"
                               >
                                 <Link2 size={14} />
-                                {matchingId === tx.id ? tr('Matching...', 'Svyazka...', 'Boglanmoqda...') : tr('Auto match', 'Avto-svyaz', "Avto boglash")}
+                                {matchingId === tx.id ? tr('Matching...', 'Matching...', 'Boglanmoqda...') : tr('Auto match', 'Auto match', "Avto boglash")}
                               </button>
                             </>
                           )}
@@ -571,18 +571,18 @@ const Payments: React.FC = () => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-gray-50 dark:bg-navy-900/50 text-xs uppercase text-gray-500 dark:text-gray-400 border-b border-light-border dark:border-navy-700">
-                  <th className="px-6 py-4 font-semibold">{tr('Order', 'Zakaz', 'Buyurtma')}</th>
-                  <th className="px-6 py-4 font-semibold">{tr('Amount', 'Summa', 'Summa')}</th>
+                  <th className="px-6 py-4 font-semibold">{tr('Order', 'Order', 'Buyurtma')}</th>
+                  <th className="px-6 py-4 font-semibold">{tr('Amount', 'Amount', 'Summa')}</th>
                   <th className="px-6 py-4 font-semibold">{tr('Status', 'Status', 'Holat')}</th>
-                  <th className="px-6 py-4 font-semibold">{tr('Provider hint', 'Podskazka provaydera', 'Provayder belgisi')}</th>
-                  <th className="px-6 py-4 font-semibold">{tr('Reminder', 'Napominanie', 'Eslatma')}</th>
+                  <th className="px-6 py-4 font-semibold">{tr('Provider hint', 'Provider hint', 'Provayder belgisi')}</th>
+                  <th className="px-6 py-4 font-semibold">{tr('Reminder', 'Reminder', 'Eslatma')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-light-border dark:divide-navy-700">
                 {loading && attempts.length === 0 ? (
-                  <tr><td colSpan={5} className="py-10 text-center text-gray-500">{tr('Loading...', 'Zagruzka...', 'Yuklanmoqda...')}</td></tr>
+                  <tr><td colSpan={5} className="py-10 text-center text-gray-500">{tr('Loading...', 'Loading...', 'Yuklanmoqda...')}</td></tr>
                 ) : attempts.length === 0 ? (
-                  <tr><td colSpan={5} className="py-10 text-center text-gray-500">{tr('No payment attempts found', 'Popytki oplaty ne naydeny', "Tolov urinishlari topilmadi")}</td></tr>
+                  <tr><td colSpan={5} className="py-10 text-center text-gray-500">{tr('No payment attempts found', 'No payment attempts found', "Tolov urinishlari topilmadi")}</td></tr>
                 ) : (
                   attempts.map((att) => (
                     <tr key={att.id} className="hover:bg-gray-50 dark:hover:bg-navy-700/50 transition-colors">
@@ -598,12 +598,12 @@ const Payments: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-500">
                         {fieldValue(att.provider_hint)}
-                        {att.payer_card_last4 ? ` • ****${att.payer_card_last4}` : ''}
+                        {att.payer_card_last4 ? ` ? ****${att.payer_card_last4}` : ''}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-500">
                         {att.payment_waiting_reminder_sent_at
                           ? formatDateTime(att.payment_waiting_reminder_sent_at, locale)
-                          : tr('Not sent', 'Ne otpravleno', 'Yuborilmagan')}
+                          : tr('Not sent', 'Not sent', 'Yuborilmagan')}
                       </td>
                     </tr>
                   ))
@@ -618,21 +618,21 @@ const Payments: React.FC = () => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-gray-50 dark:bg-navy-900/50 text-xs uppercase text-gray-500 dark:text-gray-400 border-b border-light-border dark:border-navy-700">
-                  <th className="px-6 py-4 font-semibold">{tr('Order / Client', 'Zakaz / Klient', 'Buyurtma / Mijoz')}</th>
-                  <th className="px-6 py-4 font-semibold">{tr('Attempt', 'Popytka', 'Urinish')}</th>
-                  <th className="px-6 py-4 font-semibold">{tr('Candidates', 'Kandidaty', 'Nomzodlar')}</th>
-                  <th className="px-6 py-4 font-semibold">{tr('Latest audit', 'Posledniy audit', 'Songgi audit')}</th>
+                  <th className="px-6 py-4 font-semibold">{tr('Order / Client', 'Order / Client', 'Buyurtma / Mijoz')}</th>
+                  <th className="px-6 py-4 font-semibold">{tr('Attempt', 'Attempt', 'Urinish')}</th>
+                  <th className="px-6 py-4 font-semibold">{tr('Candidates', 'Candidates', 'Nomzodlar')}</th>
+                  <th className="px-6 py-4 font-semibold">{tr('Latest audit', 'Latest audit', 'Songgi audit')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-light-border dark:divide-navy-700">
                 {loading && ambiguousQueue.length === 0 ? (
-                  <tr><td colSpan={4} className="py-10 text-center text-gray-500">{tr('Loading...', 'Zagruzka...', 'Yuklanmoqda...')}</td></tr>
+                  <tr><td colSpan={4} className="py-10 text-center text-gray-500">{tr('Loading...', 'Loading...', 'Yuklanmoqda...')}</td></tr>
                 ) : ambiguousQueue.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="py-10 text-center text-gray-500">
                       <span className="inline-flex items-center gap-2">
                         <CheckCircle size={16} className="text-green-500" />
-                        {tr('No ambiguous payments in queue', 'Spornykh platezhey net', "Noaniq tolovlar yoq")}
+                        {tr('No ambiguous payments in queue', 'No ambiguous payments in queue', "Noaniq tolovlar yoq")}
                       </span>
                     </td>
                   </tr>
@@ -653,7 +653,7 @@ const Payments: React.FC = () => {
                       </td>
                       <td className="px-6 py-4">
                         <p className="text-sm text-gray-800 dark:text-gray-100">{row.candidate_transactions?.length || 0}</p>
-                        <p className="text-xs text-gray-500">{tr('possible matches', 'vozmozhnye sovpadeniya', 'mos tushishi mumkin')}</p>
+                        <p className="text-xs text-gray-500">{tr('possible matches', 'possible matches', 'mos tushishi mumkin')}</p>
                       </td>
                       <td className="px-6 py-4">
                         {row.latest_audit ? (
@@ -677,28 +677,28 @@ const Payments: React.FC = () => {
         )}
       </Card>
 
-      <Modal isOpen={!!attachTransaction} onClose={closeAttachModal} title={tr('Attach transaction to order', 'Privyazat tranzaktsiyu k zakazu', 'Tranzaksiyani buyurtmaga boglash')} maxWidthClass="max-w-2xl">
+      <Modal isOpen={!!attachTransaction} onClose={closeAttachModal} title={tr('Attach transaction to order', 'Attach transaction to order', 'Tranzaksiyani buyurtmaga boglash')} maxWidthClass="max-w-2xl">
         {attachTransaction && (
           <div className="space-y-5">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="rounded-lg border border-light-border dark:border-navy-700 p-3 bg-gray-50 dark:bg-navy-900/40">
-                <p className="text-xs text-gray-500">{tr('Provider', 'Provayder', 'Provayder')}</p>
+                <p className="text-xs text-gray-500">{tr('Provider', 'Provider', 'Provayder')}</p>
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">{fieldValue(attachTransaction.provider)}</p>
               </div>
               <div className="rounded-lg border border-light-border dark:border-navy-700 p-3 bg-gray-50 dark:bg-navy-900/40">
-                <p className="text-xs text-gray-500">{tr('Amount', 'Summa', 'Summa')}</p>
+                <p className="text-xs text-gray-500">{tr('Amount', 'Amount', 'Summa')}</p>
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatAmount(attachTransaction.amount_uzs)}</p>
               </div>
               <div className="rounded-lg border border-light-border dark:border-navy-700 p-3 bg-gray-50 dark:bg-navy-900/40">
-                <p className="text-xs text-gray-500">{tr('Transaction status', 'Status tranzaktsii', 'Tranzaksiya holati')}</p>
+                <p className="text-xs text-gray-500">{tr('Transaction status', 'Transaction status', 'Tranzaksiya holati')}</p>
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">{fieldValue(attachTransaction.status_text)}</p>
               </div>
             </div>
 
             <div className="rounded-lg border border-light-border dark:border-navy-700 p-4 space-y-3">
               <div>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">{tr('Select order', 'Vyberite zakaz', 'Buyurtmani tanlang')}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{tr('Only active transfer orders are shown here.', 'Zdes pokazany tolko aktivnye zakazy s TRANSFER.', 'Bu yerda faqat aktiv otkazma buyurtmalar korsatiladi.')}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{tr('Select order', 'Select order', 'Buyurtmani tanlang')}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{tr('Only active transfer orders are shown here.', 'Only active transfer orders are shown here.', 'Bu yerda faqat aktiv otkazma buyurtmalar korsatiladi.')}</p>
               </div>
               <select
                 value={attachOrderId}
@@ -709,16 +709,16 @@ const Payments: React.FC = () => {
                 disabled={attachOrdersLoading || attaching}
                 className="w-full bg-white dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2.5 text-sm text-gray-900 dark:text-white outline-none focus:border-primary-blue"
               >
-                <option value="">{attachOrdersLoading ? tr('Loading orders...', 'Zagruzka zakazov...', 'Buyurtmalar yuklanmoqda...') : tr('Choose order', 'Vyberite zakaz', 'Buyurtmani tanlang')}</option>
+                <option value="">{attachOrdersLoading ? tr('Loading orders...', 'Loading orders...', 'Buyurtmalar yuklanmoqda...') : tr('Choose order', 'Choose order', 'Buyurtmani tanlang')}</option>
                 {attachOrders.map((order) => (
                   <option key={order.id} value={order.id}>
-                    {`${formatOrderRef(order.id)} · ${formatAmount(order.total_amount_uzs)} · ${getOrderStatusLabel(order.status)}`}
+                    {`${formatOrderRef(order.id)} ? ${formatAmount(order.total_amount_uzs)} ? ${getOrderStatusLabel(order.status)}`}
                   </option>
                 ))}
               </select>
               {!attachOrdersLoading && attachOrders.length === 0 && !attachError && (
                 <div className="rounded-lg border border-light-border dark:border-navy-700 bg-gray-50 dark:bg-navy-900/40 px-3 py-2 text-xs text-gray-600 dark:text-gray-300">
-                  {tr('No active transfer orders available for manual attach.', 'Net aktivnykh TRANSFER-zakazov dlya ruchnoy privyazki.', 'Qolda boglash uchun aktiv otkazma buyurtmalar topilmadi.')}
+                  {tr('No active transfer orders available for manual attach.', 'No active transfer orders available for manual attach.', 'Qolda boglash uchun aktiv otkazma buyurtmalar topilmadi.')}
                 </div>
               )}
               {attachError && (
@@ -742,7 +742,7 @@ const Payments: React.FC = () => {
                 disabled={attaching}
                 className="px-4 py-2 rounded-lg border border-light-border dark:border-navy-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-navy-800 disabled:opacity-60"
               >
-                {tr('Cancel', 'Otmena', 'Bekor qilish')}
+                {tr('Cancel', 'Cancel', 'Bekor qilish')}
               </button>
               <button
                 type="button"
@@ -751,23 +751,23 @@ const Payments: React.FC = () => {
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-primary-blue bg-primary-blue text-white hover:bg-blue-700 disabled:opacity-60"
               >
                 <Link2 size={15} />
-                {attaching ? tr('Attaching...', 'Privyazka...', 'Boglanmoqda...') : tr('Attach to order', 'Privyazat k zakazu', 'Buyurtmaga boglash')}
+                {attaching ? tr('Attaching...', 'Attaching...', 'Boglanmoqda...') : tr('Attach to order', 'Attach to order', 'Buyurtmaga boglash')}
               </button>
             </div>
           </div>
         )}
       </Modal>
 
-      <Modal isOpen={!!selectedTransaction} onClose={() => setSelectedTransaction(null)} title={tr('Transaction details', 'Detali tranzaktsii', 'Tranzaksiya tafsilotlari')} maxWidthClass="max-w-4xl">
+      <Modal isOpen={!!selectedTransaction} onClose={() => setSelectedTransaction(null)} title={tr('Transaction details', 'Transaction details', 'Tranzaksiya tafsilotlari')} maxWidthClass="max-w-4xl">
         {selectedTransaction && (
           <div className="space-y-5">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="rounded-lg border border-light-border dark:border-navy-700 p-3 bg-gray-50 dark:bg-navy-900/40">
-                <p className="text-xs text-gray-500">{tr('Amount', 'Summa', 'Summa')}</p>
+                <p className="text-xs text-gray-500">{tr('Amount', 'Amount', 'Summa')}</p>
                 <p className="text-lg font-semibold text-gray-900 dark:text-white">{formatAmount(selectedTransaction.amount_uzs)}</p>
               </div>
               <div className="rounded-lg border border-light-border dark:border-navy-700 p-3 bg-gray-50 dark:bg-navy-900/40">
-                <p className="text-xs text-gray-500">{tr('Provider', 'Provayder', 'Provayder')}</p>
+                <p className="text-xs text-gray-500">{tr('Provider', 'Provider', 'Provayder')}</p>
                 <p className="text-lg font-semibold text-gray-900 dark:text-white">{fieldValue(selectedTransaction.provider)}</p>
               </div>
               <div className="rounded-lg border border-light-border dark:border-navy-700 p-3 bg-gray-50 dark:bg-navy-900/40">
@@ -777,17 +777,17 @@ const Payments: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-              <div className="rounded-lg border border-light-border dark:border-navy-700 p-3"><p className="text-xs text-gray-500">{tr('Transaction ID', 'ID tranzaktsii', 'Tranzaksiya ID')}</p><p className="font-mono break-all text-gray-900 dark:text-white">{fieldValue(selectedTransaction.id)}</p></div>
-              <div className="rounded-lg border border-light-border dark:border-navy-700 p-3"><p className="text-xs text-gray-500">{tr('Provider transaction ID', 'ID provaydera', 'Provayder tranzaksiya ID')}</p><p className="font-mono break-all text-gray-900 dark:text-white">{fieldValue(selectedTransaction.provider_transaction_id)}</p></div>
-              <div className="rounded-lg border border-light-border dark:border-navy-700 p-3"><p className="text-xs text-gray-500">{tr('Occurred at', 'Vremya platezha', "Tolov vaqti")}</p><p className="text-gray-900 dark:text-white">{formatDateTime(selectedTransaction.occurred_at, locale)}</p></div>
-              <div className="rounded-lg border border-light-border dark:border-navy-700 p-3"><p className="text-xs text-gray-500">{tr('Created at', 'Sozdano', 'Yaratilgan')}</p><p className="text-gray-900 dark:text-white">{formatDateTime(selectedTransaction.created_at, locale)}</p></div>
-              <div className="rounded-lg border border-light-border dark:border-navy-700 p-3"><p className="text-xs text-gray-500">{tr('Sender card', 'Karta otpravitelya', 'Yuboruvchi karta')}</p><p className="text-gray-900 dark:text-white">{fieldValue(selectedTransaction.sender_card_masked || selectedTransaction.sender_card_last4)}</p></div>
-              <div className="rounded-lg border border-light-border dark:border-navy-700 p-3"><p className="text-xs text-gray-500">{tr('Merchant card', 'Karta magazina', 'Qabul qiluvchi karta')}</p><p className="text-gray-900 dark:text-white">{fieldValue(selectedTransaction.merchant_card_last4)}</p></div>
-              <div className="rounded-lg border border-light-border dark:border-navy-700 p-3"><p className="text-xs text-gray-500">{tr('Merchant name', 'Nazvanie magazina', 'Qabul qiluvchi nomi')}</p><p className="text-gray-900 dark:text-white">{fieldValue(selectedTransaction.merchant_name)}</p></div>
-              <div className="rounded-lg border border-light-border dark:border-navy-700 p-3"><p className="text-xs text-gray-500">{tr('Payer name', 'Imya platelshchika', "Tolovchi ismi")}</p><p className="text-gray-900 dark:text-white">{fieldValue(selectedTransaction.payer_name)}</p></div>
-              <div className="rounded-lg border border-light-border dark:border-navy-700 p-3"><p className="text-xs text-gray-500">{tr('Payer phone', 'Telefon platelshchika', "Tolovchi telefoni")}</p><p className="text-gray-900 dark:text-white">{fieldValue(selectedTransaction.payer_phone_masked)}</p></div>
+              <div className="rounded-lg border border-light-border dark:border-navy-700 p-3"><p className="text-xs text-gray-500">{tr('Transaction ID', 'Transaction ID', 'Tranzaksiya ID')}</p><p className="font-mono break-all text-gray-900 dark:text-white">{fieldValue(selectedTransaction.id)}</p></div>
+              <div className="rounded-lg border border-light-border dark:border-navy-700 p-3"><p className="text-xs text-gray-500">{tr('Provider transaction ID', 'Provider transaction ID', 'Provayder tranzaksiya ID')}</p><p className="font-mono break-all text-gray-900 dark:text-white">{fieldValue(selectedTransaction.provider_transaction_id)}</p></div>
+              <div className="rounded-lg border border-light-border dark:border-navy-700 p-3"><p className="text-xs text-gray-500">{tr('Occurred at', 'Occurred at', "Tolov vaqti")}</p><p className="text-gray-900 dark:text-white">{formatDateTime(selectedTransaction.occurred_at, locale)}</p></div>
+              <div className="rounded-lg border border-light-border dark:border-navy-700 p-3"><p className="text-xs text-gray-500">{tr('Created at', 'Created at', 'Yaratilgan')}</p><p className="text-gray-900 dark:text-white">{formatDateTime(selectedTransaction.created_at, locale)}</p></div>
+              <div className="rounded-lg border border-light-border dark:border-navy-700 p-3"><p className="text-xs text-gray-500">{tr('Sender card', 'Sender card', 'Yuboruvchi karta')}</p><p className="text-gray-900 dark:text-white">{fieldValue(selectedTransaction.sender_card_masked || selectedTransaction.sender_card_last4)}</p></div>
+              <div className="rounded-lg border border-light-border dark:border-navy-700 p-3"><p className="text-xs text-gray-500">{tr('Merchant card', 'Merchant card', 'Qabul qiluvchi karta')}</p><p className="text-gray-900 dark:text-white">{fieldValue(selectedTransaction.merchant_card_last4)}</p></div>
+              <div className="rounded-lg border border-light-border dark:border-navy-700 p-3"><p className="text-xs text-gray-500">{tr('Merchant name', 'Merchant name', 'Qabul qiluvchi nomi')}</p><p className="text-gray-900 dark:text-white">{fieldValue(selectedTransaction.merchant_name)}</p></div>
+              <div className="rounded-lg border border-light-border dark:border-navy-700 p-3"><p className="text-xs text-gray-500">{tr('Payer name', 'Payer name', "Tolovchi ismi")}</p><p className="text-gray-900 dark:text-white">{fieldValue(selectedTransaction.payer_name)}</p></div>
+              <div className="rounded-lg border border-light-border dark:border-navy-700 p-3"><p className="text-xs text-gray-500">{tr('Payer phone', 'Payer phone', "Tolovchi telefoni")}</p><p className="text-gray-900 dark:text-white">{fieldValue(selectedTransaction.payer_phone_masked)}</p></div>
               <div className="rounded-lg border border-light-border dark:border-navy-700 p-3">
-                <p className="text-xs text-gray-500">{tr('Linked order', 'Svyazannyy zakaz', "Boglangan buyurtma")}</p>
+                <p className="text-xs text-gray-500">{tr('Linked order', 'Linked order', "Boglangan buyurtma")}</p>
                 {selectedTransaction.linked_order_id ? (
                   <div className="mt-1 space-y-2">
                     <p className="text-gray-900 dark:text-white font-semibold">{formatOrderRef(selectedTransaction.linked_order_id)}</p>
@@ -799,7 +799,7 @@ const Payments: React.FC = () => {
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-light-border dark:border-navy-600 text-sm text-primary-blue dark:text-blue-300 hover:bg-gray-50 dark:hover:bg-navy-800"
                       >
                         <Link2 size={14} />
-                        {tr('Open order', 'Otkryt zakaz', 'Buyurtmani ochish')}
+                        {tr('Open order', 'Open order', 'Buyurtmani ochish')}
                       </button>
                       <button
                         type="button"
@@ -807,7 +807,7 @@ const Payments: React.FC = () => {
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-light-border dark:border-navy-600 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-navy-800"
                       >
                         <Link2 size={14} />
-                        {tr('Change order', 'Izmenit zakaz', 'Buyurtmani ozgartirish')}
+                        {tr('Change order', 'Change order', 'Buyurtmani ozgartirish')}
                       </button>
                     </div>
                   </div>
@@ -820,22 +820,22 @@ const Payments: React.FC = () => {
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-light-border dark:border-navy-600 text-sm text-primary-blue dark:text-blue-300 hover:bg-gray-50 dark:hover:bg-navy-800"
                     >
                       <Link2 size={14} />
-                      {tr('Attach order', 'Privyazat zakaz', 'Buyurtmani boglash')}
+                      {tr('Attach order', 'Attach order', 'Buyurtmani boglash')}
                     </button>
                   </div>
                 )}
               </div>
-              <div className="rounded-lg border border-light-border dark:border-navy-700 p-3"><p className="text-xs text-gray-500">{tr('Source chat ID', 'ID chata istochnika', 'Manba chat ID')}</p><p className="font-mono break-all text-gray-900 dark:text-white">{fieldValue(selectedTransaction.source_chat_id)}</p></div>
-              <div className="rounded-lg border border-light-border dark:border-navy-700 p-3"><p className="text-xs text-gray-500">{tr('Source message ID', 'ID soobshcheniya', 'Manba xabar ID')}</p><p className="font-mono break-all text-gray-900 dark:text-white">{fieldValue(selectedTransaction.source_message_id)}</p></div>
+              <div className="rounded-lg border border-light-border dark:border-navy-700 p-3"><p className="text-xs text-gray-500">{tr('Source chat ID', 'Source chat ID', 'Manba chat ID')}</p><p className="font-mono break-all text-gray-900 dark:text-white">{fieldValue(selectedTransaction.source_chat_id)}</p></div>
+              <div className="rounded-lg border border-light-border dark:border-navy-700 p-3"><p className="text-xs text-gray-500">{tr('Source message ID', 'Source message ID', 'Manba xabar ID')}</p><p className="font-mono break-all text-gray-900 dark:text-white">{fieldValue(selectedTransaction.source_message_id)}</p></div>
             </div>
 
             <div className="rounded-lg border border-light-border dark:border-navy-700 p-3">
-              <p className="text-xs text-gray-500">{tr('Raw hash', 'Raw khesh', 'Raw hash')}</p>
+              <p className="text-xs text-gray-500">{tr('Raw hash', 'Raw hash', 'Raw hash')}</p>
               <p className="font-mono break-all text-gray-900 dark:text-white">{fieldValue(selectedTransaction.raw_hash)}</p>
             </div>
 
             <div className="rounded-lg border border-light-border dark:border-navy-700 p-3">
-              <p className="text-xs text-gray-500 mb-2">{tr('Parsed payload', 'Razobrannyy payload', 'Ajratilgan payload')}</p>
+              <p className="text-xs text-gray-500 mb-2">{tr('Parsed payload', 'Parsed payload', 'Ajratilgan payload')}</p>
               <pre className="text-xs leading-relaxed overflow-auto bg-gray-50 dark:bg-navy-900/40 rounded-lg p-3 text-gray-800 dark:text-gray-200">{JSON.stringify(selectedTransaction.parsed_payload || {}, null, 2)}</pre>
             </div>
           </div>

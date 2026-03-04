@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { clientApiRequest, CLIENT_API_BASE_URL } from '../api/clientApi';
 import { ClientBootstrapResponse, ClientBootstrapState, ClientTelegramUser, ClientWebAppConfigResponse, ClientWebAppEntry } from '../types';
 

@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Card } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
 import { Badge } from '../components/ui/Badge';
@@ -124,7 +124,7 @@ const Clients: React.FC = () => {
       const rows = Array.isArray(data) ? data : (data.results || []);
       setClients(rows);
     } catch (e) {
-      const message = e instanceof Error ? e.message : tr('Failed to load clients', 'Mijozlarni yuklab bolmadi', 'Mijozlarni yuklab bolmadi');
+      const message = e instanceof Error ? e.message : tr('Failed to load clients', 'Failed to load clients', 'Mijozlarni yuklab bolmadi');
       setError(message);
       toast.error(message);
     } finally {
@@ -170,7 +170,7 @@ const Clients: React.FC = () => {
         );
       } catch (e) {
         if (!active) return;
-        const message = e instanceof Error ? e.message : tr('Failed to load bottle data', 'Ne udalos zagruzit dannye po tare', 'Idish maʼlumotlarini yuklab bo‘lmadi');
+        const message = e instanceof Error ? e.message : tr('Failed to load bottle data', 'Failed to load bottle data', "Idish ma'lumotlarini yuklab bo'lmadi");
         toast.error(message);
       } finally {
         if (active) setBottleLoading(false);
@@ -198,14 +198,14 @@ const Clients: React.FC = () => {
     p === 'instagram'
       ? tr('Instagram', 'Instagram', 'Instagram')
       : p === 'manual'
-        ? tr('Manual', 'Ручной', 'Qo‘lda')
+        ? tr('Manual', 'Manual', "Qo\'lda")
         : tr('Telegram', 'Telegram', 'Telegram')
   );
 
   const languageLabel = (lang?: ClientRow['preferred_language']) => {
-    if (lang === 'ru') return tr('Russian', 'Русский', 'Ruscha');
-    if (lang === 'uz') return tr("Uzbek", 'Uzbek', "O'zbek");
-    if (lang === 'en') return tr('English', 'Английский', 'Inglizcha');
+    if (lang === 'ru') return tr('Russian', 'Russian', 'Ruscha');
+    if (lang === 'uz') return tr("Uzbek", 'Uzbek', "O\'zbek");
+    if (lang === 'en') return tr('English', 'English', 'Inglizcha');
     return '-';
   };
 
@@ -217,9 +217,9 @@ const Clients: React.FC = () => {
   };
 
   const movementLabel = (movementType: BottleMovement['movement_type']) => {
-    if (movementType === 'ORDER_DELIVERED') return tr('Delivered order', 'Dostavlennyy zakaz', 'Yetkazilgan buyurtma');
-    if (movementType === 'REFUND') return tr('Refund', 'Vozvrat', 'Qaytarish');
-    if (movementType === 'MANUAL_ADJUST') return tr('Manual adjust', 'Ruchnaya korrektirovka', 'Qoʻlda tuzatish');
+    if (movementType === 'ORDER_DELIVERED') return tr('Delivered order', 'Delivered order', 'Yetkazilgan buyurtma');
+    if (movementType === 'REFUND') return tr('Refund', 'Refund', 'Qaytarish');
+    if (movementType === 'MANUAL_ADJUST') return tr('Manual adjust', 'Manual adjust', "Qo'lda tuzatish");
     return movementType;
   };
 
@@ -232,16 +232,16 @@ const Clients: React.FC = () => {
 
   const orderStatusLabel = (status: OrderStatus) => {
     switch (status) {
-      case 'NEW_LEAD': return tr('New lead', 'Новый лид', 'Yangi lid');
-      case 'INFO_COLLECTED': return tr('Info collected', 'Информация собрана', "Ma'lumot yig'ilgan");
-      case 'PAYMENT_PENDING': return tr('Payment pending', 'Ожидает оплаты', "To'lov kutilmoqda");
-      case 'PAYMENT_CONFIRMED': return tr('Payment confirmed', 'Оплата подтверждена', "To'lov tasdiqlangan");
-      case 'DISPATCHED': return tr('Dispatched', 'Отправлен', 'Yuborilgan');
-      case 'ASSIGNED': return tr('Assigned', 'Назначен', 'Biriktirilgan');
-      case 'OUT_FOR_DELIVERY': return tr('Out for delivery', 'В доставке', 'Yetkazib berishda');
-      case 'DELIVERED': return tr('Delivered', 'Доставлен', 'Yetkazildi');
-      case 'CANCELED': return tr('Canceled', 'Отменен', 'Bekor qilingan');
-      case 'FAILED': return tr('Failed', 'Неудачно', 'Muvaffaqiyatsiz');
+      case 'NEW_LEAD': return tr('New lead', 'New lead', 'Yangi lid');
+      case 'INFO_COLLECTED': return tr('Info collected', 'Info collected', "Ma\'lumot yig\'ilgan");
+      case 'PAYMENT_PENDING': return tr('Payment pending', 'Payment pending', "To\'lov kutilmoqda");
+      case 'PAYMENT_CONFIRMED': return tr('Payment confirmed', 'Payment confirmed', "To\'lov tasdiqlangan");
+      case 'DISPATCHED': return tr('Dispatched', 'Dispatched', 'Yuborilgan');
+      case 'ASSIGNED': return tr('Assigned', 'Assigned', 'Biriktirilgan');
+      case 'OUT_FOR_DELIVERY': return tr('Out for delivery', 'Out for delivery', 'Yetkazib berishda');
+      case 'DELIVERED': return tr('Delivered', 'Delivered', 'Yetkazildi');
+      case 'CANCELED': return tr('Canceled', 'Canceled', 'Bekor qilingan');
+      case 'FAILED': return tr('Failed', 'Failed', 'Muvaffaqiyatsiz');
       default: return status;
     }
   };
@@ -300,12 +300,12 @@ const Clients: React.FC = () => {
         method: 'POST',
         body: JSON.stringify(payload),
       });
-      toast.success(editing ? tr('Client updated', 'Mijoz yangilandi', 'Mijoz yangilandi') : tr('Client created', 'Mijoz yaratildi', 'Mijoz yaratildi'));
+      toast.success(editing ? tr('Client updated', 'Client updated', 'Mijoz yangilandi') : tr('Client created', 'Client created', 'Mijoz yaratildi'));
       setIsModalOpen(false);
       setEditing(null);
       await loadClients();
     } catch (e) {
-      const message = e instanceof Error ? e.message : tr('Failed to save client', 'Mijozni saqlab bolmadi', 'Mijozni saqlab bolmadi');
+      const message = e instanceof Error ? e.message : tr('Failed to save client', "Mijozni saqlab bo\'lmadi", "Mijozni saqlab bo\'lmadi");
       setError(message);
       toast.error(message);
     } finally {
@@ -318,7 +318,7 @@ const Clients: React.FC = () => {
     if (!selectedClient) return;
 
     if (!refundForm.product_id) {
-      toast.error(tr('Select a product balance first', 'Snachala vyberite produkt', 'Avval mahsulotni tanlang'));
+      toast.error(tr('Select a product balance first', 'Select a product balance first', 'Avval mahsulotni tanlang'));
       return;
     }
 
@@ -336,7 +336,7 @@ const Clients: React.FC = () => {
 
       setIsRefundOpen(false);
       setRefundForm({ product_id: '', quantity: '1', refund_all: false, note: '' });
-      toast.success(tr('Bottle refund recorded', 'Vozvrat tary zafiksirovan', 'Idish qaytarilishi saqlandi'));
+      toast.success(tr('Bottle refund recorded', 'Bottle refund recorded', 'Idish qaytarilishi saqlandi'));
 
       const [balanceData, movementData] = await Promise.all([
         apiRequest<{ summary?: BottleSummary; results?: BottleBalance[] }>(ENDPOINTS.CLIENTS.BOTTLE_BALANCES(selectedClient.id)),
@@ -347,7 +347,7 @@ const Clients: React.FC = () => {
       setBottleBalances(balanceData.results || []);
       setBottleMovements(movementData.results || []);
     } catch (refundError) {
-      const message = refundError instanceof Error ? refundError.message : tr('Failed to save bottle refund', 'Ne udalos sohranit vozvrat tary', 'Idish qaytarilishini saqlab bo‘lmadi');
+      const message = refundError instanceof Error ? refundError.message : tr('Failed to save bottle refund', 'Failed to save bottle refund', "Idish qaytarilishini saqlab bo'lmadi");
       toast.error(message);
     } finally {
       setRefundSaving(false);
@@ -372,8 +372,8 @@ const Clients: React.FC = () => {
         <div className="p-4 border-b border-light-border dark:border-navy-700 bg-white dark:bg-navy-800">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Clients list', 'Mijozlar royxati', 'Mijozlar royxati')}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{tr('Total clients', 'Vsego klientov', 'Jami mijozlar')}: {clients.length}</p>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Clients list', 'Clients list', 'Mijozlar royxati')}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{tr('Total clients', 'Total clients', 'Jami mijozlar')}: {clients.length}</p>
             </div>
             <div className="relative w-full md:max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
@@ -392,19 +392,19 @@ const Clients: React.FC = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50 dark:bg-navy-900/50 text-xs uppercase text-gray-500 dark:text-gray-400 border-b border-light-border dark:border-navy-700">
-                <th className="px-6 py-4 font-semibold">{tr('Client', 'Mijoz', 'Mijoz')}</th>
-                <th className="px-6 py-4 font-semibold">{tr('Phone', 'Telefon', 'Telefon')}</th>
-                <th className="px-6 py-4 font-semibold">{tr('Platform', 'Platforma', 'Platforma')}</th>
-                <th className="px-6 py-4 font-semibold">{tr('Language', 'Til', 'Til')}</th>
-                <th className="px-6 py-4 font-semibold">{tr('Updated', 'Yangilangan', 'Yangilangan')}</th>
+                <th className="px-6 py-4 font-semibold">{tr('Client', 'Client', 'Mijoz')}</th>
+                <th className="px-6 py-4 font-semibold">{tr('Phone', 'Phone', 'Telefon')}</th>
+                <th className="px-6 py-4 font-semibold">{tr('Platform', 'Platform', 'Platforma')}</th>
+                <th className="px-6 py-4 font-semibold">{tr('Language', 'Language', 'Til')}</th>
+                <th className="px-6 py-4 font-semibold">{tr('Updated', 'Updated', 'Yangilangan')}</th>
                 <th className="px-6 py-4 font-semibold text-right">{t('actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-light-border dark:divide-navy-700">
               {loading ? (
-                <tr><td colSpan={6} className="px-6 py-10 text-center text-gray-400">{tr('Loading clients...', 'Mijozlar yuklanmoqda...', 'Mijozlar yuklanmoqda...')}</td></tr>
+                <tr><td colSpan={6} className="px-6 py-10 text-center text-gray-400">{tr('Loading clients...', 'Loading clients...', 'Mijozlar yuklanmoqda...')}</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={6} className="px-6 py-10 text-center text-gray-400">{tr('No clients found', 'Mijozlar topilmadi', 'Mijozlar topilmadi')}</td></tr>
+                <tr><td colSpan={6} className="px-6 py-10 text-center text-gray-400">{tr('No clients found', 'No clients found', 'Mijozlar topilmadi')}</td></tr>
               ) : (
                 filtered.map((c) => (
                   <tr
@@ -437,7 +437,7 @@ const Clients: React.FC = () => {
                       <button
                         onClick={(e) => { e.stopPropagation(); setEditing(c); setIsModalOpen(true); }}
                         className="p-1.5 text-gray-500 dark:text-gray-300 hover:text-primary-blue dark:hover:text-blue-400 transition-colors"
-                        title={tr('Edit client', 'Mijozni tahrirlash', 'Mijozni tahrirlash')}
+                        title={tr('Edit client', 'Edit client', 'Mijozni tahrirlash')}
                       >
                         <Edit2 size={16} />
                       </button>
@@ -453,7 +453,7 @@ const Clients: React.FC = () => {
       <Modal
         isOpen={!!selectedClient}
         onClose={() => setSelectedClient(null)}
-        title={tr('Client details', 'Mijoz tafsilotlari', 'Mijoz tafsilotlari')}
+        title={tr('Client details', 'Client details', 'Mijoz tafsilotlari')}
         footer={
           selectedClient ? (
             <div className="flex justify-end gap-3 w-full">
@@ -474,7 +474,7 @@ const Clients: React.FC = () => {
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-primary-blue text-white hover:bg-blue-600 transition-colors"
               >
                 <Edit2 size={16} />
-                {tr('Edit client', 'Mijozni tahrirlash', 'Mijozni tahrirlash')}
+                {tr('Edit client', 'Edit client', 'Mijozni tahrirlash')}
               </button>
             </div>
           ) : null
@@ -484,7 +484,7 @@ const Clients: React.FC = () => {
           <div className="space-y-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="rounded-lg border border-light-border dark:border-navy-700 p-4 bg-gray-50 dark:bg-navy-900/40">
-                <p className="text-xs text-gray-500">{tr('Full Name', 'Toliq ism', 'Toliq ism')}</p>
+                <p className="text-xs text-gray-500">{tr('Full Name', 'Full Name', 'Toliq ism')}</p>
                 <p className="text-base font-semibold text-gray-900 dark:text-white">{selectedClient.full_name || '-'}</p>
               </div>
               <div className="rounded-lg border border-light-border dark:border-navy-700 p-4 bg-gray-50 dark:bg-navy-900/40">
@@ -492,7 +492,7 @@ const Clients: React.FC = () => {
                 <p className="text-sm font-mono text-gray-900 dark:text-white break-all">{selectedClient.id}</p>
               </div>
               <div className="rounded-lg border border-light-border dark:border-navy-700 p-4">
-                <p className="text-xs text-gray-500">{tr('Phone', 'Telefon', 'Telefon')}</p>
+                <p className="text-xs text-gray-500">{tr('Phone', 'Phone', 'Telefon')}</p>
                 <p className="text-sm text-gray-900 dark:text-white">{selectedClient.phone || '-'}</p>
               </div>
               <div className="rounded-lg border border-light-border dark:border-navy-700 p-4">
@@ -500,13 +500,13 @@ const Clients: React.FC = () => {
                 <p className="text-sm text-gray-900 dark:text-white">{selectedClient.username || '-'}</p>
               </div>
               <div className="rounded-lg border border-light-border dark:border-navy-700 p-4">
-                <p className="text-xs text-gray-500">{tr('Platform', 'Platforma', 'Platforma')}</p>
+                <p className="text-xs text-gray-500">{tr('Platform', 'Platform', 'Platforma')}</p>
                 <div className="mt-1">
                   <Badge variant={selectedClient.platform === 'instagram' ? 'warning' : selectedClient.platform === 'manual' ? 'default' : 'info'}>{platformLabel(selectedClient.platform)}</Badge>
                 </div>
               </div>
               <div className="rounded-lg border border-light-border dark:border-navy-700 p-4">
-                <p className="text-xs text-gray-500">{tr('Preferred Language', 'Predpochtitelnyy yazyk', 'Afzal til')}</p>
+                <p className="text-xs text-gray-500">{tr('Preferred Language', 'Preferred Language', 'Afzal til')}</p>
                 <div className="mt-1">
                   {selectedClient.preferred_language ? (
                     <Badge variant={languageBadgeVariant(selectedClient.preferred_language)}>{languageLabel(selectedClient.preferred_language)}</Badge>
@@ -519,43 +519,43 @@ const Clients: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="rounded-lg border border-light-border dark:border-navy-700 p-4 bg-gray-50 dark:bg-navy-900/40">
-                <p className="text-xs text-gray-500">{tr('Has phone', 'Есть телефон', 'Telefon mavjud')}</p>
-                <p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">{selectedClient.has_phone ? tr('Yes', 'Да', 'Ha') : tr('No', 'Нет', 'Yo‘q')}</p>
+                <p className="text-xs text-gray-500">{tr('Has phone', 'Has phone', 'Telefon mavjud')}</p>
+                <p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">{selectedClient.has_phone ? tr('Yes', 'Yes', 'Ha') : tr('No', 'No', "Yo\'q")}</p>
               </div>
               <div className="rounded-lg border border-light-border dark:border-navy-700 p-4 bg-gray-50 dark:bg-navy-900/40">
-                <p className="text-xs text-gray-500">{tr('Identity verified', 'Идентичность подтверждена', 'Identifikatsiya tasdiqlangan')}</p>
-                <p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">{selectedClient.is_platform_identity_verified ? tr('Yes', 'Да', 'Ha') : tr('No', 'Нет', 'Yo‘q')}</p>
+                <p className="text-xs text-gray-500">{tr('Identity verified', 'Identity verified', 'Identifikatsiya tasdiqlangan')}</p>
+                <p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">{selectedClient.is_platform_identity_verified ? tr('Yes', 'Yes', 'Ha') : tr('No', 'No', "Yo\'q")}</p>
               </div>
               <div className="rounded-lg border border-light-border dark:border-navy-700 p-4 bg-gray-50 dark:bg-navy-900/40">
-                <p className="text-xs text-gray-500">{tr('Can receive Telegram', 'Может получать Telegram', 'Telegram qabul qila oladi')}</p>
-                <p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">{selectedClient.can_receive_telegram ? tr('Yes', 'Да', 'Ha') : tr('No', 'Нет', 'Yo‘q')}</p>
+                <p className="text-xs text-gray-500">{tr('Can receive Telegram', 'Can receive Telegram', 'Telegram qabul qila oladi')}</p>
+                <p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">{selectedClient.can_receive_telegram ? tr('Yes', 'Yes', 'Ha') : tr('No', 'No', "Yo\'q")}</p>
               </div>
             </div>
 
             <div className="rounded-lg border border-light-border dark:border-navy-700 p-4">
-              <p className="text-xs text-gray-500">{tr('Address', 'Manzil', 'Manzil')}</p>
+              <p className="text-xs text-gray-500">{tr('Address', 'Address', 'Manzil')}</p>
               <p className="mt-1 text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{selectedClient.address || '-'}</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="rounded-lg border border-light-border dark:border-navy-700 p-4">
-                <p className="text-xs text-gray-500">{tr('Created', 'Yaratilgan', 'Yaratilgan')}</p>
+                <p className="text-xs text-gray-500">{tr('Created', 'Created', 'Yaratilgan')}</p>
                 <p className="text-sm text-gray-900 dark:text-white">{selectedClient.created_at ? new Date(selectedClient.created_at).toLocaleString() : '-'}</p>
               </div>
               <div className="rounded-lg border border-light-border dark:border-navy-700 p-4">
-                <p className="text-xs text-gray-500">{tr('Updated', 'Yangilangan', 'Yangilangan')}</p>
+                <p className="text-xs text-gray-500">{tr('Updated', 'Updated', 'Yangilangan')}</p>
                 <p className="text-sm text-gray-900 dark:text-white">{selectedClient.updated_at ? new Date(selectedClient.updated_at).toLocaleString() : '-'}</p>
               </div>
             </div>
 
             <div className="rounded-lg border border-light-border dark:border-navy-700 overflow-hidden">
               <div className="px-4 py-3 bg-gray-50 dark:bg-navy-900 border-b border-light-border dark:border-navy-700">
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Active orders', 'Активные заказы', 'Faol buyurtmalar')}</p>
-                <p className="text-xs text-gray-500">{tr('Current open orders for this client', 'Текущие открытые заказы этого клиента', 'Bu mijozning joriy ochiq buyurtmalari')}</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Active orders', 'Active orders', 'Faol buyurtmalar')}</p>
+                <p className="text-xs text-gray-500">{tr('Current open orders for this client', 'Current open orders for this client', 'Bu mijozning joriy ochiq buyurtmalari')}</p>
               </div>
               <div className="divide-y divide-light-border dark:divide-navy-700">
                 {bottleLoading ? (
-                  <div className="px-4 py-4 text-sm text-gray-500">{tr('Loading active orders...', 'Активные заказы загружаются...', 'Faol buyurtmalar yuklanmoqda...')}</div>
+                  <div className="px-4 py-4 text-sm text-gray-500">{tr('Loading active orders...', 'Loading active orders...', 'Faol buyurtmalar yuklanmoqda...')}</div>
                 ) : clientOrders.length ? (
                   clientOrders.map((order) => (
                     <div key={order.id} className="px-4 py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -569,12 +569,12 @@ const Clients: React.FC = () => {
                       </div>
                       <div className="text-left md:text-right">
                         <p className="text-sm font-semibold text-gray-900 dark:text-white">{order.total_amount_uzs.toLocaleString()} UZS</p>
-                        <p className="text-xs text-gray-500">{tr('Payment', 'Оплата', "To'lov")}: {order.payment_method || '-'}</p>
+                        <p className="text-xs text-gray-500">{tr('Payment', 'Payment', "To\'lov")}: {order.payment_method || '-'}</p>
                       </div>
                     </div>
                   ))
                 ) : (
-                  <div className="px-4 py-4 text-sm text-gray-500">{tr('No active orders found', 'Активные заказы не найдены', 'Faol buyurtmalar topilmadi')}</div>
+                  <div className="px-4 py-4 text-sm text-gray-500">{tr('No active orders found', 'No active orders found', 'Faol buyurtmalar topilmadi')}</div>
                 )}
               </div>
             </div>
@@ -582,8 +582,8 @@ const Clients: React.FC = () => {
             <div className="rounded-lg border border-light-border dark:border-navy-700 p-4 space-y-4">
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Bottle balance', 'Balans tary', 'Idish balansi')}</p>
-                  <p className="text-xs text-gray-500">{tr('Current held deposit and reusable bottle coverage by product', 'Tekushchiy depozit i pokrytie po tare', 'Mahsulot kesimida idish qoplami va depozit')}</p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Bottle balance', 'Bottle balance', 'Idish balansi')}</p>
+                  <p className="text-xs text-gray-500">{tr('Current held deposit and reusable bottle coverage by product', 'Current held deposit and reusable bottle coverage by product', 'Mahsulot kesimida idish qoplami va depozit')}</p>
                 </div>
                 {bottleBalances.length ? (
                   <button
@@ -591,48 +591,48 @@ const Clients: React.FC = () => {
                     onClick={openRefund}
                     className="inline-flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium bg-primary-blue text-white hover:bg-blue-600 transition-colors"
                   >
-                    {tr('Manual refund', 'Ruchnoy vozvrat', 'Qoʻlda qaytarish')}
+                    {tr('Manual refund', 'Manual refund', "Qo'lda qaytarish")}
                   </button>
                 ) : null}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                 <div className="rounded-lg border border-light-border dark:border-navy-700 p-4 bg-gray-50 dark:bg-navy-900/40">
-                  <p className="text-xs text-gray-500">{tr('Outstanding bottles', 'Butylki na rukah', 'Qoʻldagi idishlar')}</p>
+                  <p className="text-xs text-gray-500">{tr('Outstanding bottles', 'Outstanding bottles', "Qo'ldagi idishlar")}</p>
                   <p className="text-lg font-semibold text-gray-900 dark:text-white">{bottleSummary?.total_outstanding_bottles_count ?? 0}</p>
                 </div>
                 <div className="rounded-lg border border-light-border dark:border-navy-700 p-4 bg-gray-50 dark:bg-navy-900/40">
-                  <p className="text-xs text-gray-500">{tr('Deposit held', 'Uderzhivaemyy depozit', 'Ushlab turilgan depozit')}</p>
+                  <p className="text-xs text-gray-500">{tr('Deposit held', 'Deposit held', 'Ushlab turilgan depozit')}</p>
                   <p className="text-lg font-semibold text-gray-900 dark:text-white">{(bottleSummary?.deposit_held_total_uzs ?? 0).toLocaleString()} UZS</p>
                 </div>
                 <div className="rounded-lg border border-light-border dark:border-navy-700 p-4 bg-gray-50 dark:bg-navy-900/40">
-                  <p className="text-xs text-gray-500">{tr('Charged total', 'Nachisleno vsego', 'Jami olingan')}</p>
+                  <p className="text-xs text-gray-500">{tr('Charged total', 'Charged total', 'Jami olingan')}</p>
                   <p className="text-lg font-semibold text-gray-900 dark:text-white">{(bottleSummary?.total_deposit_charged_uzs ?? 0).toLocaleString()} UZS</p>
                 </div>
                 <div className="rounded-lg border border-light-border dark:border-navy-700 p-4 bg-gray-50 dark:bg-navy-900/40">
-                  <p className="text-xs text-gray-500">{tr('Refunded total', 'Vozvrashcheno vsego', 'Jami qaytarilgan')}</p>
+                  <p className="text-xs text-gray-500">{tr('Refunded total', 'Refunded total', 'Jami qaytarilgan')}</p>
                   <p className="text-lg font-semibold text-gray-900 dark:text-white">{(bottleSummary?.total_deposit_refunded_uzs ?? 0).toLocaleString()} UZS</p>
                 </div>
               </div>
 
               <div className="rounded-lg border border-light-border dark:border-navy-700 overflow-hidden">
                 <div className="px-4 py-3 bg-gray-50 dark:bg-navy-900 border-b border-light-border dark:border-navy-700">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Balances by product', 'Balans po produktam', 'Mahsulotlar bo‘yicha balans')}</p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Balances by product', 'Balances by product', "Mahsulotlar bo'yicha balans")}</p>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm">
                     <thead className="bg-gray-50/80 dark:bg-navy-900/70 text-gray-500 dark:text-gray-400">
                       <tr>
                         <th className="px-4 py-3 font-medium">{t('product_name')}</th>
-                        <th className="px-4 py-3 font-medium text-right">{tr('Size', 'Razmer', 'Hajm')}</th>
-                        <th className="px-4 py-3 font-medium text-right">{tr('Covered bottles', 'Pokrytie', 'Qoplama')}</th>
-                        <th className="px-4 py-3 font-medium text-right">{tr('Deposit held', 'Depozit', 'Depozit')}</th>
-                        <th className="px-4 py-3 font-medium text-right">{tr('Refunded', 'Vozvrat', 'Qaytarilgan')}</th>
+                        <th className="px-4 py-3 font-medium text-right">{tr('Size', 'Size', 'Hajm')}</th>
+                        <th className="px-4 py-3 font-medium text-right">{tr('Covered bottles', 'Covered bottles', 'Qoplama')}</th>
+                        <th className="px-4 py-3 font-medium text-right">{tr('Deposit held', 'Deposit held', 'Depozit')}</th>
+                        <th className="px-4 py-3 font-medium text-right">{tr('Refunded', 'Refunded', 'Qaytarilgan')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-light-border dark:divide-navy-700">
                       {bottleLoading ? (
-                        <tr><td colSpan={5} className="px-4 py-4 text-center text-gray-500">{tr('Loading bottle balances...', 'Zagruzka balansa tary...', 'Idish balansi yuklanmoqda...')}</td></tr>
+                        <tr><td colSpan={5} className="px-4 py-4 text-center text-gray-500">{tr('Loading bottle balances...', 'Loading bottle balances...', 'Idish balansi yuklanmoqda...')}</td></tr>
                       ) : bottleBalances.length ? (
                         bottleBalances.map((balance) => (
                           <tr key={balance.id}>
@@ -644,7 +644,7 @@ const Clients: React.FC = () => {
                           </tr>
                         ))
                       ) : (
-                        <tr><td colSpan={5} className="px-4 py-4 text-center text-gray-500">{tr('No bottle balances found', 'Balans tary ne nayden', 'Idish balansi topilmadi')}</td></tr>
+                        <tr><td colSpan={5} className="px-4 py-4 text-center text-gray-500">{tr('No bottle balances found', 'No bottle balances found', 'Idish balansi topilmadi')}</td></tr>
                       )}
                     </tbody>
                   </table>
@@ -653,11 +653,11 @@ const Clients: React.FC = () => {
 
               <div className="rounded-lg border border-light-border dark:border-navy-700 overflow-hidden">
                 <div className="px-4 py-3 bg-gray-50 dark:bg-navy-900 border-b border-light-border dark:border-navy-700">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Recent bottle movements', 'Poslednie dvizheniya tary', 'Soʻnggi idish harakatlari')}</p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Recent bottle movements', 'Recent bottle movements', "So'nggi idish harakatlari")}</p>
                 </div>
                 <div className="divide-y divide-light-border dark:divide-navy-700 max-h-72 overflow-y-auto">
                   {bottleLoading ? (
-                    <div className="px-4 py-4 text-sm text-gray-500">{tr('Loading movements...', 'Zagruzka dvizheniy...', 'Harakatlar yuklanmoqda...')}</div>
+                    <div className="px-4 py-4 text-sm text-gray-500">{tr('Loading movements...', 'Loading movements...', 'Harakatlar yuklanmoqda...')}</div>
                   ) : bottleMovements.length ? (
                     bottleMovements.map((movement) => (
                       <div key={movement.id} className="px-4 py-4 space-y-2">
@@ -670,16 +670,16 @@ const Clients: React.FC = () => {
                           <span className="text-xs text-gray-500">{movement.created_at ? new Date(movement.created_at).toLocaleString() : '-'}</span>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs text-gray-500">
-                          <p>{tr('Bottle delta', 'Izmenenie butylok', 'Idish o‘zgarishi')}: <span className="text-gray-900 dark:text-white">{movement.bottles_delta}</span></p>
-                          <p>{tr('Deposit delta', 'Izmenenie depozita', 'Depozit o‘zgarishi')}: <span className="text-gray-900 dark:text-white">{movement.deposit_delta_uzs.toLocaleString()} UZS</span></p>
-                          <p>{tr('Balance after', 'Balans posle', 'Yakuniy balans')}: <span className="text-gray-900 dark:text-white">{movement.balance_after_count ?? '-'}</span></p>
-                          <p>{tr('Actor', 'Ispolnitel', 'Amal bajaruvchi')}: <span className="text-gray-900 dark:text-white">{movement.actor || '-'}</span></p>
+                          <p>{tr('Bottle delta', 'Bottle delta', "Idish o'zgarishi")}: <span className="text-gray-900 dark:text-white">{movement.bottles_delta}</span></p>
+                          <p>{tr('Deposit delta', 'Deposit delta', "Depozit o'zgarishi")}: <span className="text-gray-900 dark:text-white">{movement.deposit_delta_uzs.toLocaleString()} UZS</span></p>
+                          <p>{tr('Balance after', 'Balance after', 'Yakuniy balans')}: <span className="text-gray-900 dark:text-white">{movement.balance_after_count ?? '-'}</span></p>
+                          <p>{tr('Actor', 'Actor', 'Amal bajaruvchi')}: <span className="text-gray-900 dark:text-white">{movement.actor || '-'}</span></p>
                         </div>
                         {movement.note ? <p className="text-xs text-gray-500">{movement.note}</p> : null}
                       </div>
                     ))
                   ) : (
-                    <div className="px-4 py-4 text-sm text-gray-500">{tr('No bottle movements yet', 'Dvizheniy tary poka net', 'Hali idish harakati yoʻq')}</div>
+                    <div className="px-4 py-4 text-sm text-gray-500">{tr('No bottle movements yet', 'No bottle movements yet', "Hali idish harakati yo'q")}</div>
                   )}
                 </div>
               </div>
@@ -691,7 +691,7 @@ const Clients: React.FC = () => {
       <Modal
         isOpen={isRefundOpen}
         onClose={() => setIsRefundOpen(false)}
-        title={tr('Manual bottle refund', 'Ruchnoy vozvrat tary', 'Qoʻlda idish qaytarish')}
+        title={tr('Manual bottle refund', 'Manual bottle refund', "Qo'lda idish qaytarish")}
         footer={null}
       >
         <form onSubmit={handleRefund} className="space-y-4">
@@ -702,10 +702,10 @@ const Clients: React.FC = () => {
               onChange={(e) => setRefundForm((state) => ({ ...state, product_id: e.target.value }))}
               className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white"
             >
-              <option value="">{tr('Select product', 'Vyberite produkt', 'Mahsulotni tanlang')}</option>
+              <option value="">{tr('Select product', 'Select product', 'Mahsulotni tanlang')}</option>
               {bottleBalances.map((balance) => (
                 <option key={balance.id} value={balance.product_id}>
-                  {balance.product_name} {balance.product_size_liters ? `· ${balance.product_size_liters}L` : ''} · {balance.outstanding_bottles_count}
+                  {balance.product_name} {balance.product_size_liters ? `Ãƒâ€šÃ‚Â· ${balance.product_size_liters}L` : ''} Ãƒâ€šÃ‚Â· {balance.outstanding_bottles_count}
                 </option>
               ))}
             </select>
@@ -713,7 +713,7 @@ const Clients: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Quantity', 'Kolichestvo', 'Soni')}</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Quantity', 'Quantity', 'Soni')}</label>
               <input
                 type="number"
                 min="1"
@@ -730,13 +730,13 @@ const Clients: React.FC = () => {
                   checked={refundForm.refund_all}
                   onChange={(e) => setRefundForm((state) => ({ ...state, refund_all: e.target.checked }))}
                 />
-                {tr('Refund all covered bottles', 'Vernut vse butylki', 'Barcha qoplangan idishlarni qaytarish')}
+                {tr('Refund all covered bottles', 'Refund all covered bottles', 'Barcha qoplangan idishlarni qaytarish')}
               </label>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Note', 'Primechanie', 'Izoh')}</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Note', 'Note', 'Izoh')}</label>
             <textarea
               value={refundForm.note}
               onChange={(e) => setRefundForm((state) => ({ ...state, note: e.target.value }))}
@@ -747,7 +747,7 @@ const Clients: React.FC = () => {
           <div className="flex justify-end gap-3 pt-4 border-t border-light-border dark:border-navy-700">
             <button type="button" onClick={() => setIsRefundOpen(false)} className="px-4 py-2 rounded-lg text-sm border border-light-border dark:border-navy-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-navy-700 transition-colors">{t('cancel')}</button>
             <button disabled={refundSaving} type="submit" className="px-4 py-2 rounded-lg text-sm font-medium bg-primary-blue text-white hover:bg-blue-600 transition-colors disabled:opacity-50">
-              {refundSaving ? tr('Saving...', 'Sokhranenie...', 'Saqlanmoqda...') : tr('Save refund', 'Sohranit vozvrat', 'Qaytarishni saqlash')}
+              {refundSaving ? tr('Saving...', 'Saving...', 'Saqlanmoqda...') : tr('Save refund', 'Save refund', 'Qaytarishni saqlash')}
             </button>
           </div>
         </form>
@@ -756,20 +756,20 @@ const Clients: React.FC = () => {
       <Modal
         isOpen={isModalOpen}
         onClose={() => { setIsModalOpen(false); setEditing(null); }}
-        title={editing ? tr('Edit Client', 'Mijozni tahrirlash', 'Mijozni tahrirlash') : tr('New Client', 'Yangi mijoz', 'Yangi mijoz')}
+        title={editing ? tr('Edit Client', 'Edit Client', 'Mijozni tahrirlash') : tr('New Client', 'New Client', 'Yangi mijoz')}
         footer={null}
       >
         <form onSubmit={handleSave} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Platform', 'Platforma', 'Platforma')}</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Platform', 'Platform', 'Platforma')}</label>
               <select
                 name="platform"
                 required
                 defaultValue={editing?.platform || 'manual'}
                 className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white"
               >
-                <option value="manual">{tr('Manual', 'Ручной', 'Qo‘lda')}</option>
+                <option value="manual">{tr('Manual', 'Manual', "Qo'lda")}</option>
                 <option value="telegram">{tr('Telegram', 'Telegram', 'Telegram')}</option>
                 <option value="instagram">{tr('Instagram', 'Instagram', 'Instagram')}</option>
               </select>
@@ -783,22 +783,22 @@ const Clients: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Preferred Language', 'Predpochtitelnyy yazyk', 'Afzal til')}</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Preferred Language', 'Preferred Language', 'Afzal til')}</label>
               <select
                 name="preferred_language"
                 defaultValue={editing?.preferred_language || ''}
                 className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white"
               >
-                <option value="">{tr('Not set', 'Ne ukazan', 'Belgilanmagan')}</option>
-                <option value="uz">{tr("Uzbek", 'Uzbek', "O'zbek")}</option>
-                <option value="ru">{tr('Russian', 'Русский', 'Ruscha')}</option>
-                <option value="en">{tr('English', 'Английский', 'Inglizcha')}</option>
+                <option value="">{tr('Not set', 'Not set', 'Belgilanmagan')}</option>
+                <option value="uz">{tr("Uzbek", 'Uzbek', "O\'zbek")}</option>
+                <option value="ru">{tr('Russian', 'Russian', 'Ruscha')}</option>
+                <option value="en">{tr('English', 'English', 'Inglizcha')}</option>
               </select>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Full Name', 'Toliq ism', 'Toliq ism')}</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Full Name', 'Full Name', 'Toliq ism')}</label>
             <input
               name="full_name"
               defaultValue={editing?.full_name || ''}
@@ -807,7 +807,7 @@ const Clients: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Phone', 'Telefon', 'Telefon')}</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Phone', 'Phone', 'Telefon')}</label>
             <input
               name="phone"
               defaultValue={editing?.phone || ''}
@@ -816,7 +816,7 @@ const Clients: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Address', 'Manzil', 'Manzil')}</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Address', 'Address', 'Manzil')}</label>
             <textarea
               name="address"
               defaultValue={editing?.address || ''}
@@ -837,7 +837,7 @@ const Clients: React.FC = () => {
               type="submit"
               className="px-4 py-2 rounded-lg text-sm font-medium bg-primary-blue text-white hover:bg-blue-600 transition-colors disabled:opacity-50"
             >
-              {saving ? tr('Saving...', 'Saqlanmoqda...', 'Saqlanmoqda...') : t('save')}
+              {saving ? tr('Saving...', 'Saving...', 'Saqlanmoqda...') : t('save')}
             </button>
           </div>
         </form>

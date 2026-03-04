@@ -8,7 +8,7 @@ const localeMap: Record<ClientUiLanguage, string> = {
 
 const currencySuffix: Record<ClientUiLanguage, string> = {
   uz: 'so\'m',
-  ru: 'сум',
+  ru: 'ÃƒÆ'Ã¢â‚¬ËœÃƒâ€šÃ‚ÂÃƒÆ'Ã¢â‚¬ËœÃƒâ€ Ã¢â‚¬â„¢ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¼',
   en: 'UZS',
 };
 
@@ -38,16 +38,16 @@ export const getBottleMovementCount = (movement?: ClientBottleMovement | null) =
 
 export const getOrderStatusLabel = (status?: ClientOrderStatus | string | null, language: ClientUiLanguage = 'uz') => {
   const labels: Record<string, Record<ClientUiLanguage, string>> = {
-    NEW_LEAD: { uz: 'Yangi murojaat', ru: 'Новый лид', en: 'New lead' },
-    INFO_COLLECTED: { uz: 'Ma\'lumot olindi', ru: 'Данные собраны', en: 'Info collected' },
-    PAYMENT_PENDING: { uz: 'To\'lov kutilmoqda', ru: 'Ожидается оплата', en: 'Payment pending' },
-    PAYMENT_CONFIRMED: { uz: 'To\'lov tasdiqlangan', ru: 'Оплата подтверждена', en: 'Payment confirmed' },
-    DISPATCHED: { uz: 'Jo\'natildi', ru: 'Отправлен', en: 'Dispatched' },
-    ASSIGNED: { uz: 'Biriktirildi', ru: 'Назначен', en: 'Assigned' },
-    OUT_FOR_DELIVERY: { uz: 'Yetkazib berishda', ru: 'В доставке', en: 'Out for delivery' },
-    DELIVERED: { uz: 'Yetkazildi', ru: 'Доставлен', en: 'Delivered' },
-    CANCELED: { uz: 'Bekor qilindi', ru: 'Отменен', en: 'Canceled' },
-    FAILED: { uz: 'Muvaffaqiyatsiz', ru: 'Неуспешно', en: 'Failed' },
+    NEW_LEAD: { uz: 'Yangi murojaat', ru: 'ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚ÂÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¾ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â²ÃƒÆ'Ã¢â‚¬ËœÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¹ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¹ ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â»ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¸ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â´', en: 'New lead' },
+    INFO_COLLECTED: { uz: 'Ma\'lumot olindi', ru: 'ÃƒÆ'Ã‚ÂÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â°ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â½ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â½ÃƒÆ'Ã¢â‚¬ËœÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¹ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Âµ ÃƒÆ'Ã¢â‚¬ËœÃƒâ€šÃ‚ÂÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¾ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â±ÃƒÆ'Ã¢â‚¬ËœÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â°ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â½ÃƒÆ'Ã¢â‚¬ËœÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¹', en: 'Info collected' },
+    PAYMENT_PENDING: { uz: 'To\'lov kutilmoqda', ru: 'ÃƒÆ'Ã‚ÂÃƒâ€¦Ã‚Â¾ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¶ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¸ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â´ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â°ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚ÂµÃƒÆ'Ã¢â‚¬ËœÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ'Ã¢â‚¬ËœÃƒâ€šÃ‚ÂÃƒÆ'Ã¢â‚¬ËœÃƒâ€šÃ‚Â ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¾ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¿ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â»ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â°ÃƒÆ'Ã¢â‚¬ËœÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â°', en: 'Payment pendingâ€™ },
+    PAYMENT_CONFIRMED: { uz: 'To\'lov tasdiqlangan', ru: 'ÃƒÆ'Ã‚ÂÃƒâ€¦Ã‚Â¾ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¿ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â»ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â°ÃƒÆ'Ã¢â‚¬ËœÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â° ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¿ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¾ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â´ÃƒÆ'Ã¢â‚¬ËœÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â²ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚ÂµÃƒÆ'Ã¢â‚¬ËœÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¶ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â´ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚ÂµÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â½ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â°', en: 'Payment confirmed' },
+    DISPATCHED: { uz: 'Jo\'natildi', ru: 'ÃƒÆ'Ã‚ÂÃƒâ€¦Ã‚Â¾ÃƒÆ'Ã¢â‚¬ËœÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¿ÃƒÆ'Ã¢â‚¬ËœÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â°ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â²ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â»ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚ÂµÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â½', en: 'Dispatched' },
+    ASSIGNED: { uz: 'Biriktirildi', ru: 'ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚ÂÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â°ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â·ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â½ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â°ÃƒÆ'Ã¢â‚¬ËœÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¡ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚ÂµÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â½', en: 'Assigned' },
+    OUT_FOR_DELIVERY: { uz: 'Yetkazib berishda', ru: 'ÃƒÆ'Ã‚ÂÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â´ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¾ÃƒÆ'Ã¢â‚¬ËœÃƒâ€šÃ‚ÂÃƒÆ'Ã¢â‚¬ËœÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â°ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â²ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚ÂºÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Âµ', en: 'Out for delivery' },
+    DELIVERED: { uz: 'Yetkazildi', ru: 'ÃƒÆ'Ã‚ÂÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¾ÃƒÆ'Ã¢â‚¬ËœÃƒâ€šÃ‚ÂÃƒÆ'Ã¢â‚¬ËœÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â°ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â²ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â»ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚ÂµÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â½', en: 'Delivered' },
+    CANCELED: { uz: 'Bekor qilindi', ru: 'ÃƒÆ'Ã‚ÂÃƒâ€¦Ã‚Â¾ÃƒÆ'Ã¢â‚¬ËœÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¼ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚ÂµÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â½ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚ÂµÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â½', en: 'Canceled' },
+    FAILED: { uz: 'Muvaffaqiyatsiz', ru: 'ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚ÂÃƒÆ'Ã‚ÂÃƒâ€šÃ‚ÂµÃƒÆ'Ã¢â‚¬ËœÃƒâ€ Ã¢â‚¬â„¢ÃƒÆ'Ã¢â‚¬ËœÃƒâ€šÃ‚ÂÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¿ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚ÂµÃƒÆ'Ã¢â‚¬ËœÃƒâ€¹Ã¢â‚¬Â ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â½ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¾', en: 'Failed' },
   };
   return labels[status || '']?.[language] || status || '-';
 };
@@ -61,7 +61,7 @@ export const getOrderStatusClasses = (status?: ClientOrderStatus | string | null
     case 'ASSIGNED':
     case 'OUT_FOR_DELIVERY':
       return 'bg-sky-100 text-sky-700';
-    case 'PAYMENT_PENDING':
+    case 'PAYMENT_PENDINGâ€™:
     case 'INFO_COLLECTED':
     case 'NEW_LEAD':
       return 'bg-amber-100 text-amber-700';
@@ -75,9 +75,9 @@ export const getOrderStatusClasses = (status?: ClientOrderStatus | string | null
 
 export const getAvailabilityLabel = (status?: string | null, language: ClientUiLanguage = 'uz') => {
   const labels: Record<string, Record<ClientUiLanguage, string>> = {
-    in_stock: { uz: 'Bor', ru: 'В наличии', en: 'In stock' },
-    low_stock: { uz: 'Kam qoldi', ru: 'Мало осталось', en: 'Low stock' },
-    out_of_stock: { uz: 'Tugagan', ru: 'Нет в наличии', en: 'Out of stock' },
+    in_stock: { uz: 'Bor', ru: 'ÃƒÆ'Ã‚ÂÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â½ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â°ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â»ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¸ÃƒÆ'Ã¢â‚¬ËœÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¡ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¸ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¸', en: 'In stock' },
+    low_stock: { uz: 'Kam qoldi', ru: 'ÃƒÆ'Ã‚ÂÃƒâ€¦Ã¢â‚¬Å“ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â°ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â»ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¾ ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¾ÃƒÆ'Ã¢â‚¬ËœÃƒâ€šÃ‚ÂÃƒÆ'Ã¢â‚¬ËœÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â°ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â»ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¾ÃƒÆ'Ã¢â‚¬ËœÃƒâ€šÃ‚ÂÃƒÆ'Ã¢â‚¬ËœÃƒâ€¦Ã¢â‚¬â„¢', en: 'Low stock' },
+    out_of_stock: { uz: 'Tugagan', ru: 'ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚ÂÃƒÆ'Ã‚ÂÃƒâ€šÃ‚ÂµÃƒÆ'Ã¢â‚¬ËœÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â² ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â½ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â°ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â»ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¸ÃƒÆ'Ã¢â‚¬ËœÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¡ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¸ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¸', en: 'Out of stock' },
   };
   return labels[status || '']?.[language] || status || '-';
 };
@@ -93,19 +93,19 @@ export const getAvailabilityClasses = (status?: string | null) => {
 
 export const getMovementLabel = (movementType?: string | null, language: ClientUiLanguage = 'uz') => {
   const labels: Record<string, Record<ClientUiLanguage, string>> = {
-    DELIVERY: { uz: 'Yetkazib berish', ru: 'Доставка', en: 'Delivery' },
-    ORDER_DELIVERED: { uz: 'Buyurtma yetkazildi', ru: 'Заказ доставлен', en: 'Order delivered' },
-    REFUND: { uz: 'Qaytarildi', ru: 'Возврат', en: 'Refund' },
-    MANUAL_ADJUST: { uz: 'Qo\'lda tuzatish', ru: 'Ручная корректировка', en: 'Manual adjust' },
+    DELIVERY: { uz: 'Yetkazib berish', ru: 'ÃƒÆ'Ã‚ÂÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¾ÃƒÆ'Ã¢â‚¬ËœÃƒâ€šÃ‚ÂÃƒÆ'Ã¢â‚¬ËœÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â°ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â²ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚ÂºÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â°', en: 'Delivery' },
+    ORDER_DELIVERED: { uz: 'Buyurtma yetkazildi', ru: 'ÃƒÆ'Ã‚ÂÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬ÂÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â°ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚ÂºÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â°ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â· ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â´ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¾ÃƒÆ'Ã¢â‚¬ËœÃƒâ€šÃ‚ÂÃƒÆ'Ã¢â‚¬ËœÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â°ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â²ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â»ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚ÂµÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â½', en: 'Order delivered' },
+    REFUND: { uz: 'Qaytarildi', ru: 'ÃƒÆ'Ã‚ÂÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¾ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â·ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â²ÃƒÆ'Ã¢â‚¬ËœÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â°ÃƒÆ'Ã¢â‚¬ËœÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡', en: 'Refund' },
+    MANUAL_ADJUST: { uz: 'Qo\'lda tuzatish', ru: 'ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â ÃƒÆ'Ã¢â‚¬ËœÃƒâ€ Ã¢â‚¬â„¢ÃƒÆ'Ã¢â‚¬ËœÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¡ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â½ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â°ÃƒÆ'Ã¢â‚¬ËœÃƒâ€šÃ‚Â ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚ÂºÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¾ÃƒÆ'Ã¢â‚¬ËœÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ'Ã¢â‚¬ËœÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚ÂµÃƒÆ'Ã‚ÂÃƒâ€šÃ‚ÂºÃƒÆ'Ã¢â‚¬ËœÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¸ÃƒÆ'Ã¢â‚¬ËœÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¾ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â²ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚ÂºÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â°', en: 'Manual adjust' },
   };
   return labels[movementType || '']?.[language] || movementType || '-';
 };
 
 export const getPaymentMethodLabel = (paymentMethod?: ClientPaymentMethod | string | null, language: ClientUiLanguage = 'uz') => {
   const labels: Record<string, Record<ClientUiLanguage, string>> = {
-    CASH: { uz: 'Naqd pul', ru: 'Наличные', en: 'Cash' },
-    TRANSFER: { uz: 'O\'tkazma', ru: 'Перевод', en: 'Transfer' },
-    UNKNOWN: { uz: 'Noma\'lum', ru: 'Неизвестно', en: 'Unknown' },
+    CASH: { uz: 'Naqd pul', ru: 'ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚ÂÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â°ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â»ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¸ÃƒÆ'Ã¢â‚¬ËœÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¡ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â½ÃƒÆ'Ã¢â‚¬ËœÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¹ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Âµ', en: 'Cash' },
+    TRANSFER: { uz: 'O\'tkazmaâ€™, ru: 'ÃƒÆ'Ã‚ÂÃƒâ€¦Ã‚Â¸ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚ÂµÃƒÆ'Ã¢â‚¬ËœÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚ÂµÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â²ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¾ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â´', en: 'Transfer' },
+    UNKNOWN: { uz: 'Noma\'lum', ru: 'ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚ÂÃƒÆ'Ã‚ÂÃƒâ€šÃ‚ÂµÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¸ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â·ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â²ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚ÂµÃƒÆ'Ã¢â‚¬ËœÃƒâ€šÃ‚ÂÃƒÆ'Ã¢â‚¬ËœÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â½ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¾', en: 'Unknown' },
   };
   return labels[paymentMethod || '']?.[language] || paymentMethod || '-';
 };
@@ -124,13 +124,13 @@ export const isClientOrderTerminal = (status?: ClientOrderStatus | string | null
 export const getClientLanguageLabel = (languageCode?: string | null, language: ClientUiLanguage = 'uz') => {
   const normalized = (languageCode || '').trim().toLowerCase();
   if (normalized.startsWith('ru')) {
-    return language === 'uz' ? 'Ruscha' : language === 'ru' ? 'Русский' : 'Russian';
+    return language === 'uz' ? 'Ruscha' : language === 'ru' ? 'ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â ÃƒÆ'Ã¢â‚¬ËœÃƒâ€ Ã¢â‚¬â„¢ÃƒÆ'Ã¢â‚¬ËœÃƒâ€šÃ‚ÂÃƒÆ'Ã¢â‚¬ËœÃƒâ€šÃ‚ÂÃƒÆ'Ã‚ÂÃƒâ€šÃ‚ÂºÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¸ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¹' : 'Russian';
   }
   if (normalized.startsWith('en')) {
-    return language === 'uz' ? 'Inglizcha' : language === 'ru' ? 'Английский' : 'English';
+    return language === 'uz' ? 'Inglizcha' : language === 'ru' ? 'ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚ÂÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â½ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â³ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â»ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¸ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¹ÃƒÆ'Ã¢â‚¬ËœÃƒâ€šÃ‚ÂÃƒÆ'Ã‚ÂÃƒâ€šÃ‚ÂºÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¸ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¹' : 'English';
   }
   if (normalized.startsWith('uz')) {
-    return language === 'uz' ? 'O\'zbekcha' : language === 'ru' ? 'Узбекский' : 'Uzbek';
+    return language === 'uz' ? 'O\'zbekcha' : language === 'ru' ? 'ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â£ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â·ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â±ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚ÂµÃƒÆ'Ã‚ÂÃƒâ€šÃ‚ÂºÃƒÆ'Ã¢â‚¬ËœÃƒâ€šÃ‚ÂÃƒÆ'Ã‚ÂÃƒâ€šÃ‚ÂºÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¸ÃƒÆ'Ã‚ÂÃƒâ€šÃ‚Â¹' : 'Uzbek';
   }
   return languageCode || '-';
 };

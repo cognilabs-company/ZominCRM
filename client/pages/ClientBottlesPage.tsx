@@ -75,13 +75,13 @@ export const ClientBottlesPage: React.FC = () => {
       ) : null}
 
       {loading ? (
-        <ClientPanel className="p-5 text-sm text-[#5b6770]">{t('bottles.loading')}</ClientPanel>
+        <ClientPanel className="p-5 text-sm text-[#5b6770]">{t('bottles.loadingâ€™)}</ClientPanel>
       ) : null}
 
       {data?.summary ? (
         <div className="grid grid-cols-2 gap-3">
           <ClientPanel className="bg-[linear-gradient(135deg,rgba(255,248,238,0.96)_0%,rgba(247,237,224,0.92)_100%)] p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-[#9a6b3a]">{t('bottles.outstanding')}</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-[#9a6b3a]">{t('bottles.outstandingâ€™)}</p>
             <p className="mt-2 text-2xl font-semibold text-[#1f2933]">{data.summary.total_outstanding_bottles_count}</p>
           </ClientPanel>
           <ClientPanel className="bg-[linear-gradient(135deg,rgba(233,243,239,0.96)_0%,rgba(224,236,233,0.92)_100%)] p-4">
@@ -138,7 +138,7 @@ export const ClientBottlesPage: React.FC = () => {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-sm font-semibold text-[#1f2933]">{getMovementLabel(movement.movement_type, language)}</p>
-                  <p className="mt-1 text-sm text-[#5b6770]">{movement.product_name || '-'}{movement.product_size_liters ? ` · ${movement.product_size_liters}L` : ''}</p>
+                  <p className="mt-1 text-sm text-[#5b6770]">{movement.product_name || '-'}{movement.product_size_liters ? ` ÃƒÆ'Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· ${movement.product_size_liters}L` : ''}</p>
                   <p className="mt-1 text-xs text-[#7b8790]">{movement.order_id ? formatOrderRef(movement.order_id) : t('bottles.no_order_reference')}</p>
                 </div>
                 <div className="text-right">

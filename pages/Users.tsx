@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Card } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
 import { useAuth } from '../context/AuthContext';
@@ -61,7 +61,7 @@ const Users: React.FC = () => {
       const list = Array.isArray(data) ? data : (data.results || []);
       setUsers(list);
     } catch (e) {
-      const message = e instanceof Error ? e.message : tr('Failed to load users', 'Не удалось загрузить пользователей', 'Foydalanuvchilarni yuklab bo‘lmadi');
+      const message = e instanceof Error ? e.message : tr('Failed to load users', 'Failed to load users', "Foydalanuvchilarni yuklab bo\'lmadi");
       setError(message);
       toast.error(message);
     } finally {
@@ -79,7 +79,7 @@ const Users: React.FC = () => {
       });
       setPermissions(rows);
     } catch (e) {
-      const message = e instanceof Error ? e.message : tr('Failed to load permissions', 'Не удалось загрузить разрешения', 'Ruxsatlarni yuklab bo‘lmadi');
+      const message = e instanceof Error ? e.message : tr('Failed to load permissions', 'Failed to load permissions', "Ruxsatlarni yuklab bo\'lmadi");
       setError(message);
       toast.error(message);
     } finally {
@@ -108,7 +108,7 @@ const Users: React.FC = () => {
       if (e instanceof ApiError && e.status === 405) {
         return;
       }
-      const message = e instanceof Error ? e.message : tr('Failed to load user detail', 'Не удалось загрузить детали пользователя', 'Foydalanuvchi tafsilotlarini yuklab bo‘lmadi');
+      const message = e instanceof Error ? e.message : tr('Failed to load user detail', 'Failed to load user detail', "Foydalanuvchi tafsilotlarini yuklab bo\'lmadi");
       setError(message);
       toast.error(message);
     } finally {
@@ -134,13 +134,13 @@ const Users: React.FC = () => {
           permission_codes: selectedPerms,
         }),
       });
-      toast.success(tr('User created successfully.', 'Foydalanuvchi yaratildi.', 'Foydalanuvchi yaratildi.'));
+      toast.success(tr('User created successfully.', 'User created successfully.', 'Foydalanuvchi yaratildi.'));
       setIsCreateOpen(false);
       e.currentTarget.reset();
       setSelectedPerms([]);
       await loadUsers();
     } catch (e2) {
-      const message = e2 instanceof Error ? e2.message : tr('Failed to create user', 'Не удалось создать пользователя', 'Foydalanuvchini yaratib bo‘lmadi');
+      const message = e2 instanceof Error ? e2.message : tr('Failed to create user', 'Failed to create user', "Foydalanuvchini yaratib bo\'lmadi");
       setError(message);
       toast.error(message);
     } finally {
@@ -183,7 +183,7 @@ const Users: React.FC = () => {
         method: 'PATCH',
         body: JSON.stringify(payload),
       });
-      toast.success(tr('User updated successfully.', 'Foydalanuvchi yangilandi.', 'Foydalanuvchi yangilandi.'));
+      toast.success(tr('User updated successfully.', 'User updated successfully.', 'Foydalanuvchi yangilandi.'));
       setIsEditOpen(false);
       setEditingUser(null);
       await loadUsers();
@@ -192,12 +192,12 @@ const Users: React.FC = () => {
       }
     } catch (e) {
       if (e instanceof ApiError && e.status === 405) {
-        const message = tr('Edit method is not enabled on backend yet (405).', 'Backendda tahrirlash metodi hali yoqilmagan (405).', 'Backendda tahrirlash metodi hali yoqilmagan (405).');
+        const message = tr('Edit method is not enabled on backend yet (405).', 'Edit method is not enabled on backend yet (405).', 'Backendda tahrirlash metodi hali yoqilmagan (405).');
         setError(message);
         toast.error(message);
         return;
       }
-      const message = e instanceof Error ? e.message : tr('Failed to update user', 'Не удалось обновить пользователя', 'Foydalanuvchini yangilab bo‘lmadi');
+      const message = e instanceof Error ? e.message : tr('Failed to update user', 'Failed to update user', "Foydalanuvchini yangilab bo\'lmadi");
       setError(message);
       toast.error(message);
     } finally {
@@ -210,10 +210,10 @@ const Users: React.FC = () => {
   if (!isAdmin) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-light-text dark:text-white">{tr('User Management', 'Foydalanuvchilar boshqaruvi', 'Foydalanuvchilar boshqaruvi')}</h1>
+        <h1 className="text-2xl font-bold text-light-text dark:text-white">{tr('User Management', 'User Management', 'Foydalanuvchilar boshqaruvi')}</h1>
         <Card>
-          <p className="text-sm text-red-600">{tr('Only ADMIN can access this page.', 'Bu sahifaga faqat ADMIN kira oladi.', 'Bu sahifaga faqat ADMIN kira oladi.')}</p>
-          <p className="text-xs text-gray-500 mt-1">{tr('Current role', 'Joriy rol', 'Joriy rol')}: {user?.role || '-'}</p>
+          <p className="text-sm text-red-600">{tr('Only ADMIN can access this page.', 'Only ADMIN can access this page.', 'Bu sahifaga faqat ADMIN kira oladi.')}</p>
+          <p className="text-xs text-gray-500 mt-1">{tr('Current role', 'Current role', 'Joriy rol')}: {user?.role || '-'}</p>
         </Card>
       </div>
     );
@@ -222,12 +222,12 @@ const Users: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-light-text dark:text-white">{tr('User Management', 'Foydalanuvchilar boshqaruvi', 'Foydalanuvchilar boshqaruvi')}</h1>
+        <h1 className="text-2xl font-bold text-light-text dark:text-white">{tr('User Management', 'User Management', 'Foydalanuvchilar boshqaruvi')}</h1>
         <button
           onClick={() => setIsCreateOpen(true)}
           className="px-4 py-2 bg-primary-blue hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
         >
-          {tr('Add User', "Foydalanuvchi qo'shish", "Foydalanuvchi qo'shish")} <Plus size={16} />
+          {tr('Add User', "Foydalanuvchi qo\'shish", "Foydalanuvchi qo\'shish")} <Plus size={16} />
         </button>
       </div>
 
@@ -238,20 +238,20 @@ const Users: React.FC = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50 dark:bg-navy-900/50 text-xs uppercase text-gray-500 dark:text-gray-400 border-b border-light-border dark:border-navy-700">
-                <th className="px-6 py-4 font-semibold">{tr('Username', 'Login', 'Login')}</th>
-                <th className="px-6 py-4 font-semibold">{tr('Full Name', 'Полное имя', 'To‘liq ism')}</th>
+                <th className="px-6 py-4 font-semibold">{tr('Username', 'Username', 'Login')}</th>
+                <th className="px-6 py-4 font-semibold">{tr('Full Name', 'Full Name', "To\'liq ism")}</th>
                 <th className="px-6 py-4 font-semibold">{tr('Email', 'Email', 'Email')}</th>
-                <th className="px-6 py-4 font-semibold">{tr('Role', 'Rol', 'Rol')}</th>
-                <th className="px-6 py-4 font-semibold">{tr('Status', 'Holat', 'Holat')}</th>
-                <th className="px-6 py-4 font-semibold text-right">{tr('Actions', 'Amallar', 'Amallar')}</th>
+                <th className="px-6 py-4 font-semibold">{tr('Role', 'Role', 'Rol')}</th>
+                <th className="px-6 py-4 font-semibold">{tr('Status', 'Status', 'Holat')}</th>
+                <th className="px-6 py-4 font-semibold text-right">{tr('Actions', 'Actions', 'Amallar')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-light-border dark:divide-navy-700">
               {loading && (
-                <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">{tr('Loading users...', 'Foydalanuvchilar yuklanmoqda...', 'Foydalanuvchilar yuklanmoqda...')}</td></tr>
+                <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">{tr('Loading users...', 'Loading users...', 'Foydalanuvchilar yuklanmoqda...')}</td></tr>
               )}
               {!loading && users.length === 0 && (
-                <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">{tr('No users found.', 'Foydalanuvchilar topilmadi.', 'Foydalanuvchilar topilmadi.')}</td></tr>
+                <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">{tr('No users found.', 'No users found.', 'Foydalanuvchilar topilmadi.')}</td></tr>
               )}
               {!loading && users.map((u) => (
                 <tr
@@ -265,7 +265,7 @@ const Users: React.FC = () => {
                   <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">{u.role || '-'}</td>
                   <td className="px-6 py-4 text-sm">
                     <span className={`px-2 py-1 rounded text-xs font-medium ${u.is_active === false ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
-                      {u.is_active === false ? tr('Inactive', 'Nofaol', 'Nofaol') : tr('Active', 'Faol', 'Faol')}
+                      {u.is_active === false ? tr('Inactive', 'Inactive', 'Nofaol') : tr('Active', 'Active', 'Faol')}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
@@ -276,7 +276,7 @@ const Users: React.FC = () => {
                           openEdit(u);
                         }}
                         className="p-1.5 text-gray-500 dark:text-gray-300 hover:text-primary-blue dark:hover:text-blue-400 transition-colors"
-                        title={tr('Edit user', 'Foydalanuvchini tahrirlash', 'Foydalanuvchini tahrirlash')}
+                        title={tr('Edit user', 'Edit user', 'Foydalanuvchini tahrirlash')}
                       >
                         <Edit2 size={16} />
                       </button>
@@ -292,25 +292,25 @@ const Users: React.FC = () => {
       <Modal
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
-        title={tr('Add User', "Foydalanuvchi qo'shish", "Foydalanuvchi qo'shish")}
+        title={tr('Add User', "Foydalanuvchi qo\'shish", "Foydalanuvchi qo\'shish")}
         footer={null}
       >
         <form onSubmit={onCreateUser} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Username', 'Login', 'Login')}</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Username', 'Username', 'Login')}</label>
               <input name="username" required className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Password', 'Parol', 'Parol')}</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Password', 'Password', 'Parol')}</label>
               <input name="password" type="password" required className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('First Name', 'Ism', 'Ism')}</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('First Name', 'First Name', 'Ism')}</label>
               <input name="first_name" className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Last Name', 'Familiya', 'Familiya')}</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Last Name', 'Last Name', 'Familiya')}</label>
               <input name="last_name" className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" />
             </div>
             <div className="md:col-span-2">
@@ -318,7 +318,7 @@ const Users: React.FC = () => {
               <input name="email" type="email" className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Role', 'Rol', 'Rol')}</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Role', 'Role', 'Rol')}</label>
               <select name="role" defaultValue="OPERATOR" className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white">
                 <option value="OPERATOR">OPERATOR</option>
                 <option value="SUPERUSER">SUPERUSER</option>
@@ -328,9 +328,9 @@ const Users: React.FC = () => {
           </div>
 
           <div>
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{tr('Permissions', 'Ruxsatlar', 'Ruxsatlar')}</p>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{tr('Permissions', 'Permissions', 'Ruxsatlar')}</p>
             {loadingPerms ? (
-              <p className="text-sm text-gray-500">{tr('Loading permissions...', 'Ruxsatlar yuklanmoqda...', 'Ruxsatlar yuklanmoqda...')}</p>
+              <p className="text-sm text-gray-500">{tr('Loading permissions...', 'Loading permissions...', 'Ruxsatlar yuklanmoqda...')}</p>
             ) : (
               <div className="max-h-56 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-2">
                 {permissions.map((perm) => (
@@ -352,10 +352,10 @@ const Users: React.FC = () => {
 
           <div className="flex justify-end gap-3 pt-2">
               <button type="button" onClick={() => setIsCreateOpen(false)} className="px-4 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-navy-700 transition-colors">
-                {tr('Cancel', 'Bekor qilish', 'Bekor qilish')}
+                {tr('Cancel', 'Cancel', 'Bekor qilish')}
               </button>
               <button disabled={saving} type="submit" className="px-4 py-2 rounded-lg text-sm font-medium bg-primary-blue text-white hover:bg-blue-600 transition-colors disabled:opacity-50">
-                {saving ? tr('Creating...', 'Yaratilmoqda...', 'Yaratilmoqda...') : tr('Create User', "Foydalanuvchi yaratish", "Foydalanuvchi yaratish")}
+                {saving ? tr('Creating...', 'Creating...', 'Yaratilmoqda...') : tr('Create User', "Foydalanuvchi yaratish", "Foydalanuvchi yaratish")}
               </button>
           </div>
         </form>
@@ -364,26 +364,26 @@ const Users: React.FC = () => {
       <Modal
         isOpen={isEditOpen}
         onClose={() => { setIsEditOpen(false); setEditingUser(null); }}
-        title={editingUser ? `${tr('Edit User', 'Foydalanuvchini tahrirlash', 'Foydalanuvchini tahrirlash')}: ${editingUser.username}` : tr('Edit User', 'Foydalanuvchini tahrirlash', 'Foydalanuvchini tahrirlash')}
+        title={editingUser ? `${tr('Edit User', 'Edit User', 'Foydalanuvchini tahrirlash')}: ${editingUser.username}` : tr('Edit User', 'Edit User', 'Foydalanuvchini tahrirlash')}
         footer={null}
       >
         {editingUser && (
           <form onSubmit={onUpdateUser} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Username', 'Login', 'Login')}</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Username', 'Username', 'Login')}</label>
                 <input name="username" required defaultValue={editingUser.username} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('New Password (optional)', 'Yangi parol (ixtiyoriy)', 'Yangi parol (ixtiyoriy)')}</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('New Password (optional)', 'New Password (optional)', 'Yangi parol (ixtiyoriy)')}</label>
                 <input name="password" type="password" className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('First Name', 'Ism', 'Ism')}</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('First Name', 'First Name', 'Ism')}</label>
                 <input name="first_name" defaultValue={editingUser.first_name || ''} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Last Name', 'Familiya', 'Familiya')}</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Last Name', 'Last Name', 'Familiya')}</label>
                 <input name="last_name" defaultValue={editingUser.last_name || ''} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" />
               </div>
               <div className="md:col-span-2">
@@ -391,7 +391,7 @@ const Users: React.FC = () => {
                 <input name="email" type="email" defaultValue={editingUser.email || ''} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Role', 'Rol', 'Rol')}</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Role', 'Role', 'Rol')}</label>
                 <select name="role" defaultValue={editingUser.role || 'SUPERUSER'} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white">
                   <option value="OPERATOR">OPERATOR</option>
                   <option value="SUPERUSER">SUPERUSER</option>
@@ -401,15 +401,15 @@ const Users: React.FC = () => {
               <div className="flex items-end">
                 <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                   <input name="is_active" type="checkbox" defaultChecked={editingUser.is_active !== false} />
-                  {tr('Active', 'Faol', 'Faol')}
+                  {tr('Active', 'Active', 'Faol')}
                 </label>
               </div>
             </div>
 
             <div>
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{tr('Permissions', 'Ruxsatlar', 'Ruxsatlar')}</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{tr('Permissions', 'Permissions', 'Ruxsatlar')}</p>
               {loadingPerms ? (
-                <p className="text-sm text-gray-500">{tr('Loading permissions...', 'Ruxsatlar yuklanmoqda...', 'Ruxsatlar yuklanmoqda...')}</p>
+                <p className="text-sm text-gray-500">{tr('Loading permissions...', 'Loading permissions...', 'Ruxsatlar yuklanmoqda...')}</p>
               ) : (
                 <div className="max-h-56 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-2">
                   {permissions.map((perm) => (
@@ -431,10 +431,10 @@ const Users: React.FC = () => {
 
             <div className="flex justify-end gap-3 pt-2">
               <button type="button" onClick={() => { setIsEditOpen(false); setEditingUser(null); }} className="px-4 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-navy-700 transition-colors">
-                {tr('Cancel', 'Bekor qilish', 'Bekor qilish')}
+                {tr('Cancel', 'Cancel', 'Bekor qilish')}
               </button>
               <button disabled={saving} type="submit" className="px-4 py-2 rounded-lg text-sm font-medium bg-primary-blue text-white hover:bg-blue-600 transition-colors disabled:opacity-50">
-                {saving ? tr('Saving...', 'Сохранение...', 'Saqlanmoqda...') : tr('Save Changes', 'Сохранить изменения', 'O‘zgarishlarni saqlash')}
+                {saving ? tr('Saving...', 'Saving...', 'Saqlanmoqda...') : tr('Save Changes', 'Save Changes', "O\'zgarishlarni saqlash")}
               </button>
             </div>
           </form>
@@ -444,7 +444,7 @@ const Users: React.FC = () => {
       <Modal
         isOpen={isDetailOpen}
         onClose={() => { setIsDetailOpen(false); setSelectedUser(null); }}
-        title={selectedUser ? `${tr('User', 'Foydalanuvchi', 'Foydalanuvchi')}: ${selectedUser.username}` : tr('User Details', 'Foydalanuvchi tafsilotlari', 'Foydalanuvchi tafsilotlari')}
+        title={selectedUser ? `${tr('User', 'User', 'Foydalanuvchi')}: ${selectedUser.username}` : tr('User Details', 'User Details', 'Foydalanuvchi tafsilotlari')}
         footer={selectedUser ? (
           <div className="flex justify-end w-full">
             <button
@@ -454,28 +454,28 @@ const Users: React.FC = () => {
               }}
               className="px-4 py-2 rounded-lg text-sm font-medium bg-primary-blue text-white hover:bg-blue-600 transition-colors inline-flex items-center gap-2"
             >
-              {tr('Edit', 'Tahrirlash', 'Tahrirlash')} <Edit2 size={14} />
+              {tr('Edit', 'Edit', 'Tahrirlash')} <Edit2 size={14} />
             </button>
           </div>
         ) : null}
       >
-        {detailLoading && <p className="text-sm text-gray-500">{tr('Loading user details...', 'Foydalanuvchi tafsilotlari yuklanmoqda...', 'Foydalanuvchi tafsilotlari yuklanmoqda...')}</p>}
+        {detailLoading && <p className="text-sm text-gray-500">{tr('Loading user details...', 'Loading user details...', 'Foydalanuvchi tafsilotlari yuklanmoqda...')}</p>}
         {!detailLoading && selectedUser && (
           <div className="space-y-4 text-sm">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div><p className="text-gray-500">{tr('Username', 'Login', 'Login')}</p><p className="font-medium text-gray-900 dark:text-white">{selectedUser.username || '-'}</p></div>
-              <div><p className="text-gray-500">{tr('Role', 'Rol', 'Rol')}</p><p className="font-medium text-gray-900 dark:text-white">{selectedUser.role || '-'}</p></div>
-              <div><p className="text-gray-500">{tr('First Name', 'Ism', 'Ism')}</p><p className="font-medium text-gray-900 dark:text-white">{selectedUser.first_name || '-'}</p></div>
-              <div><p className="text-gray-500">{tr('Last Name', 'Familiya', 'Familiya')}</p><p className="font-medium text-gray-900 dark:text-white">{selectedUser.last_name || '-'}</p></div>
+              <div><p className="text-gray-500">{tr('Username', 'Username', 'Login')}</p><p className="font-medium text-gray-900 dark:text-white">{selectedUser.username || '-'}</p></div>
+              <div><p className="text-gray-500">{tr('Role', 'Role', 'Rol')}</p><p className="font-medium text-gray-900 dark:text-white">{selectedUser.role || '-'}</p></div>
+              <div><p className="text-gray-500">{tr('First Name', 'First Name', 'Ism')}</p><p className="font-medium text-gray-900 dark:text-white">{selectedUser.first_name || '-'}</p></div>
+              <div><p className="text-gray-500">{tr('Last Name', 'Last Name', 'Familiya')}</p><p className="font-medium text-gray-900 dark:text-white">{selectedUser.last_name || '-'}</p></div>
               <div className="md:col-span-2"><p className="text-gray-500">{tr('Email', 'Email', 'Email')}</p><p className="font-medium text-gray-900 dark:text-white">{selectedUser.email || '-'}</p></div>
-              <div><p className="text-gray-500">{tr('Status', 'Holat', 'Holat')}</p><p className="font-medium text-gray-900 dark:text-white">{selectedUser.is_active === false ? tr('Inactive', 'Nofaol', 'Nofaol') : tr('Active', 'Faol', 'Faol')}</p></div>
-              <div><p className="text-gray-500">{tr('Created', 'Yaratilgan', 'Yaratilgan')}</p><p className="font-medium text-gray-900 dark:text-white">{selectedUser.created_at ? new Date(selectedUser.created_at).toLocaleString() : '-'}</p></div>
+              <div><p className="text-gray-500">{tr('Status', 'Status', 'Holat')}</p><p className="font-medium text-gray-900 dark:text-white">{selectedUser.is_active === false ? tr('Inactive', 'Inactive', 'Nofaol') : tr('Active', 'Active', 'Faol')}</p></div>
+              <div><p className="text-gray-500">{tr('Created', 'Created', 'Yaratilgan')}</p><p className="font-medium text-gray-900 dark:text-white">{selectedUser.created_at ? new Date(selectedUser.created_at).toLocaleString() : '-'}</p></div>
             </div>
 
             <div>
-              <p className="text-gray-500 mb-2">{tr('Permissions', 'Ruxsatlar', 'Ruxsatlar')}</p>
+              <p className="text-gray-500 mb-2">{tr('Permissions', 'Permissions', 'Ruxsatlar')}</p>
               {selectedPermissions.length === 0 ? (
-                <p className="text-gray-500">{tr('No permissions', 'Нет разрешений', 'Ruxsatlar yo‘q')}</p>
+                <p className="text-gray-500">{tr('No permissions', 'No permissions', "Ruxsatlar yo\'q")}</p>
               ) : (
                 <div className="flex flex-wrap gap-2">
                   {selectedPermissions.map((code) => (

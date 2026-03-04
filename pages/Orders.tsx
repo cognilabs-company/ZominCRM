@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Badge } from '../components/ui/Badge';
 import { Card } from '../components/ui/Card';
@@ -146,22 +146,22 @@ interface LinePreview {
 }
 
 const STATUS_LABELS: Record<OrderStatus, Record<Language, string>> = {
-  NEW_LEAD: { en: 'New Lead', ru: 'Новый лид', uz: 'Yangi lid' },
-  INFO_COLLECTED: { en: 'Info Collected', ru: 'Информация собрана', uz: "Ma'lumot yig'ilgan" },
-  PAYMENT_PENDING: { en: 'Payment Pending', ru: 'Ожидает оплаты', uz: "To'lov kutilmoqda" },
-  PAYMENT_CONFIRMED: { en: 'Payment Confirmed', ru: 'Оплата подтверждена', uz: "To'lov tasdiqlangan" },
-  DISPATCHED: { en: 'Dispatched', ru: 'Отправлен', uz: 'Yuborilgan' },
-  ASSIGNED: { en: 'Assigned', ru: 'Назначен', uz: 'Biriktirilgan' },
-  OUT_FOR_DELIVERY: { en: 'Out for Delivery', ru: 'В доставке', uz: 'Yetkazib berishda' },
-  DELIVERED: { en: 'Delivered', ru: 'Доставлен', uz: 'Yetkazildi' },
-  CANCELED: { en: 'Canceled', ru: 'Отменен', uz: 'Bekor qilingan' },
-  FAILED: { en: 'Failed', ru: 'Неудачно', uz: 'Muvaffaqiyatsiz' },
+  NEW_LEAD: { en: 'New Lead', ru: 'Novyy lid', uz: 'Yangi lid' },
+  INFO_COLLECTED: { en: 'Info Collected', ru: 'Dannye sobrany', uz: "Ma\'lumot yig\'ilgan" },
+  PAYMENT_PENDING: { en: 'Payment Pending', ru: 'Ozhidayetsya oplata', uz: "To\'lov kutilmoqda" },
+  PAYMENT_CONFIRMED: { en: 'Payment Confirmed', ru: 'Oplata podtverzhdena', uz: "To\'lov tasdiqlangan" },
+  DISPATCHED: { en: 'Dispatched', ru: 'Otpravlen', uz: 'Yuborilgan' },
+  ASSIGNED: { en: 'Assigned', ru: 'Naznachen', uz: 'Biriktirilgan' },
+  OUT_FOR_DELIVERY: { en: 'Out for Delivery', ru: 'V dostavke', uz: 'Yetkazib berishda' },
+  DELIVERED: { en: 'Delivered', ru: 'Dostavlen', uz: 'Yetkazildi' },
+  CANCELED: { en: 'Canceled', ru: 'Otmenen', uz: 'Bekor qilingan' },
+  FAILED: { en: 'Failed', ru: 'Neudachno', uz: 'Muvaffaqiyatsiz' },
 };
 
 const PAYMENT_LABELS: Record<'UNKNOWN' | 'CASH' | 'TRANSFER', Record<Language, string>> = {
-  UNKNOWN: { en: 'Unknown', ru: 'Неизвестно', uz: "Noma'lum" },
-  CASH: { en: 'Cash', ru: 'Наличные', uz: 'Naqd' },
-  TRANSFER: { en: 'Transfer', ru: 'Перевод', uz: "O'tkazma" },
+  UNKNOWN: { en: 'Unknown', ru: 'Neizvestno', uz: "Noma\'lum" },
+  CASH: { en: 'Cash', ru: 'Nalichnye', uz: 'Naqd' },
+  TRANSFER: { en: 'Transfer', ru: 'Perevod', uz: "O\'tkazma" },
 };
 
 const ORDER_STATUSES: OrderStatus[] = ['NEW_LEAD', 'INFO_COLLECTED', 'PAYMENT_PENDING', 'PAYMENT_CONFIRMED', 'DISPATCHED', 'ASSIGNED', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELED', 'FAILED'];
@@ -286,7 +286,7 @@ const Orders: React.FC = () => {
         await loadOrders(reference.byId, statusFilter);
       } catch (e) {
         if (!active) return;
-        const message = e instanceof Error ? e.message : tr('Failed to load orders', 'Не удалось загрузить заказы', "Buyurtmalarni yuklab bo'lmadi");
+        const message = e instanceof Error ? e.message : tr('Failed to load orders', 'Failed to load orders', "Buyurtmalarni yuklab bo'lmadi");
         setError(message);
         toast.error(message);
       } finally {
@@ -438,21 +438,21 @@ const Orders: React.FC = () => {
             force_confirm: true,
           }),
         });
-        toast.success(tr('Order dispatched to courier.', 'Заказ отправлен курьеру.', 'Buyurtma kuryerga yuborildi.'));
+        toast.success(tr('Order dispatched to courier.', 'Order dispatched to courier.', 'Buyurtma kuryerga yuborildi.'));
       } else {
         await apiRequest(ENDPOINTS.ORDERS.UPDATE_STATUS(orderId), {
           method: 'POST',
           body: JSON.stringify({ to_status: 'CANCELED' }),
         });
-        toast.success(tr('Order canceled successfully.', 'Заказ отменен.', 'Buyurtma bekor qilindi.'));
+        toast.success(tr('Order canceled successfully.', 'Order canceled successfully.', 'Buyurtma bekor qilindi.'));
       }
       await loadOrders(clientsById, statusFilter);
     } catch (e) {
-      let message = e instanceof Error ? e.message : tr('Action failed', 'Ошибка операции', 'Amal bajarilmadi');
+      let message = e instanceof Error ? e.message : tr('Action failed', 'Action failed', 'Amal bajarilmadi');
       if (e instanceof ApiError && e.code === 'E-ORD-003') {
         message = action === 'dispatch'
-          ? tr('This order cannot be dispatched from its current status.', 'Этот заказ нельзя отправить курьеру из текущего статуса.', "Bu buyurtmani hozirgi holatidan kuryerga yuborib bo'lmaydi.")
-          : tr('This status change is not allowed.', 'Это изменение статуса недоступно.', "Bu status o'zgarishiga ruxsat berilmagan.");
+          ? tr('This order cannot be dispatched from its current status.', 'This order cannot be dispatched from its current status.', "Bu buyurtmani hozirgi holatidan kuryerga yuborib bo'lmaydi.")
+          : tr('This status change is not allowed.', 'This status change is not allowed.', "Bu status o'zgarishiga ruxsat berilmagan.");
       }
       setError(message);
       toast.error(message);
@@ -467,19 +467,19 @@ const Orders: React.FC = () => {
       .filter((row) => row.product_id && row.quantity > 0);
 
     if (clientMode === 'existing' && !selectedClientId) {
-      toast.error(tr('Please select a client.', 'Выберите клиента.', 'Mijozni tanlang.'));
+      toast.error(tr('Please select a client.', 'Please select a client.', 'Mijozni tanlang.'));
       return;
     }
     if (clientMode === 'new' && !clientForm.full_name.trim()) {
-      toast.error(tr('Client name is required.', 'Требуется имя клиента.', 'Mijoz ismi majburiy.'));
+      toast.error(tr('Client name is required.', 'Client name is required.', 'Mijoz ismi majburiy.'));
       return;
     }
     if (!orderForm.location_text.trim()) {
-      toast.error(tr('Delivery address is required.', 'Требуется адрес доставки.', 'Yetkazib berish manzili majburiy.'));
+      toast.error(tr('Delivery address is required.', 'Delivery address is required.', 'Yetkazib berish manzili majburiy.'));
       return;
     }
     if (!validItems.length) {
-      toast.error(tr('Add at least one product.', 'Добавьте хотя бы один товар.', "Kamida bitta mahsulot qo'shing."));
+      toast.error(tr('Add at least one product.', 'Add at least one product.', "Kamida bitta mahsulot qo'shing."));
       return;
     }
 
@@ -516,12 +516,12 @@ const Orders: React.FC = () => {
       setCreateLoading(true);
       setError(null);
       await apiRequest(ENDPOINTS.ORDERS.CREATE_FULL, { method: 'POST', body: JSON.stringify(payload) });
-      toast.success(tr('Order created successfully.', 'Заказ создан.', 'Buyurtma yaratildi.'));
+      toast.success(tr('Order created successfully.', 'Order created successfully.', 'Buyurtma yaratildi.'));
       closeCreateModal();
       const reference = await loadReferenceData();
       await loadOrders(reference.byId, statusFilter);
     } catch (e) {
-      const message = e instanceof Error ? e.message : tr('Failed to create order', 'Не удалось создать заказ', "Buyurtma yaratib bo'lmadi");
+      const message = e instanceof Error ? e.message : tr('Failed to create order', 'Failed to create order', "Buyurtma yaratib bo'lmadi");
       setError(message);
       toast.error(message);
     } finally {
@@ -546,7 +546,7 @@ const Orders: React.FC = () => {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-light-text dark:text-white">{t('nav_orders')}</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">{tr('Manual order creation now includes bottle deposit preview and client bottle coverage.', 'Ручное создание заказа теперь учитывает депозит за тару и покрытие клиента.', "Qo'lda buyurtma yaratish endi idish depoziti va mijoz qoplamasini hisoblaydi.")}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{tr('Manual order creation now includes bottle deposit preview and client bottle coverage.', 'Manual order creation now includes bottle deposit preview and client bottle coverage.', "Qo'lda buyurtma yaratish endi idish depoziti va mijoz qoplamasini hisoblaydi.")}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button onClick={() => setIsFilterOpen((value) => !value)} className={`flex items-center gap-2 px-4 py-2 border text-sm rounded-lg transition-colors ${isFilterOpen ? 'bg-blue-50 border-primary-blue text-primary-blue dark:bg-navy-700 dark:border-blue-500 dark:text-blue-400' : 'bg-white dark:bg-navy-800 border-light-border dark:border-navy-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-navy-700'}`}>
@@ -564,14 +564,14 @@ const Orders: React.FC = () => {
       {isFilterOpen ? (
         <Card>
           <div className="flex justify-between items-center mb-4">
-            <h3 className="font-semibold text-light-text dark:text-white text-sm">{t('filter')} {tr('Options', 'Параметры', 'Parametrlar')}</h3>
+            <h3 className="font-semibold text-light-text dark:text-white text-sm">{t('filter')} {tr('Options', 'Options', 'Parametrlar')}</h3>
             <button onClick={() => setIsFilterOpen(false)} className="text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-gray-200"><X size={16} /></button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{t('status')}</label>
               <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white">
-                <option value="">{tr('All statuses', 'Все статусы', 'Barcha holatlar')}</option>
+                <option value="">{tr('All statuses', 'All statuses', 'Barcha holatlar')}</option>
                 {ORDER_STATUSES.map((status) => <option key={status} value={status}>{getStatusLabel(status)}</option>)}
               </select>
             </div>
@@ -584,21 +584,21 @@ const Orders: React.FC = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50 dark:bg-navy-900/50 text-xs uppercase text-gray-500 dark:text-gray-400 border-b border-light-border dark:border-navy-700">
-                <th className="px-6 py-4 font-semibold">{tr('Order', 'Заказ', 'Buyurtma')}</th>
-                <th className="px-6 py-4 font-semibold">{tr('Client', 'Клиент', 'Mijoz')}</th>
-                <th className="px-6 py-4 font-semibold">{tr('Created', 'Создан', 'Yaratilgan')}</th>
-                <th className="px-6 py-4 font-semibold">{tr('Product subtotal', 'Подытог товаров', 'Mahsulot summasi')}</th>
-                <th className="px-6 py-4 font-semibold">{tr('Deposit', 'Депозит', 'Depozit')}</th>
-                <th className="px-6 py-4 font-semibold">{tr('Total', 'Итого', 'Jami')}</th>
-                <th className="px-6 py-4 font-semibold">{tr('Status', 'Статус', 'Holat')}</th>
-                <th className="px-6 py-4 font-semibold text-right">{tr('Actions', 'Действия', 'Amallar')}</th>
+                <th className="px-6 py-4 font-semibold">{tr('Order', 'Order', 'Buyurtma')}</th>
+                <th className="px-6 py-4 font-semibold">{tr('Client', 'Client', 'Mijoz')}</th>
+                <th className="px-6 py-4 font-semibold">{tr('Created', 'Created', 'Yaratilgan')}</th>
+                <th className="px-6 py-4 font-semibold">{tr('Product subtotal', 'Product subtotal', 'Mahsulot summasi')}</th>
+                <th className="px-6 py-4 font-semibold">{tr('Deposit', 'Deposit', 'Depozit')}</th>
+                <th className="px-6 py-4 font-semibold">{tr('Total', 'Total', 'Jami')}</th>
+                <th className="px-6 py-4 font-semibold">{tr('Status', 'Status', 'Holat')}</th>
+                <th className="px-6 py-4 font-semibold text-right">{tr('Actions', 'Actions', 'Amallar')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-light-border dark:divide-navy-700">
               {loading ? (
-                <tr><td colSpan={8} className="px-6 py-8 text-center text-gray-500">{tr('Loading orders...', 'Заказы загружаются...', 'Buyurtmalar yuklanmoqda...')}</td></tr>
+                <tr><td colSpan={8} className="px-6 py-8 text-center text-gray-500">{tr('Loading orders...', 'Loading orders...', 'Buyurtmalar yuklanmoqda...')}</td></tr>
               ) : orders.length === 0 ? (
-                <tr><td colSpan={8} className="px-6 py-8 text-center text-gray-500">{tr('No orders found.', 'Заказы не найдены.', 'Buyurtmalar topilmadi.')}</td></tr>
+                <tr><td colSpan={8} className="px-6 py-8 text-center text-gray-500">{tr('No orders found.', 'No orders found.', 'Buyurtmalar topilmadi.')}</td></tr>
               ) : orders.map((order) => (
                 <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-navy-700/50 transition-colors">
                   <td onClick={() => openOrderDetails(order)} className="px-6 py-4 cursor-pointer"><p className="text-sm font-semibold text-primary-blue dark:text-blue-400">#{order.id.slice(0, 8)}</p><p className="text-xs text-gray-500 font-mono mt-1">{order.id}</p></td>
@@ -608,7 +608,7 @@ const Orders: React.FC = () => {
                   <td onClick={() => openOrderDetails(order)} className="px-6 py-4 text-sm text-amber-700 dark:text-amber-400 cursor-pointer">{order.bottle_deposit_total_uzs.toLocaleString()}</td>
                   <td onClick={() => openOrderDetails(order)} className="px-6 py-4 text-sm font-semibold text-gray-900 dark:text-white cursor-pointer">{order.total_uzs.toLocaleString()}</td>
                   <td onClick={() => openOrderDetails(order)} className="px-6 py-4 cursor-pointer"><Badge variant={getStatusVariant(order.status) as any}>{getStatusLabel(order.status)}</Badge></td>
-                  <td className="px-6 py-4 text-right"><div className="flex justify-end gap-2">{order.status === 'INFO_COLLECTED' || order.status === 'PAYMENT_CONFIRMED' ? <button onClick={() => handleAction('dispatch', order.id)} className="px-3 py-1.5 rounded-lg text-xs font-medium border border-light-border dark:border-navy-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-navy-700">{tr('Dispatch', 'Отправить', 'Yuborish')}</button> : null}<button onClick={() => handleAction('cancel', order.id)} className="px-3 py-1.5 rounded-lg text-xs font-medium border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30">{tr('Cancel', 'Отменить', 'Bekor qilish')}</button></div></td>
+                  <td className="px-6 py-4 text-right"><div className="flex justify-end gap-2">{order.status === 'INFO_COLLECTED' || order.status === 'PAYMENT_CONFIRMED' ? <button onClick={() => handleAction('dispatch', order.id)} className="px-3 py-1.5 rounded-lg text-xs font-medium border border-light-border dark:border-navy-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-navy-700">{tr('Dispatch', 'Dispatch', 'Yuborish')}</button> : null}<button onClick={() => handleAction('cancel', order.id)} className="px-3 py-1.5 rounded-lg text-xs font-medium border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30">{tr('Cancel', 'Cancel', 'Bekor qilish')}</button></div></td>
                 </tr>
               ))}
             </tbody>
@@ -619,56 +619,56 @@ const Orders: React.FC = () => {
       <Modal
         isOpen={!!selectedOrder}
         onClose={closeOrderDetails}
-        title={selectedOrder ? `${tr('Order details', 'Детали заказа', 'Buyurtma tafsilotlari')} #${selectedOrder.id.slice(0, 8)}` : tr('Order details', 'Детали заказа', 'Buyurtma tafsilotlari')}
+        title={selectedOrder ? `${tr('Order details', 'Order details', 'Buyurtma tafsilotlari')} #${selectedOrder.id.slice(0, 8)}` : tr('Order details', 'Order details', 'Buyurtma tafsilotlari')}
         maxWidthClass="max-w-5xl"
         footer={<div className="flex gap-3 w-full justify-end"><button onClick={closeOrderDetails} className="px-4 py-2 rounded-lg text-sm border border-light-border dark:border-navy-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-navy-700 transition-colors">{t('cancel')}</button></div>}
       >
         {selectedOrder ? (
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div className="rounded-xl border border-light-border dark:border-navy-700 bg-gray-50 dark:bg-navy-900/50 p-4"><p className="text-xs text-gray-500 uppercase">{tr('Product subtotal', 'Подытог товаров', 'Mahsulot summasi')}</p><p className="mt-2 text-xl font-bold text-gray-900 dark:text-white">{selectedOrder.product_subtotal_uzs.toLocaleString()} UZS</p></div>
-              <div className="rounded-xl border border-amber-200 dark:border-amber-900/40 bg-amber-50/70 dark:bg-amber-900/10 p-4"><p className="text-xs text-amber-700 dark:text-amber-400 uppercase">{tr('Bottle deposit', 'Депозит за тару', 'Idish depoziti')}</p><p className="mt-2 text-xl font-bold text-amber-800 dark:text-amber-300">{selectedOrder.bottle_deposit_total_uzs.toLocaleString()} UZS</p></div>
-              <div className="rounded-xl border border-light-border dark:border-navy-700 bg-gray-50 dark:bg-navy-900/50 p-4"><p className="text-xs text-gray-500 uppercase">{tr('Final total', 'Итоговая сумма', 'Yakuniy summa')}</p><p className="mt-2 text-xl font-bold text-gray-900 dark:text-white">{selectedOrder.total_uzs.toLocaleString()} UZS</p></div>
+              <div className="rounded-xl border border-light-border dark:border-navy-700 bg-gray-50 dark:bg-navy-900/50 p-4"><p className="text-xs text-gray-500 uppercase">{tr('Product subtotal', 'Product subtotal', 'Mahsulot summasi')}</p><p className="mt-2 text-xl font-bold text-gray-900 dark:text-white">{selectedOrder.product_subtotal_uzs.toLocaleString()} UZS</p></div>
+              <div className="rounded-xl border border-amber-200 dark:border-amber-900/40 bg-amber-50/70 dark:bg-amber-900/10 p-4"><p className="text-xs text-amber-700 dark:text-amber-400 uppercase">{tr('Bottle deposit', 'Bottle deposit', 'Idish depoziti')}</p><p className="mt-2 text-xl font-bold text-amber-800 dark:text-amber-300">{selectedOrder.bottle_deposit_total_uzs.toLocaleString()} UZS</p></div>
+              <div className="rounded-xl border border-light-border dark:border-navy-700 bg-gray-50 dark:bg-navy-900/50 p-4"><p className="text-xs text-gray-500 uppercase">{tr('Final total', 'Final total', 'Yakuniy summa')}</p><p className="mt-2 text-xl font-bold text-gray-900 dark:text-white">{selectedOrder.total_uzs.toLocaleString()} UZS</p></div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="rounded-xl border border-light-border dark:border-navy-700 p-4">
-                <h4 className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white mb-3"><User size={16} /> {tr('Client and status', 'Клиент и статус', 'Mijoz va holat')}</h4>
+                <h4 className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white mb-3"><User size={16} /> {tr('Client and status', 'Client and status', 'Mijoz va holat')}</h4>
                 <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                  <p><span className="text-gray-500">{tr('Client', 'Клиент', 'Mijoz')}:</span> <span className="font-medium text-gray-900 dark:text-white">{selectedOrder.client_name}</span></p>
+                  <p><span className="text-gray-500">{tr('Client', 'Client', 'Mijoz')}:</span> <span className="font-medium text-gray-900 dark:text-white">{selectedOrder.client_name}</span></p>
                   <p><span className="text-gray-500">ID:</span> <span className="font-mono">{selectedOrder.client_id}</span></p>
-                  <p><span className="text-gray-500">{tr('Payment', 'Оплата', "To'lov")}:</span> <span className="font-medium text-gray-900 dark:text-white">{getPaymentLabel(selectedOrder.payment_method)}</span></p>
-                  <p><span className="text-gray-500">{tr('Status', 'Статус', 'Holat')}:</span> <Badge variant={getStatusVariant(selectedOrder.status) as any} className="ml-2">{getStatusLabel(selectedOrder.status)}</Badge></p>
-                  <p><span className="text-gray-500">{tr('Courier ID', 'ID курьера', 'Kuryer ID')}:</span> <span className="font-mono">{selectedOrder.courier_id || '-'}</span></p>
-                  <p><span className="text-gray-500">{tr('Client confirmed', 'Подтверждение клиента', 'Mijoz tasdiqlagan')}:</span> <span className="font-medium text-gray-900 dark:text-white">{selectedOrder.client_confirmed_at ? new Date(selectedOrder.client_confirmed_at).toLocaleString() : tr('Not yet', 'Еще нет', "Hali yo'q")}</span></p>
+                  <p><span className="text-gray-500">{tr('Payment', 'Payment', "To'lov")}:</span> <span className="font-medium text-gray-900 dark:text-white">{getPaymentLabel(selectedOrder.payment_method)}</span></p>
+                  <p><span className="text-gray-500">{tr('Status', 'Status', 'Holat')}:</span> <Badge variant={getStatusVariant(selectedOrder.status) as any} className="ml-2">{getStatusLabel(selectedOrder.status)}</Badge></p>
+                  <p><span className="text-gray-500">{tr('Courier ID', 'Courier ID', 'Kuryer ID')}:</span> <span className="font-mono">{selectedOrder.courier_id || '-'}</span></p>
+                  <p><span className="text-gray-500">{tr('Client confirmed', 'Client confirmed', 'Mijoz tasdiqlagan')}:</span> <span className="font-medium text-gray-900 dark:text-white">{selectedOrder.client_confirmed_at ? new Date(selectedOrder.client_confirmed_at).toLocaleString() : tr('Not yet', 'Not yet', "Hali yo'q")}</span></p>
                 </div>
               </div>
               <div className="rounded-xl border border-light-border dark:border-navy-700 p-4">
-                <h4 className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white mb-3"><MapPin size={16} /> {tr('Delivery details', 'Доставка', 'Yetkazib berish')}</h4>
+                <h4 className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white mb-3"><MapPin size={16} /> {tr('Delivery details', 'Delivery details', 'Yetkazib berish')}</h4>
                 <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                  <p><span className="text-gray-500">{tr('Address', 'Адрес', 'Manzil')}:</span> <span className="font-medium text-gray-900 dark:text-white">{selectedOrder.delivery_address || '-'}</span></p>
-                  <p><span className="text-gray-500">{tr('Requested time', 'Запрошенное время', "So'ralgan vaqt")}:</span> <span className="font-medium text-gray-900 dark:text-white">{selectedOrder.requested_time ? new Date(selectedOrder.requested_time).toLocaleString() : tr('As soon as possible', 'Как можно скорее', 'Iloji boricha tez')}</span></p>
+                  <p><span className="text-gray-500">{tr('Address', 'Address', 'Manzil')}:</span> <span className="font-medium text-gray-900 dark:text-white">{selectedOrder.delivery_address || '-'}</span></p>
+                  <p><span className="text-gray-500">{tr('Requested time', 'Requested time', "So'ralgan vaqt")}:</span> <span className="font-medium text-gray-900 dark:text-white">{selectedOrder.requested_time ? new Date(selectedOrder.requested_time).toLocaleString() : tr('As soon as possible', 'As soon as possible', 'Iloji boricha tez')}</span></p>
                   <p><span className="text-gray-500">Lat/Lng:</span> <span className="font-medium text-gray-900 dark:text-white">{selectedOrder.delivery_lat ?? '-'} / {selectedOrder.delivery_lng ?? '-'}</span></p>
-                  <p><span className="text-gray-500">{tr('Created', 'Создан', 'Yaratilgan')}:</span> <span className="font-medium text-gray-900 dark:text-white">{new Date(selectedOrder.created_at).toLocaleString()}</span></p>
-                  <p><span className="text-gray-500">{tr('Updated', 'Обновлен', 'Yangilangan')}:</span> <span className="font-medium text-gray-900 dark:text-white">{new Date(selectedOrder.updated_at).toLocaleString()}</span></p>
+                  <p><span className="text-gray-500">{tr('Created', 'Created', 'Yaratilgan')}:</span> <span className="font-medium text-gray-900 dark:text-white">{new Date(selectedOrder.created_at).toLocaleString()}</span></p>
+                  <p><span className="text-gray-500">{tr('Updated', 'Updated', 'Yangilangan')}:</span> <span className="font-medium text-gray-900 dark:text-white">{new Date(selectedOrder.updated_at).toLocaleString()}</span></p>
                 </div>
               </div>
             </div>
 
             <div>
-              <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2"><Package size={16} /> {tr('Order items', 'Позиции заказа', 'Buyurtma elementlari')}</h4>
+              <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2"><Package size={16} /> {tr('Order items', 'Order items', 'Buyurtma elementlari')}</h4>
               <div className="border border-light-border dark:border-navy-700 rounded-lg overflow-hidden">
                 <table className="w-full text-left text-sm">
                   <thead className="bg-gray-50 dark:bg-navy-900">
                     <tr>
                       <th className="px-4 py-3 text-gray-500 font-medium">{t('product_name')}</th>
-                      <th className="px-4 py-3 text-gray-500 font-medium text-right">{tr('Size (L)', 'Размер (л)', 'Hajmi (l)')}</th>
-                      <th className="px-4 py-3 text-gray-500 font-medium text-right">{tr('Qty', 'Кол-во', 'Soni')}</th>
-                      <th className="px-4 py-3 text-gray-500 font-medium text-right">{tr('Unit', 'Цена', 'Birlik')}</th>
-                      <th className="px-4 py-3 text-gray-500 font-medium text-right">{tr('Product total', 'Сумма товара', 'Mahsulot summasi')}</th>
-                      <th className="px-4 py-3 text-gray-500 font-medium text-right">{tr('Deposit qty', 'Кол-во депозита', 'Depozit soni')}</th>
-                      <th className="px-4 py-3 text-gray-500 font-medium text-right">{tr('Deposit / unit', 'Депозит / ед.', 'Depozit / birlik')}</th>
-                      <th className="px-4 py-3 text-gray-500 font-medium text-right">{tr('Deposit total', 'Итого депозит', 'Jami depozit')}</th>
+                      <th className="px-4 py-3 text-gray-500 font-medium text-right">{tr('Size (L)', 'Size (L)', 'Hajmi (l)')}</th>
+                      <th className="px-4 py-3 text-gray-500 font-medium text-right">{tr('Qty', 'Qty', 'Soni')}</th>
+                      <th className="px-4 py-3 text-gray-500 font-medium text-right">{tr('Unit', 'Unit', 'Birlik')}</th>
+                      <th className="px-4 py-3 text-gray-500 font-medium text-right">{tr('Product total', 'Product total', 'Mahsulot summasi')}</th>
+                      <th className="px-4 py-3 text-gray-500 font-medium text-right">{tr('Deposit qty', 'Deposit qty', 'Depozit soni')}</th>
+                      <th className="px-4 py-3 text-gray-500 font-medium text-right">{tr('Deposit / unit', 'Deposit / unit', 'Depozit / birlik')}</th>
+                      <th className="px-4 py-3 text-gray-500 font-medium text-right">{tr('Deposit total', 'Deposit total', 'Jami depozit')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-light-border dark:divide-navy-700">
@@ -683,7 +683,7 @@ const Orders: React.FC = () => {
                         <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-400">{item.bottle_deposit_unit_uzs.toLocaleString()}</td>
                         <td className="px-4 py-3 text-right text-amber-700 dark:text-amber-400">{item.bottle_deposit_total_uzs.toLocaleString()}</td>
                       </tr>
-                    )) : <tr><td colSpan={8} className="px-4 py-3 text-center text-gray-500 italic">{tr('No items found.', 'Позиции не найдены.', 'Elementlar topilmadi.')}</td></tr>}
+                    )) : <tr><td colSpan={8} className="px-4 py-3 text-center text-gray-500 italic">{tr('No items found.', 'No items found.', 'Elementlar topilmadi.')}</td></tr>}
                   </tbody>
                 </table>
               </div>
@@ -697,7 +697,7 @@ const Orders: React.FC = () => {
       <Modal
         isOpen={isCreateOpen}
         onClose={closeCreateModal}
-        title={tr('Create manual order', 'Создать заказ вручную', "Qo'lda buyurtma yaratish")}
+        title={tr('Create manual order', 'Create manual order', "Qo'lda buyurtma yaratish")}
         maxWidthClass="max-w-6xl"
         footer={null}
       >
@@ -707,49 +707,49 @@ const Orders: React.FC = () => {
               <div className="rounded-xl border border-light-border dark:border-navy-700 p-5 space-y-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <h3 className="text-base font-semibold text-gray-900 dark:text-white">{tr('Client info', 'Информация о клиенте', "Mijoz ma'lumotlari")}</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{tr('Use an existing CRM client or create a new manual client in one step.', 'Можно выбрать клиента CRM или создать нового вручную.', 'CRM mijozini tanlang yoki shu yerda yangi mijoz yarating.')}</p>
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-white">{tr('Client info', 'Client info', "Mijoz ma'lumotlari")}</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{tr('Use an existing CRM client or create a new manual client in one step.', 'Use an existing CRM client or create a new manual client in one step.', 'CRM mijozini tanlang yoki shu yerda yangi mijoz yarating.')}</p>
                   </div>
                   <div className="flex rounded-lg border border-light-border dark:border-navy-700 overflow-hidden">
-                    <button type="button" onClick={() => setClientMode('existing')} className={`px-3 py-2 text-sm ${clientMode === 'existing' ? 'bg-primary-blue text-white' : 'bg-white dark:bg-navy-900 text-gray-700 dark:text-gray-200'}`}>{tr('Existing', 'Существующий', 'Mavjud')}</button>
-                    <button type="button" onClick={() => setClientMode('new')} className={`px-3 py-2 text-sm ${clientMode === 'new' ? 'bg-primary-blue text-white' : 'bg-white dark:bg-navy-900 text-gray-700 dark:text-gray-200'}`}>{tr('New client', 'Новый клиент', 'Yangi mijoz')}</button>
+                    <button type="button" onClick={() => setClientMode('existing')} className={`px-3 py-2 text-sm ${clientMode === 'existing' ? 'bg-primary-blue text-white' : 'bg-white dark:bg-navy-900 text-gray-700 dark:text-gray-200'}`}>{tr('Existing', 'Existing', 'Mavjud')}</button>
+                    <button type="button" onClick={() => setClientMode('new')} className={`px-3 py-2 text-sm ${clientMode === 'new' ? 'bg-primary-blue text-white' : 'bg-white dark:bg-navy-900 text-gray-700 dark:text-gray-200'}`}>{tr('New client', 'New client', 'Yangi mijoz')}</button>
                   </div>
                 </div>
 
                 {clientMode === 'existing' ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Client', 'Клиент', 'Mijoz')}</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Client', 'Client', 'Mijoz')}</label>
                       <select value={selectedClientId} onChange={(event) => setSelectedClientId(event.target.value)} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white">
-                        <option value="">{tr('Select client', 'Выберите клиента', 'Mijozni tanlang')}</option>
+                        <option value="">{tr('Select client', 'Select client', 'Mijozni tanlang')}</option>
                         {clients.map((client) => <option key={client.id} value={client.id}>{client.full_name || client.phone || client.id}</option>)}
                       </select>
                     </div>
-                    <div className="rounded-lg border border-light-border dark:border-navy-700 p-4 bg-gray-50 dark:bg-navy-900/40"><p className="text-xs text-gray-500">{tr('Phone', 'Телефон', 'Telefon')}</p><p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">{selectedClient?.phone || '-'}</p></div>
-                    <div className="rounded-lg border border-light-border dark:border-navy-700 p-4 bg-gray-50 dark:bg-navy-900/40"><p className="text-xs text-gray-500">{tr('Preferred language', 'Предпочтительный язык', 'Afzal til')}</p><p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">{selectedClient?.preferred_language || '-'}</p></div>
-                    <div className="rounded-lg border border-light-border dark:border-navy-700 p-4 bg-gray-50 dark:bg-navy-900/40"><p className="text-xs text-gray-500">{tr('Platform', 'Платформа', 'Platforma')}</p><p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">{selectedClient?.platform || 'manual'}</p></div>
-                    <div className="rounded-lg border border-light-border dark:border-navy-700 p-4 bg-gray-50 dark:bg-navy-900/40"><p className="text-xs text-gray-500">{tr('Identity', 'Идентичность', 'Identifikatsiya')}</p><p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">{selectedClient?.is_platform_identity_verified ? tr('Verified', 'Подтверждено', 'Tasdiqlangan') : tr('Unverified', 'Не подтверждено', 'Tasdiqlanmagan')}</p></div>
+                    <div className="rounded-lg border border-light-border dark:border-navy-700 p-4 bg-gray-50 dark:bg-navy-900/40"><p className="text-xs text-gray-500">{tr('Phone', 'Phone', 'Telefon')}</p><p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">{selectedClient?.phone || '-'}</p></div>
+                    <div className="rounded-lg border border-light-border dark:border-navy-700 p-4 bg-gray-50 dark:bg-navy-900/40"><p className="text-xs text-gray-500">{tr('Preferred language', 'Preferred language', 'Afzal til')}</p><p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">{selectedClient?.preferred_language || '-'}</p></div>
+                    <div className="rounded-lg border border-light-border dark:border-navy-700 p-4 bg-gray-50 dark:bg-navy-900/40"><p className="text-xs text-gray-500">{tr('Platform', 'Platform', 'Platforma')}</p><p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">{selectedClient?.platform || 'manual'}</p></div>
+                    <div className="rounded-lg border border-light-border dark:border-navy-700 p-4 bg-gray-50 dark:bg-navy-900/40"><p className="text-xs text-gray-500">{tr('Identity', 'Identity', 'Identifikatsiya')}</p><p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">{selectedClient?.is_platform_identity_verified ? tr('Verified', 'Verified', 'Tasdiqlangan') : tr('Unverified', 'Unverified', 'Tasdiqlanmagan')}</p></div>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Full name', 'Полное имя', "To'liq ism")}</label><input value={clientForm.full_name} onChange={(event) => setClientForm((state) => ({ ...state, full_name: event.target.value }))} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" /></div>
-                    <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Phone', 'Телефон', 'Telefon')}</label><input value={clientForm.phone} onChange={(event) => setClientForm((state) => ({ ...state, phone: event.target.value }))} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" /></div>
+                    <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Full name', 'Full name', "To'liq ism")}</label><input value={clientForm.full_name} onChange={(event) => setClientForm((state) => ({ ...state, full_name: event.target.value }))} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" /></div>
+                    <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Phone', 'Phone', 'Telefon')}</label><input value={clientForm.phone} onChange={(event) => setClientForm((state) => ({ ...state, phone: event.target.value }))} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" /></div>
                     <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Username', 'Username', 'Username')}</label><input value={clientForm.username} onChange={(event) => setClientForm((state) => ({ ...state, username: event.target.value }))} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" /></div>
-                    <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Language', 'Язык', 'Til')}</label><select value={clientForm.preferred_language} onChange={(event) => setClientForm((state) => ({ ...state, preferred_language: event.target.value as Language }))} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white"><option value="uz">O'zbek</option><option value="ru">Русский</option><option value="en">English</option></select></div>
-                    <div className="md:col-span-2"><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Address', 'Адрес', 'Manzil')}</label><textarea value={clientForm.address} onChange={(event) => setClientForm((state) => ({ ...state, address: event.target.value }))} className="w-full h-24 bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" /></div>
+                    <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Language', 'Language', 'Til')}</label><select value={clientForm.preferred_language} onChange={(event) => setClientForm((state) => ({ ...state, preferred_language: event.target.value as Language }))} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white"><option value="uz">O'zbek</option><option value="ru">Russian</option><option value="en">English</option></select></div>
+                    <div className="md:col-span-2"><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Address', 'Address', 'Manzil')}</label><textarea value={clientForm.address} onChange={(event) => setClientForm((state) => ({ ...state, address: event.target.value }))} className="w-full h-24 bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" /></div>
                   </div>
                 )}
               </div>
 
               <div className="rounded-xl border border-light-border dark:border-navy-700 p-5 space-y-4">
                 <div>
-                  <h3 className="text-base font-semibold text-gray-900 dark:text-white">{tr('Delivery and payment', 'Доставка и оплата', "Yetkazib berish va to'lov")}</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{tr('This data will be sent inside the new create-full backend contract.', 'Эти данные уйдут в новый create-full контракт.', "Bu ma'lumotlar yangi create-full kontrakti bilan yuboriladi.")}</p>
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-white">{tr('Delivery and payment', 'Delivery and payment', "Yetkazib berish va to'lov")}</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{tr('This data will be sent inside the new create-full backend contract.', 'This data will be sent inside the new create-full backend contract.', "Bu ma'lumotlar yangi create-full kontrakti bilan yuboriladi.")}</p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Payment method', 'Способ оплаты', "To'lov usuli")}</label><select value={orderForm.payment_method} onChange={(event) => setOrderForm((state) => ({ ...state, payment_method: event.target.value as 'UNKNOWN' | 'CASH' | 'TRANSFER' }))} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white"><option value="CASH">{getPaymentLabel('CASH')}</option><option value="TRANSFER">{getPaymentLabel('TRANSFER')}</option><option value="UNKNOWN">{getPaymentLabel('UNKNOWN')}</option></select></div>
-                  <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Requested delivery time', 'Запрошенное время доставки', "So'ralgan yetkazish vaqti")}</label><input type="datetime-local" value={orderForm.delivery_time_requested} onChange={(event) => setOrderForm((state) => ({ ...state, delivery_time_requested: event.target.value }))} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" /></div>
-                  <div className="md:col-span-2"><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Location text', 'Текстовый адрес', 'Manzil matni')}</label><textarea value={orderForm.location_text} onChange={(event) => setOrderForm((state) => ({ ...state, location_text: event.target.value }))} className="w-full h-24 bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" /></div>
+                  <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Payment method', 'Payment method', "To'lov usuli")}</label><select value={orderForm.payment_method} onChange={(event) => setOrderForm((state) => ({ ...state, payment_method: event.target.value as 'UNKNOWN' | 'CASH' | 'TRANSFER' }))} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white"><option value="CASH">{getPaymentLabel('CASH')}</option><option value="TRANSFER">{getPaymentLabel('TRANSFER')}</option><option value="UNKNOWN">{getPaymentLabel('UNKNOWN')}</option></select></div>
+                  <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Requested delivery time', 'Requested delivery time', "So'ralgan yetkazish vaqti")}</label><input type="datetime-local" value={orderForm.delivery_time_requested} onChange={(event) => setOrderForm((state) => ({ ...state, delivery_time_requested: event.target.value }))} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" /></div>
+                  <div className="md:col-span-2"><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Location text', 'Location text', 'Manzil matni')}</label><textarea value={orderForm.location_text} onChange={(event) => setOrderForm((state) => ({ ...state, location_text: event.target.value }))} className="w-full h-24 bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" /></div>
                   <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Latitude</label><input type="number" step="any" value={orderForm.location_lat} onChange={(event) => setOrderForm((state) => ({ ...state, location_lat: event.target.value }))} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" /></div>
                   <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Longitude</label><input type="number" step="any" value={orderForm.location_lng} onChange={(event) => setOrderForm((state) => ({ ...state, location_lng: event.target.value }))} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" /></div>
                 </div>
@@ -758,23 +758,23 @@ const Orders: React.FC = () => {
               <div className="rounded-xl border border-light-border dark:border-navy-700 p-5 space-y-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <h3 className="text-base font-semibold text-gray-900 dark:text-white">{tr('Order items', 'Позиции заказа', 'Buyurtma elementlari')}</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{tr('Choose products and quantities. Deposit preview uses real product deposit settings.', 'Выберите товары и количество. Депозит считается из настроек товара.', "Mahsulot va miqdorni tanlang. Depozit mahsulot sozlamalaridan olinadi.")}</p>
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-white">{tr('Order items', 'Order items', 'Buyurtma elementlari')}</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{tr('Choose products and quantities. Deposit preview uses real product deposit settings.', 'Choose products and quantities. Deposit preview uses real product deposit settings.', "Mahsulot va miqdorni tanlang. Depozit mahsulot sozlamalaridan olinadi.")}</p>
                   </div>
-                  <button type="button" onClick={() => setItemRows((rows) => [...rows, createItemRow()])} className="inline-flex items-center gap-2 rounded-lg bg-primary-blue px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"><Plus size={16} /> {tr('Add line', 'Добавить строку', "Qator qo'shish")}</button>
+                  <button type="button" onClick={() => setItemRows((rows) => [...rows, createItemRow()])} className="inline-flex items-center gap-2 rounded-lg bg-primary-blue px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"><Plus size={16} /> {tr('Add line', 'Add line', "Qator qo'shish")}</button>
                 </div>
                 <div className="space-y-3">
                   {itemRows.map((row, index) => (
                     <div key={row.id} className="grid grid-cols-1 md:grid-cols-[1.6fr_0.5fr_auto] gap-3 items-end rounded-lg border border-light-border dark:border-navy-700 p-3 bg-gray-50 dark:bg-navy-900/30">
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{tr('Product', 'Товар', 'Mahsulot')} #{index + 1}</label>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{tr('Product', 'Product', 'Mahsulot')} #{index + 1}</label>
                         <select value={row.productId} onChange={(event) => setItemRows((rows) => rows.map((current) => current.id === row.id ? { ...current, productId: event.target.value } : current))} className="w-full bg-white dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white">
-                          <option value="">{tr('Select product', 'Выберите товар', 'Mahsulotni tanlang')}</option>
-                          {products.map((product) => <option key={product.id} value={product.id}>{product.name} · {product.size_liters}L · {product.price_uzs.toLocaleString()} UZS</option>)}
+                          <option value="">{tr('Select product', 'Select product', 'Mahsulotni tanlang')}</option>
+                          {products.map((product) => <option key={product.id} value={product.id}>{product.name} - {product.size_liters}L - {product.price_uzs.toLocaleString()} UZS</option>)}
                         </select>
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{tr('Quantity', 'Количество', 'Soni')}</label>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{tr('Quantity', 'Quantity', 'Soni')}</label>
                         <input type="number" min="1" value={row.quantity} onChange={(event) => setItemRows((rows) => rows.map((current) => current.id === row.id ? { ...current, quantity: event.target.value } : current))} className="w-full bg-white dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" />
                       </div>
                       <button type="button" onClick={() => setItemRows((rows) => rows.length > 1 ? rows.filter((current) => current.id !== row.id) : rows)} className="inline-flex items-center justify-center rounded-lg border border-light-border dark:border-navy-600 px-3 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-navy-700 transition-colors"><Minus size={16} /></button>
@@ -787,46 +787,46 @@ const Orders: React.FC = () => {
             <div className="space-y-6">
               <div className="rounded-xl border border-light-border dark:border-navy-700 p-5 space-y-4 sticky top-0">
                 <div>
-                  <h3 className="text-base font-semibold text-gray-900 dark:text-white">{tr('Price preview', 'Предпросмотр суммы', "Narx ko'rinishi")}</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{tr('Frontend preview mirrors backend deposit rules as closely as possible.', 'Предпросмотр повторяет депозитную логику backend максимально близко.', "Oldindan ko'rish backend depozit qoidalariga maksimal yaqin ishlaydi.")}</p>
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-white">{tr('Price preview', 'Price preview', "Narx ko'rinishi")}</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{tr('Frontend preview mirrors backend deposit rules as closely as possible.', 'Frontend preview mirrors backend deposit rules as closely as possible.', "Oldindan ko'rish backend depozit qoidalariga maksimal yaqin ishlaydi.")}</p>
                 </div>
 
                 {clientMode === 'existing' ? (
                   <div className="rounded-lg border border-light-border dark:border-navy-700 p-4 bg-gray-50 dark:bg-navy-900/40">
-                    <div className="flex items-center justify-between gap-2"><p className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Bottle balance summary', 'Сводка по таре', 'Idish balansi')}</p>{bottleLoading ? <span className="text-xs text-gray-500">{tr('Loading...', 'Загрузка...', 'Yuklanmoqda...')}</span> : null}</div>
+                    <div className="flex items-center justify-between gap-2"><p className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Bottle balance summary', 'Bottle balance summary', 'Idish balansi')}</p>{bottleLoading ? <span className="text-xs text-gray-500">{tr('Loading...', 'Loading...', 'Yuklanmoqda...')}</span> : null}</div>
                     <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
-                      <div><p className="text-xs text-gray-500">{tr('Outstanding bottles', 'Бутылки на руках', "Qo'ldagi idishlar")}</p><p className="font-semibold text-gray-900 dark:text-white">{bottleSummary?.total_outstanding_bottles_count ?? 0}</p></div>
-                      <div><p className="text-xs text-gray-500">{tr('Deposit held', 'Удерживаемый депозит', 'Ushlab turilgan depozit')}</p><p className="font-semibold text-gray-900 dark:text-white">{(bottleSummary?.deposit_held_total_uzs ?? 0).toLocaleString()} UZS</p></div>
+                      <div><p className="text-xs text-gray-500">{tr('Outstanding bottles', 'Outstanding bottles', "Qo'ldagi idishlar")}</p><p className="font-semibold text-gray-900 dark:text-white">{bottleSummary?.total_outstanding_bottles_count ?? 0}</p></div>
+                      <div><p className="text-xs text-gray-500">{tr('Deposit held', 'Deposit held', 'Ushlab turilgan depozit')}</p><p className="font-semibold text-gray-900 dark:text-white">{(bottleSummary?.deposit_held_total_uzs ?? 0).toLocaleString()} UZS</p></div>
                     </div>
                     {bottleBalances.length ? (
-                      <div className="mt-3 space-y-2">{bottleBalances.map((balance) => <div key={balance.id} className="rounded-lg border border-light-border dark:border-navy-700 p-3 bg-white dark:bg-navy-800"><p className="text-sm font-medium text-gray-900 dark:text-white">{balance.product_name} {balance.product_size_liters ? `· ${balance.product_size_liters}L` : ''}</p><p className="text-xs text-gray-500 mt-1">{tr('Covered bottles', 'Покрытые бутылки', 'Qoplangan idishlar')}: {balance.outstanding_bottles_count}</p></div>)}</div>
-                    ) : <p className="mt-3 text-sm text-gray-500">{selectedClientId ? tr('No active bottle balance for this client.', 'У клиента нет активного баланса тары.', "Bu mijozda faol idish balansi yo'q.") : tr('Select a client to load bottle balance.', 'Выберите клиента, чтобы загрузить баланс тары.', 'Idish balansini yuklash uchun mijozni tanlang.')}</p>}
+                      <div className="mt-3 space-y-2">{bottleBalances.map((balance) => <div key={balance.id} className="rounded-lg border border-light-border dark:border-navy-700 p-3 bg-white dark:bg-navy-800"><p className="text-sm font-medium text-gray-900 dark:text-white">{balance.product_name} {balance.product_size_liters ? `- ${balance.product_size_liters}L` : ''}</p><p className="text-xs text-gray-500 mt-1">{tr('Covered bottles', 'Covered bottles', 'Qoplangan idishlar')}: {balance.outstanding_bottles_count}</p></div>)}</div>
+                    ) : <p className="mt-3 text-sm text-gray-500">{selectedClientId ? tr('No active bottle balance for this client.', 'No active bottle balance for this client.', "Bu mijozda faol idish balansi yo'q.") : tr('Select a client to load bottle balance.', 'Select a client to load bottle balance.', 'Idish balansini yuklash uchun mijozni tanlang.')}</p>}
                   </div>
                 ) : null}
 
                 <div className="space-y-3">
                   <div className="rounded-lg border border-light-border dark:border-navy-700 p-4 bg-gray-50 dark:bg-navy-900/40">
-                    <div className="flex justify-between items-center gap-3"><span className="text-sm text-gray-600 dark:text-gray-400">{tr('Product subtotal', 'Подытог товаров', 'Mahsulot summasi')}</span><span className="text-sm font-semibold text-gray-900 dark:text-white">{previewTotals.productSubtotalUzs.toLocaleString()} UZS</span></div>
-                    <div className="mt-2 flex justify-between items-center gap-3"><span className="text-sm text-amber-700 dark:text-amber-400">{tr('Bottle deposit', 'Депозит за тару', 'Idish depoziti')}</span><span className="text-sm font-semibold text-amber-800 dark:text-amber-300">{previewTotals.bottleDepositTotalUzs.toLocaleString()} UZS</span></div>
-                    <div className="mt-3 pt-3 border-t border-light-border dark:border-navy-700 flex justify-between items-center gap-3"><span className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Total payable', 'Итого к оплате', "Jami to'lov")}</span><span className="text-lg font-bold text-gray-900 dark:text-white">{previewTotals.totalAmountUzs.toLocaleString()} UZS</span></div>
+                    <div className="flex justify-between items-center gap-3"><span className="text-sm text-gray-600 dark:text-gray-400">{tr('Product subtotal', 'Product subtotal', 'Mahsulot summasi')}</span><span className="text-sm font-semibold text-gray-900 dark:text-white">{previewTotals.productSubtotalUzs.toLocaleString()} UZS</span></div>
+                    <div className="mt-2 flex justify-between items-center gap-3"><span className="text-sm text-amber-700 dark:text-amber-400">{tr('Bottle deposit', 'Bottle deposit', 'Idish depoziti')}</span><span className="text-sm font-semibold text-amber-800 dark:text-amber-300">{previewTotals.bottleDepositTotalUzs.toLocaleString()} UZS</span></div>
+                    <div className="mt-3 pt-3 border-t border-light-border dark:border-navy-700 flex justify-between items-center gap-3"><span className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Total payable', 'Total payable', "Jami to'lov")}</span><span className="text-lg font-bold text-gray-900 dark:text-white">{previewTotals.totalAmountUzs.toLocaleString()} UZS</span></div>
                   </div>
 
                   <div className="rounded-lg border border-light-border dark:border-navy-700 overflow-hidden">
-                    <div className="px-4 py-3 bg-gray-50 dark:bg-navy-900 border-b border-light-border dark:border-navy-700"><p className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Preview lines', 'Строки предпросмотра', "Oldindan ko'rish qatorlari")}</p></div>
+                    <div className="px-4 py-3 bg-gray-50 dark:bg-navy-900 border-b border-light-border dark:border-navy-700"><p className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Preview lines', 'Preview lines', "Oldindan ko'rish qatorlari")}</p></div>
                     <div className="max-h-[420px] overflow-y-auto divide-y divide-light-border dark:divide-navy-700">
                       {previewLines.length ? previewLines.map((line) => (
                         <div key={line.id} className="p-4 space-y-2">
-                          <div className="flex items-start justify-between gap-3"><div><p className="text-sm font-medium text-gray-900 dark:text-white">{line.productName}</p><p className="text-xs text-gray-500">{line.productSizeLiters}L · {line.quantity} × {line.unitPriceUzs.toLocaleString()} UZS</p></div><p className="text-sm font-semibold text-gray-900 dark:text-white">{line.lineTotalUzs.toLocaleString()} UZS</p></div>
+                          <div className="flex items-start justify-between gap-3"><div><p className="text-sm font-medium text-gray-900 dark:text-white">{line.productName}</p><p className="text-xs text-gray-500">{line.productSizeLiters}L - {line.quantity} x {line.unitPriceUzs.toLocaleString()} UZS</p></div><p className="text-sm font-semibold text-gray-900 dark:text-white">{line.lineTotalUzs.toLocaleString()} UZS</p></div>
                           {line.requiresReturnableBottle ? (
                             <div className="grid grid-cols-2 gap-2 text-xs text-gray-500">
-                              <p>{tr('Covered bottles', 'Покрыто бутылок', 'Qoplangan idishlar')}: <span className="text-gray-900 dark:text-white">{line.alreadyCoveredBottleCount}</span></p>
-                              <p>{tr('Deposit charged for', 'Депозит начислен за', 'Depozit olinadi')}: <span className="text-gray-900 dark:text-white">{line.bottleDepositChargeQuantity}</span></p>
-                              <p>{tr('Deposit / unit', 'Депозит / ед.', 'Depozit / birlik')}: <span className="text-gray-900 dark:text-white">{line.bottleDepositUnitUzs.toLocaleString()} UZS</span></p>
-                              <p>{tr('Deposit total', 'Итого депозит', 'Jami depozit')}: <span className="text-amber-700 dark:text-amber-400">{line.bottleDepositTotalUzs.toLocaleString()} UZS</span></p>
+                              <p>{tr('Covered bottles', 'Covered bottles', 'Qoplangan idishlar')}: <span className="text-gray-900 dark:text-white">{line.alreadyCoveredBottleCount}</span></p>
+                              <p>{tr('Deposit charged for', 'Deposit charged for', 'Depozit olinadi')}: <span className="text-gray-900 dark:text-white">{line.bottleDepositChargeQuantity}</span></p>
+                              <p>{tr('Deposit / unit', 'Deposit / unit', 'Depozit / birlik')}: <span className="text-gray-900 dark:text-white">{line.bottleDepositUnitUzs.toLocaleString()} UZS</span></p>
+                              <p>{tr('Deposit total', 'Deposit total', 'Jami depozit')}: <span className="text-amber-700 dark:text-amber-400">{line.bottleDepositTotalUzs.toLocaleString()} UZS</span></p>
                             </div>
-                          ) : <p className="text-xs text-gray-500">{tr('No bottle deposit for this product.', 'Для этого товара нет депозита за тару.', "Bu mahsulot uchun idish depoziti yo'q.")}</p>}
+                          ) : <p className="text-xs text-gray-500">{tr('No bottle deposit for this product.', 'No bottle deposit for this product.', "Bu mahsulot uchun idish depoziti yo'q.")}</p>}
                         </div>
-                      )) : <div className="p-4 text-sm text-gray-500">{tr('Add products to see preview.', 'Добавьте товары для предпросмотра.', "Oldindan ko'rish uchun mahsulot qo'shing.")}</div>}
+                      )) : <div className="p-4 text-sm text-gray-500">{tr('Add products to see preview.', 'Add products to see preview.', "Oldindan ko'rish uchun mahsulot qo'shing.")}</div>}
                     </div>
                   </div>
                 </div>
@@ -836,7 +836,7 @@ const Orders: React.FC = () => {
 
           <div className="flex justify-end gap-3 pt-4 border-t border-light-border dark:border-navy-700">
             <button type="button" onClick={closeCreateModal} className="px-4 py-2 rounded-lg text-sm border border-light-border dark:border-navy-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-navy-700 transition-colors">{t('cancel')}</button>
-            <button disabled={createLoading} type="submit" className="px-4 py-2 rounded-lg text-sm font-medium bg-primary-blue text-white hover:bg-blue-700 transition-colors disabled:opacity-50">{createLoading ? tr('Saving...', 'Сохранение...', 'Saqlanmoqda...') : tr('Create order', 'Создать заказ', 'Buyurtma yaratish')}</button>
+            <button disabled={createLoading} type="submit" className="px-4 py-2 rounded-lg text-sm font-medium bg-primary-blue text-white hover:bg-blue-700 transition-colors disabled:opacity-50">{createLoading ? tr('Saving...', 'Saving...', 'Saqlanmoqda...') : tr('Create order', 'Create order', 'Buyurtma yaratish')}</button>
           </div>
         </form>
       </Modal>

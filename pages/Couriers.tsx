@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Badge } from '../components/ui/Badge';
 import { Card } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
@@ -132,7 +132,7 @@ const Couriers: React.FC = () => {
       const data = await apiRequest<ListResponse<CourierStats>>(url);
       setRows(data.results || []);
     } catch (e) {
-      const message = e instanceof Error ? e.message : tr('Failed to load couriers', 'Не удалось загрузить курьеров', 'Kuryerlarni yuklab bo‘lmadi');
+      const message = e instanceof Error ? e.message : tr('Failed to load couriers', 'Failed to load couriers', "Kuryerlarni yuklab bo'lmadi");
       setError(message);
       toast.error(message);
     } finally {
@@ -150,7 +150,7 @@ const Couriers: React.FC = () => {
       setQueue(queueRes.results || []);
       setEvents(eventsRes.results || []);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : tr('Failed to load courier operations', 'Не удалось загрузить операции курьеров', 'Kuryer operatsiyalarini yuklab bo‘lmadi'));
+      toast.error(e instanceof Error ? e.message : tr('Failed to load courier operations', "Kuryer operatsiyalarini yuklab bo'lmadi"));
     } finally {
       setLoadingOps(false);
     }
@@ -214,7 +214,7 @@ const Couriers: React.FC = () => {
   const saveCourier = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.full_name.trim()) {
-      toast.warning(tr('Full name is required.', 'Полное имя обязательно.', 'To‘liq ism majburiy.'));
+      toast.warning(tr('Full name is required.', 'Full name is required.', "To'liq ism majburiy."));
       return;
     }
 
@@ -233,13 +233,13 @@ const Couriers: React.FC = () => {
           });
 
       if (!response.courier) {
-        throw new Error(tr('Invalid courier response', 'Некорректный ответ курьера', 'Kuryer javobi noto‘g‘ri'));
+        throw new Error(tr('Invalid courier response', 'Invalid courier response', "Kuryer javobi noto'g'ri"));
       }
 
       toast.success(
         editingRow
-          ? tr('Courier updated.', 'Курьер обновлён.', 'Kuryer yangilandi.')
-          : tr('Courier created.', 'Курьер создан.', 'Kuryer yaratildi.')
+          ? tr('Courier updated.', 'Courier updated.', 'Kuryer yangilandi.')
+          : tr('Courier created.', 'Courier created.', 'Kuryer yaratildi.')
       );
 
       closeModal();
@@ -248,15 +248,15 @@ const Couriers: React.FC = () => {
     } catch (e) {
       if (e instanceof ApiError) {
         if (e.status === 409) {
-          toast.error(tr('Duplicate phone or Telegram ID.', 'Дублируется телефон или Telegram ID.', 'Telefon yoki Telegram ID takrorlangan.'));
+          toast.error(tr('Duplicate phone or Telegram ID.', 'Duplicate phone or Telegram ID.', 'Telefon yoki Telegram ID takrorlangan.'));
           return;
         }
         if (e.status === 400) {
-          toast.error(e.message || tr('Invalid courier data.', 'Неверные данные курьера.', 'Kuryer ma’lumoti noto‘g‘ri.'));
+          toast.error(e.message || tr('Invalid courier data.', 'Invalid courier data.', "Kuryer ma'lumoti noto'g'ri."));
           return;
         }
       }
-      const message = e instanceof Error ? e.message : tr('Failed to save courier', 'Не удалось сохранить курьера', 'Kuryerni saqlab bo‘lmadi');
+      const message = e instanceof Error ? e.message : tr('Failed to save courier', 'Failed to save courier', "Kuryerni saqlab bo'lmadi");
       setError(message);
       toast.error(message);
     } finally {
@@ -268,7 +268,7 @@ const Couriers: React.FC = () => {
     const ok = window.confirm(
       tr(
         `Deactivate courier "${row.full_name}"?`,
-        `Деактивировать курьера "${row.full_name}"?`,
+        `Deactivate courier "${row.full_name}"?`,
         `"${row.full_name}" kuryerni nofaol qilishni xohlaysizmi?`
       )
     );
@@ -277,11 +277,11 @@ const Couriers: React.FC = () => {
     try {
       setDeletingId(row.id);
       await apiRequest<CourierMutationResponse>(ENDPOINTS.COURIERS.DETAIL(row.id), { method: 'DELETE' });
-      toast.success(tr('Courier removed from active list.', 'Курьер убран из активного списка.', 'Kuryer faol ro‘yxatdan chiqarildi.'));
+      toast.success(tr('Courier removed from active list.', 'Courier removed from active list.', "Kuryer faol ro'yxatdan chiqarildi."));
       await loadCouriers();
       await loadOperations();
     } catch (e) {
-      const message = e instanceof Error ? e.message : tr('Failed to delete courier', 'Не удалось удалить курьера', 'Kuryerni o‘chirib bo‘lmadi');
+      const message = e instanceof Error ? e.message : tr('Failed to delete courier', 'Failed to delete courier', "Kuryerni o'chirib bo'lmadi");
       toast.error(message);
     } finally {
       setDeletingId(null);
@@ -342,15 +342,15 @@ const Couriers: React.FC = () => {
   const getEventTypeLabel = (type: string) => {
     const key = String(type || '').toUpperCase();
     const labels: Record<string, [string, string, string]> = {
-      BROADCASTED: ['Broadcasted', 'Разослано курьерам', 'Kuryerlarga yuborildi'],
-      ACCEPTED: ['Accepted', 'Принят', 'Qabul qilingan'],
-      ASSIGNED: ['Assigned', 'Назначен', 'Biriktirilgan'],
-      DISPATCHED: ['Dispatched', 'Отправлен', 'Jo‘natilgan'],
-      OUT_FOR_DELIVERY: ['Out for delivery', 'В доставке', 'Yetkazib berishda'],
-      DELIVERED: ['Delivered', 'Доставлен', 'Yetkazildi'],
-      REJECTED: ['Rejected', 'Отклонён', 'Rad etilgan'],
-      CANCELED: ['Canceled', 'Отменён', 'Bekor qilingan'],
-      PROBLEM: ['Problem', 'Проблема', 'Muammo'],
+      BROADCASTED: ['Broadcasted', 'Broadcasted', 'Kuryerlarga yuborildi'],
+      ACCEPTED: ['Accepted', 'Accepted', 'Qabul qilingan'],
+      ASSIGNED: ['Assigned', 'Assigned', 'Biriktirilgan'],
+      DISPATCHED: ['Dispatched', 'Dispatched', "Jo'natilgan"],
+      OUT_FOR_DELIVERY: ['Out for delivery', 'Out for delivery', 'Yetkazib berishda'],
+      DELIVERED: ['Delivered', 'Delivered', 'Yetkazildi'],
+      REJECTED: ['Rejected', 'Rejected', 'Rad etilgan'],
+      CANCELED: ['Canceled', 'Canceled', 'Bekor qilingan'],
+      PROBLEM: ['Problem', 'Problem', 'Muammo'],
     };
     const tuple = labels[key];
     return tuple ? tr(tuple[0], tuple[1], tuple[2]) : key;
@@ -360,9 +360,9 @@ const Couriers: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-light-text dark:text-white">{tr('Couriers', 'Курьеры', 'Kuryerlar')}</h1>
+            <h1 className="text-2xl font-bold text-light-text dark:text-white">{tr('Couriers', 'Couriers', 'Kuryerlar')}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            {tr('Courier profiles, stats, and order activity.', 'Профили курьеров, статистика и активность по заказам.', 'Kuryer profillari, statistikasi va buyurtma faoliyati.')}
+              {tr('Courier profiles, stats, and order activity.', 'Courier profiles, stats, and order activity.', 'Kuryer profillari, statistikasi va buyurtma faoliyati.')}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -370,7 +370,7 @@ const Couriers: React.FC = () => {
             onClick={refreshAll}
             disabled={loading || loadingOps}
             className="p-2 bg-white dark:bg-navy-800 border border-light-border dark:border-navy-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-navy-700 transition"
-            title={tr('Refresh', 'Обновить', 'Yangilash')}
+            title={tr('Refresh', 'Refresh', 'Yangilash')}
           >
             <RefreshCw size={18} className={loading || loadingOps ? 'animate-spin' : ''} />
           </button>
@@ -378,7 +378,7 @@ const Couriers: React.FC = () => {
             onClick={openCreate}
             className="px-4 py-2 bg-primary-blue hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors inline-flex items-center gap-2"
           >
-            <Plus size={16} /> {tr('Add Courier', 'Добавить курьера', 'Kuryer qo‘shish')}
+            <Plus size={16} /> {tr('Add Courier', 'Add Courier', "Kuryer qo'shish")}
           </button>
         </div>
       </div>
@@ -387,15 +387,15 @@ const Couriers: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
-          <p className="text-xs uppercase tracking-wide text-gray-500">{tr('Total Orders', 'Всего заказов', 'Jami buyurtmalar')}</p>
+          <p className="text-xs uppercase tracking-wide text-gray-500">{tr('Total Orders', 'Total Orders', 'Jami buyurtmalar')}</p>
           <p className="mt-2 text-2xl font-bold text-light-text dark:text-white">{totals.total}</p>
         </Card>
         <Card>
-          <p className="text-xs uppercase tracking-wide text-gray-500">{tr('Active Orders', 'Активные заказы', 'Faol buyurtmalar')}</p>
+          <p className="text-xs uppercase tracking-wide text-gray-500">{tr('Active Orders', 'Active Orders', 'Faol buyurtmalar')}</p>
           <p className="mt-2 text-2xl font-bold text-light-text dark:text-white">{totals.active}</p>
         </Card>
         <Card>
-          <p className="text-xs uppercase tracking-wide text-gray-500">{tr('Completed Orders', 'Завершённые заказы', 'Tugatilgan buyurtmalar')}</p>
+          <p className="text-xs uppercase tracking-wide text-gray-500">{tr('Completed Orders', 'Completed Orders', 'Tugatilgan buyurtmalar')}</p>
           <p className="mt-2 text-2xl font-bold text-light-text dark:text-white">{totals.completed}</p>
         </Card>
       </div>
@@ -409,14 +409,14 @@ const Couriers: React.FC = () => {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && loadCouriers()}
-              placeholder={tr('Search courier...', 'Поиск курьера...', 'Kuryerni qidirish...')}
+              placeholder={tr('Search courier...', 'Search courier...', 'Kuryerni qidirish...')}
               className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg text-sm focus:outline-none focus:border-primary-blue dark:text-white"
             />
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
               <input type="checkbox" checked={includeInactive} onChange={(e) => setIncludeInactive(e.target.checked)} />
-              {tr('Include inactive', 'Показывать неактивных', 'Nofaollarni ko‘rsatish')}
+              {tr('Include inactive', 'Include inactive', "Nofaollarni ko'rsatish")}
             </label>
             <select
               value={String(limit)}
@@ -431,7 +431,7 @@ const Couriers: React.FC = () => {
               onClick={loadCouriers}
               className="px-3 py-2 rounded-lg text-sm font-medium bg-white dark:bg-navy-900 border border-light-border dark:border-navy-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-navy-700"
             >
-              {tr('Apply', 'Применить', 'Qo‘llash')}
+              {tr('Apply', 'Apply', "Qo'llash")}
             </button>
           </div>
         </div>
@@ -440,22 +440,22 @@ const Couriers: React.FC = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50 dark:bg-navy-900/50 text-xs uppercase text-gray-500 dark:text-gray-400 border-b border-light-border dark:border-navy-700">
-                <th className="px-6 py-4 font-semibold">{tr('Courier', 'Курьер', 'Kuryer')}</th>
+                <th className="px-6 py-4 font-semibold">{tr('Courier', 'Courier', 'Kuryer')}</th>
                 <th className="px-6 py-4 font-semibold">{tr('Telegram', 'Telegram', 'Telegram')}</th>
-                <th className="px-6 py-4 font-semibold text-center">{tr('Active', 'Активные', 'Faol')}</th>
-                <th className="px-6 py-4 font-semibold text-center">{tr('Completed', 'Завершённые', 'Tugagan')}</th>
-                <th className="px-6 py-4 font-semibold text-center">{tr('Total', 'Всего', 'Jami')}</th>
-                <th className="px-6 py-4 font-semibold">{tr('Last Event', 'Последнее событие', 'Oxirgi hodisa')}</th>
-                <th className="px-6 py-4 font-semibold">{tr('Status', 'Статус', 'Holat')}</th>
-                <th className="px-6 py-4 font-semibold text-right">{tr('Actions', 'Действия', 'Amallar')}</th>
+                <th className="px-6 py-4 font-semibold text-center">{tr('Active', 'Active', 'Faol')}</th>
+                <th className="px-6 py-4 font-semibold text-center">{tr('Completed', 'Completed', 'Tugagan')}</th>
+                <th className="px-6 py-4 font-semibold text-center">{tr('Total', 'Total', 'Jami')}</th>
+                <th className="px-6 py-4 font-semibold">{tr('Last Event', 'Last Event', 'Oxirgi hodisa')}</th>
+                <th className="px-6 py-4 font-semibold">{tr('Status', 'Status', 'Holat')}</th>
+                <th className="px-6 py-4 font-semibold text-right">{tr('Actions', 'Actions', 'Amallar')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-light-border dark:divide-navy-700">
               {loading && rows.length === 0 && (
-                <tr><td colSpan={8} className="px-6 py-10 text-center text-gray-500">{tr('Loading couriers...', 'Загрузка курьеров...', 'Kuryerlar yuklanmoqda...')}</td></tr>
+                <tr><td colSpan={8} className="px-6 py-10 text-center text-gray-500">{tr('Loading couriers...', 'Loading couriers...', 'Kuryerlar yuklanmoqda...')}</td></tr>
               )}
               {!loading && rows.length === 0 && (
-                <tr><td colSpan={8} className="px-6 py-10 text-center text-gray-500">{tr('No couriers found.', 'Курьеры не найдены.', 'Kuryerlar topilmadi.')}</td></tr>
+                <tr><td colSpan={8} className="px-6 py-10 text-center text-gray-500">{tr('No couriers found.', 'No couriers found.', 'Kuryerlar topilmadi.')}</td></tr>
               )}
               {rows.map((row) => (
                 <tr key={row.id} className="hover:bg-gray-50 dark:hover:bg-navy-700/50 transition-colors">
@@ -488,19 +488,19 @@ const Couriers: React.FC = () => {
                   <td className="px-6 py-4 text-sm text-gray-500">{row.last_event_at ? new Date(row.last_event_at).toLocaleString() : '-'}</td>
                   <td className="px-6 py-4">
                     <Badge variant={row.is_active ? 'success' : 'default'} dot>
-                      {row.is_active ? tr('Active', 'Активный', 'Faol') : tr('Inactive', 'Неактивный', 'Nofaol')}
+                      {row.is_active ? tr('Active', 'Active', 'Faol') : tr('Inactive', 'Inactive', 'Nofaol')}
                     </Badge>
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="inline-flex items-center gap-2">
-                      <button onClick={() => openEdit(row)} className="p-1.5 text-gray-500 dark:text-gray-300 hover:text-primary-blue dark:hover:text-blue-400 transition-colors" title={tr('Edit', 'Редактировать', 'Tahrirlash')}>
+                      <button onClick={() => openEdit(row)} className="p-1.5 text-gray-500 dark:text-gray-300 hover:text-primary-blue dark:hover:text-blue-400 transition-colors" title={tr('Edit', 'Edit', 'Tahrirlash')}>
                         <Edit2 size={16} />
                       </button>
                       <button
                         onClick={() => softDeleteCourier(row)}
                         disabled={deletingId === row.id || row.is_active === false}
                         className="p-1.5 text-gray-500 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 transition-colors disabled:opacity-40"
-                        title={tr('Remove from active list', 'Убрать из активного списка', 'Faol ro‘yxatdan chiqarish')}
+                        title={tr('Remove from active list', 'Remove from active list', "Faol ro'yxatdan chiqarish")}
                       >
                         <Trash2 size={16} />
                       </button>
@@ -516,9 +516,9 @@ const Couriers: React.FC = () => {
       <Card className="!p-0 overflow-hidden">
         <div className="p-4 border-b border-light-border dark:border-navy-700 bg-white dark:bg-navy-800 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-light-text dark:text-white">{tr('Courier Operations', 'Операции курьеров', 'Kuryer operatsiyalari')}</h3>
+            <h3 className="text-lg font-semibold text-light-text dark:text-white">{tr('Courier Operations', 'Courier Operations', 'Kuryer operatsiyalari')}</h3>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              {tr('See who is handling which orders and who completed them.', 'Смотрите, кто ведёт какие заказы и кто завершил доставку.', 'Qaysi buyurtmani kim bajarayotgani va kim yakunlaganini ko‘ring.')}
+              {tr('See who is handling which orders and who completed them.', 'See who is handling which orders and who completed them.', "Qaysi buyurtmani kim bajarayotgani va kim yakunlaganini ko'ring.")}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -526,13 +526,13 @@ const Couriers: React.FC = () => {
               onClick={() => setOpsTab('queue')}
               className={`px-3 py-1.5 rounded-lg text-sm border ${opsTab === 'queue' ? 'bg-primary-blue text-white border-primary-blue' : 'bg-white dark:bg-navy-900 border-light-border dark:border-navy-600 text-gray-700 dark:text-gray-200'}`}
             >
-              {tr('Queue', 'Очередь', 'Navbat')}
+              {tr('Queue', 'Queue', 'Navbat')}
             </button>
             <button
               onClick={() => setOpsTab('events')}
               className={`px-3 py-1.5 rounded-lg text-sm border ${opsTab === 'events' ? 'bg-primary-blue text-white border-primary-blue' : 'bg-white dark:bg-navy-900 border-light-border dark:border-navy-600 text-gray-700 dark:text-gray-200'}`}
             >
-              {tr('History', 'История', 'Tarix')}
+              {tr('History', 'History', 'Tarix')}
             </button>
           </div>
         </div>
@@ -542,17 +542,17 @@ const Couriers: React.FC = () => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-gray-50 dark:bg-navy-900/50 text-xs uppercase text-gray-500 dark:text-gray-400 border-b border-light-border dark:border-navy-700">
-                  <th className="px-6 py-4 font-semibold">{tr('Order', 'Заказ', 'Buyurtma')}</th>
-                  <th className="px-6 py-4 font-semibold">{tr('Address', 'Адрес', 'Manzil')}</th>
-                  <th className="px-6 py-4 font-semibold">{tr('Total (UZS)', 'Сумма', 'Jami (UZS)')}</th>
-                  <th className="px-6 py-4 font-semibold">{tr('Created', 'Создан', 'Yaratilgan')}</th>
+                  <th className="px-6 py-4 font-semibold">{tr('Order', 'Order', 'Buyurtma')}</th>
+                  <th className="px-6 py-4 font-semibold">{tr('Address', 'Address', 'Manzil')}</th>
+                  <th className="px-6 py-4 font-semibold">{tr('Total (UZS)', 'Total (UZS)', 'Jami (UZS)')}</th>
+                  <th className="px-6 py-4 font-semibold">{tr('Created', 'Created', 'Yaratilgan')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-light-border dark:divide-navy-700">
                 {loadingOps && queue.length === 0 ? (
-                  <tr><td colSpan={4} className="py-10 text-center text-gray-500">{tr('Loading queue...', 'Загрузка очереди...', 'Navbat yuklanmoqda...')}</td></tr>
+                  <tr><td colSpan={4} className="py-10 text-center text-gray-500">{tr('Loading queue...', 'Loading queue...', 'Navbat yuklanmoqda...')}</td></tr>
                 ) : queue.length === 0 ? (
-                  <tr><td colSpan={4} className="py-10 text-center text-gray-500">{tr('Queue is empty.', 'Очередь пуста.', 'Navbat bo‘sh.')}</td></tr>
+                  <tr><td colSpan={4} className="py-10 text-center text-gray-500">{tr('Queue is empty.', 'Queue is empty.', "Navbat bo'sh.")}</td></tr>
                 ) : (
                   queue.map((order) => (
                     <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-navy-700/50 transition-colors">
@@ -587,9 +587,9 @@ const Couriers: React.FC = () => {
           <div>
             <div className="px-4 py-3 border-b border-light-border dark:border-navy-700 flex flex-wrap items-center gap-2 bg-white dark:bg-navy-800">
               {([
-                ['all', tr('All events', 'Все события', 'Barcha hodisalar')],
-                ['active', tr('Active work', 'Активная работа', 'Faol ish')],
-                ['completed', tr('Completed', 'Завершено', 'Yakunlangan')],
+                ['all', tr('All events', 'All events', 'Barcha hodisalar')],
+                ['active', tr('Active work', 'Active work', 'Faol ish')],
+                ['completed', tr('Completed', 'Completed', 'Yakunlangan')],
               ] as Array<[EventFilter, string]>).map(([key, label]) => (
                 <button
                   key={key}
@@ -604,17 +604,17 @@ const Couriers: React.FC = () => {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-gray-50 dark:bg-navy-900/50 text-xs uppercase text-gray-500 dark:text-gray-400 border-b border-light-border dark:border-navy-700">
-                    <th className="px-6 py-4 font-semibold">{tr('Event', 'Событие', 'Hodisa')}</th>
-                    <th className="px-6 py-4 font-semibold">{tr('Order', 'Заказ', 'Buyurtma')}</th>
-                    <th className="px-6 py-4 font-semibold">{tr('Courier', 'Курьер', 'Kuryer')}</th>
-                    <th className="px-6 py-4 font-semibold">{tr('Time', 'Время', 'Vaqt')}</th>
+                    <th className="px-6 py-4 font-semibold">{tr('Event', 'Event', 'Hodisa')}</th>
+                    <th className="px-6 py-4 font-semibold">{tr('Order', 'Order', 'Buyurtma')}</th>
+                    <th className="px-6 py-4 font-semibold">{tr('Courier', 'Courier', 'Kuryer')}</th>
+                    <th className="px-6 py-4 font-semibold">{tr('Time', 'Time', 'Vaqt')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-light-border dark:divide-navy-700">
                   {loadingOps && events.length === 0 ? (
-                    <tr><td colSpan={4} className="py-10 text-center text-gray-500">{tr('Loading events...', 'Загрузка событий...', 'Hodisalar yuklanmoqda...')}</td></tr>
+                    <tr><td colSpan={4} className="py-10 text-center text-gray-500">{tr('Loading events...', 'Loading events...', 'Hodisalar yuklanmoqda...')}</td></tr>
                   ) : filteredEvents.length === 0 ? (
-                    <tr><td colSpan={4} className="py-10 text-center text-gray-500">{tr('No events in this filter.', 'Нет событий в этом фильтре.', 'Bu filtrda hodisalar yo‘q.')}</td></tr>
+                    <tr><td colSpan={4} className="py-10 text-center text-gray-500">{tr('No events in this filter.', 'No events in this filter.', "Bu filtrda hodisalar yo'q.")}</td></tr>
                   ) : (
                     filteredEvents.map((ev) => (
                       <tr key={ev.id} className="hover:bg-gray-50 dark:hover:bg-navy-700/50 transition-colors">
@@ -643,15 +643,15 @@ const Couriers: React.FC = () => {
         )}
       </Card>
 
-      <Modal isOpen={isModalOpen} onClose={closeModal} title={editingRow ? tr('Edit Courier', 'Редактировать курьера', 'Kuryerni tahrirlash') : tr('Add Courier', 'Добавить курьера', 'Kuryer qo‘shish')} footer={null}>
+      <Modal isOpen={isModalOpen} onClose={closeModal} title={editingRow ? tr('Edit Courier', 'Edit Courier', 'Kuryerni tahrirlash') : tr('Add Courier', 'Add Courier', "Kuryer qo'shish")} footer={null}>
         <form onSubmit={saveCourier} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Full Name', 'Полное имя', 'To‘liq ism')} *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Full Name', 'Full Name', "To'liq ism")} *</label>
               <input value={form.full_name} onChange={(e) => onChangeForm('full_name', e.target.value)} required className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Phone', 'Телефон', 'Telefon')}</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Phone', 'Phone', 'Telefon')}</label>
               <input value={form.phone} onChange={(e) => onChangeForm('phone', e.target.value)} placeholder="+998901234567" className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" />
             </div>
             <div>
@@ -661,12 +661,12 @@ const Couriers: React.FC = () => {
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Telegram Username</label>
               <input value={form.telegram_username} onChange={(e) => onChangeForm('telegram_username', e.target.value.replace(/^@/, ''))} placeholder="courier_username" className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" />
-              <p className="text-xs text-gray-500 mt-1">{tr('Phone can be empty if Telegram ID is provided (backend will generate tgid-...).', 'Телефон может быть пустым, если указан Telegram ID (backend создаст tgid-...).', 'Telegram ID bo‘lsa telefon bo‘sh qolishi mumkin (backend tgid-... yaratadi).')}</p>
+              <p className="text-xs text-gray-500 mt-1">{tr('Phone can be empty if Telegram ID is provided (backend will generate tgid-...).', 'Phone can be empty if Telegram ID is provided (backend will generate tgid-...).', "Telegram ID bo'lsa telefon bo'sh qolishi mumkin (backend tgid-... yaratadi).")}</p>
             </div>
             <div className="md:col-span-2">
               <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                 <input type="checkbox" checked={form.is_active} onChange={(e) => onChangeForm('is_active', e.target.checked)} />
-                {tr('Active courier', 'Активный курьер', 'Faol kuryer')}
+                {tr('Active courier', 'Active courier', 'Faol kuryer')}
               </label>
             </div>
           </div>
@@ -676,10 +676,10 @@ const Couriers: React.FC = () => {
               onClick={closeModal}
               className="px-4 py-2 rounded-lg text-sm border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 dark:border-red-800/60 dark:bg-red-950/30 dark:text-red-300 dark:hover:bg-red-900/30 transition-colors"
             >
-              {tr('Cancel', 'Отмена', 'Bekor qilish')}
+              {tr('Cancel', 'Cancel', 'Bekor qilish')}
             </button>
             <button disabled={saving} type="submit" className="px-4 py-2 rounded-lg text-sm font-medium bg-primary-blue text-white hover:bg-blue-600 transition-colors disabled:opacity-50">
-              {saving ? tr('Saving...', 'Сохранение...', 'Saqlanmoqda...') : editingRow ? tr('Save Changes', 'Сохранить изменения', 'O‘zgarishlarni saqlash') : tr('Create Courier', 'Создать курьера', 'Kuryer yaratish')}
+              {saving ? tr('Saving...', 'Saving...', 'Saqlanmoqda...') : editingRow ? tr('Save Changes', 'Save Changes', "O'zgarishlarni saqlash") : tr('Create Courier', 'Create Courier', 'Kuryer yaratish')}
             </button>
           </div>
         </form>

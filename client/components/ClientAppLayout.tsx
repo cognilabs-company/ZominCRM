@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { ArrowRight, Compass, Package, RefreshCw, ShieldCheck, Sparkles, UserRound } from 'lucide-react';
 import { useClientApp } from '../bootstrap/ClientAppContext';

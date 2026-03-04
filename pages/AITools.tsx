@@ -107,10 +107,10 @@ const AITools: React.FC = () => {
           return;
         }
         if (e instanceof ApiError && e.status === 403) {
-          setError(tr('AI access denied', 'AI kirish taqiqlangan', 'AI kirish taqiqlangan'));
+          setError(tr('AI access denied', 'AI access denied', 'AI kirish taqiqlangan'));
           return;
         }
-        toast.warning(e instanceof Error ? e.message : tr('Failed to load AI tool catalog', 'AI tool katalogini yuklab bo‘lmadi', 'AI tool katalogini yuklab bo‘lmadi'));
+        toast.warning(e instanceof Error ? e.message : tr('Failed to load AI tool catalog', "AI tool katalogini yuklab bo\'lmadi", "AI tool katalogini yuklab bo\'lmadi"));
       } finally {
         setLoadingCatalog(false);
       }
@@ -178,16 +178,16 @@ const AITools: React.FC = () => {
         return;
       }
       if (e instanceof ApiError && e.status === 403) {
-        setError(tr('AI access denied', 'AI kirish taqiqlangan', 'AI kirish taqiqlangan'));
-        toast.error(tr('AI access denied', 'AI kirish taqiqlangan', 'AI kirish taqiqlangan'));
+        setError(tr('AI access denied', 'AI access denied', 'AI kirish taqiqlangan'));
+        toast.error(tr('AI access denied', 'AI access denied', 'AI kirish taqiqlangan'));
         return;
       }
       if (e instanceof ApiError && (e.status === 400 || e.status === 409)) {
         toast.warning(e.message);
       } else {
-        toast.error(e instanceof Error ? e.message : tr('Playground request failed', 'Playground so‘rovi bajarilmadi', 'Playground so‘rovi bajarilmadi'));
+          toast.error(e instanceof Error ? e.message : tr('Playground request failed', "Playground so\'rovi bajarilmadi", "Playground so\'rovi bajarilmadi"));
       }
-      setError(e instanceof Error ? e.message : tr('Playground request failed', 'Playground so‘rovi bajarilmadi', 'Playground so‘rovi bajarilmadi'));
+        setError(e instanceof Error ? e.message : tr('Playground request failed', "Playground so\'rovi bajarilmadi", "Playground so\'rovi bajarilmadi"));
     } finally {
       setIsLoading(false);
     }
@@ -196,7 +196,7 @@ const AITools: React.FC = () => {
   return (
     <div className="h-[calc(100vh-8rem)] flex flex-col gap-4">
       <div className="flex justify-between items-center shrink-0">
-        <h1 className="text-2xl font-bold text-light-text dark:text-white">{tr('AI Playground', 'AI sinov maydoni', 'AI sinov maydoni')}</h1>
+        <h1 className="text-2xl font-bold text-light-text dark:text-white">{tr('AI Playground', 'AI Playground', 'AI sinov maydoni')}</h1>
       </div>
 
       {error && <div className="shrink-0 rounded-lg border border-red-200 bg-red-50 text-red-700 px-4 py-3 text-sm">{error}</div>}
@@ -208,7 +208,7 @@ const AITools: React.FC = () => {
               <div>
                 <p className="text-sm font-semibold text-light-text dark:text-white">{t('ai_playground')}</p>
                 <p className="text-[11px] text-gray-500 mt-1">
-                  {tr('Session', 'Sessiya', 'Sessiya')}: <span className="font-mono">{activeConversationId || tr('auto-create on first run', 'birinchi yuborishda avtomatik yaratiladi', 'birinchi yuborishda avtomatik yaratiladi')}</span>
+                  {tr('Session', 'Session', 'Sessiya')}: <span className="font-mono">{activeConversationId || tr('auto-create on first run', 'auto-create on first run', 'birinchi yuborishda avtomatik yaratiladi')}</span>
                 </p>
               </div>
               <button
@@ -226,7 +226,7 @@ const AITools: React.FC = () => {
               className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 py-3 space-y-3"
             >
               {chatHistory.length === 0 ? (
-                <p className="text-sm text-gray-500">{tr('Response will appear here.', 'Javob shu yerda ko‘rinadi.', 'Javob shu yerda ko‘rinadi.')}</p>
+                <p className="text-sm text-gray-500">{tr('Response will appear here.', "Javob shu yerda ko\'rinadi.", "Javob shu yerda ko\'rinadi.")}</p>
               ) : (
                 chatHistory.map((msg) => (
                   <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -271,7 +271,7 @@ const AITools: React.FC = () => {
                   className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary-blue text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
                 >
                   <Send size={16} />
-                  {isLoading ? tr('Running...', 'Bajarilmoqda...', 'Bajarilmoqda...') : tr('Send', 'Yuborish', 'Yuborish')}
+                  {isLoading ? tr('Running...', 'Running...', 'Bajarilmoqda...') : tr('Send', 'Send', 'Yuborish')}
                 </button>
               </div>
             </div>
@@ -280,25 +280,25 @@ const AITools: React.FC = () => {
           <div className="p-4 border-l border-light-border dark:border-navy-700 bg-white dark:bg-navy-800 min-h-0 overflow-y-auto space-y-3">
             <div className="p-3 rounded-lg bg-gray-50 dark:bg-navy-900/50 border border-light-border dark:border-navy-700 flex items-center gap-2 text-xs">
               <span className="px-2 py-1 rounded bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300">
-                {tr('Conversation', 'Suhbat', 'Suhbat')}: {(result?.conversation?.id || '-').toString().slice(0, 8)}
+                {tr('Conversation', 'Conversation', 'Suhbat')}: {(result?.conversation?.id || '-').toString().slice(0, 8)}
               </span>
               <span className="px-2 py-1 rounded bg-indigo-100 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300">
-                {tr('Provider', 'Provayder', 'Provayder')}: {result?.debug?.provider_used || '-'}
+                {tr('Provider', 'Provider', 'Provayder')}: {result?.debug?.provider_used || '-'}
               </span>
               <span className="px-2 py-1 rounded bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300">
-                {tr('Channel', 'Kanal', 'Kanal')}: {result?.conversation?.channel || '-'}
+                {tr('Channel', 'Channel', 'Kanal')}: {result?.conversation?.channel || '-'}
               </span>
               <span className="px-2 py-1 rounded bg-gray-100 dark:bg-navy-700 text-gray-700 dark:text-gray-300">
-                {tr('Iterations', 'Iteratsiyalar', 'Iteratsiyalar')}: {(result?.trace?.iterations || []).length}
+                {tr('Iterations', 'Iterations', 'Iteratsiyalar')}: {(result?.trace?.iterations || []).length}
               </span>
             </div>
 
             <div className="p-3 rounded-lg bg-gray-50 dark:bg-navy-900/50 border border-light-border dark:border-navy-700">
-              <p className="text-xs text-gray-500 mb-2">{tr('Tool Catalog', 'Tool katalogi', 'Tool katalogi')}</p>
+              <p className="text-xs text-gray-500 mb-2">{tr('Tool Catalog', 'Tool Catalog', 'Tool katalogi')}</p>
               {loadingCatalog ? (
-                <p className="text-xs text-gray-500">{tr('Loading tools...', 'Toollar yuklanmoqda...', 'Toollar yuklanmoqda...')}</p>
+                <p className="text-xs text-gray-500">{tr('Loading tools...', 'Loading tools...', 'Toollar yuklanmoqda...')}</p>
               ) : toolCatalog.length === 0 ? (
-                <p className="text-xs text-gray-500">{tr('No tools found.', 'Toollar topilmadi.', 'Toollar topilmadi.')}</p>
+                <p className="text-xs text-gray-500">{tr('No tools found.', 'No tools found.', 'Toollar topilmadi.')}</p>
               ) : (
                 <div className="space-y-2 max-h-44 overflow-y-auto pr-1">
                   {toolCatalog.map((tool) => (
@@ -312,25 +312,25 @@ const AITools: React.FC = () => {
             </div>
 
             <div className="p-3 rounded-lg bg-gray-50 dark:bg-navy-900/50 border border-light-border dark:border-navy-700">
-              <p className="text-xs text-gray-500 mb-1">{tr('Functions', 'Funksiyalar', 'Funksiyalar')}</p>
+              <p className="text-xs text-gray-500 mb-1">{tr('Functions', 'Functions', 'Funksiyalar')}</p>
               <p className="text-sm text-gray-800 dark:text-gray-200 break-words [overflow-wrap:anywhere]">
-                {(result?.tools?.called_functions || []).join(', ') || tr('No tools called', 'Tool chaqirilmadi', 'Tool chaqirilmadi')}
+                {(result?.tools?.called_functions || []).join(', ') || tr('No tools called', 'No tools called', 'Tool chaqirilmadi')}
               </p>
             </div>
 
             <div className="p-3 rounded-lg bg-gray-50 dark:bg-navy-900/50 border border-light-border dark:border-navy-700">
-              <p className="text-xs text-gray-500 mb-2">{tr('Executed Tools', 'Bajarilgan toollar', 'Bajarilgan toollar')}</p>
+              <p className="text-xs text-gray-500 mb-2">{tr('Executed Tools', 'Executed Tools', 'Bajarilgan toollar')}</p>
               {(result?.executed_tools || []).length === 0 ? (
-                <p className="text-xs text-gray-500">{tr('No tool execution details.', 'Tool bajarilishi tafsilotlari yo‘q.', 'Tool bajarilishi tafsilotlari yo‘q.')}</p>
+                <p className="text-xs text-gray-500">{tr('No tool execution details.', "Tool bajarilishi tafsilotlari yo\'q.", "Tool bajarilishi tafsilotlari yo\'q.")}</p>
               ) : (
                 <div className="space-y-2">
                   {(result?.executed_tools || []).map((row, index) => (
                     <div key={`${row.call_id || row.name || 'tool'}-${index}`} className="rounded border border-light-border dark:border-navy-700 bg-white dark:bg-navy-800 p-2">
                       <p className="text-xs font-semibold text-gray-800 dark:text-gray-100">{row.name || '-'}</p>
-                      <pre className="mt-1 text-[11px] whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-gray-600 dark:text-gray-300">{tr('args', 'argumentlar', 'argumentlar')}: {stringify(row.arguments || {})}</pre>
-                      <pre className="mt-1 text-[11px] whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-gray-600 dark:text-gray-300">{tr('result', 'natija', 'natija')}: {stringify(row.result ?? {})}</pre>
+                      <pre className="mt-1 text-[11px] whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-gray-600 dark:text-gray-300">{tr('args', 'args', 'argumentlar')}: {stringify(row.arguments || {})}</pre>
+                      <pre className="mt-1 text-[11px] whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-gray-600 dark:text-gray-300">{tr('result', 'result', 'natija')}: {stringify(row.result ?? {})}</pre>
                       {row.error && (
-                        <pre className="mt-1 text-[11px] whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-red-600">{tr('error', 'xato', 'xato')}: {stringify(row.error)}</pre>
+                        <pre className="mt-1 text-[11px] whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-red-600">{tr('error', 'error', 'xato')}: {stringify(row.error)}</pre>
                       )}
                     </div>
                   ))}
@@ -339,24 +339,24 @@ const AITools: React.FC = () => {
             </div>
 
             <div className="p-3 rounded-lg bg-gray-50 dark:bg-navy-900/50 border border-light-border dark:border-navy-700">
-              <p className="text-xs text-gray-500 mb-1">{tr('Prompt Source', 'Prompt manbasi', 'Prompt manbasi')}</p>
-              <p className="text-sm text-gray-800 dark:text-gray-200">{tr('system', 'tizim', 'tizim')}: {result?.debug?.prompt_source?.system_prompt || '-'}</p>
-              <p className="text-sm text-gray-800 dark:text-gray-200">{tr('user', 'foydalanuvchi', 'foydalanuvchi')}: {result?.debug?.prompt_source?.user_prompt || '-'}</p>
+              <p className="text-xs text-gray-500 mb-1">{tr('Prompt Source', 'Prompt Source', 'Prompt manbasi')}</p>
+              <p className="text-sm text-gray-800 dark:text-gray-200">{tr('system', 'system', 'tizim')}: {result?.debug?.prompt_source?.system_prompt || '-'}</p>
+              <p className="text-sm text-gray-800 dark:text-gray-200">{tr('user', 'user', 'foydalanuvchi')}: {result?.debug?.prompt_source?.user_prompt || '-'}</p>
               <p className="text-sm text-gray-800 dark:text-gray-200">{tr('credential', 'credential', 'credential')}: {result?.debug?.prompt_credential_id || '-'}</p>
-              <p className="text-sm text-gray-800 dark:text-gray-200">{tr('db prompts', 'db promptlar', 'db promptlar')}: {typeof result?.debug?.used_db_prompts === 'boolean' ? String(result?.debug?.used_db_prompts) : '-'}</p>
+              <p className="text-sm text-gray-800 dark:text-gray-200">{tr('db prompts', 'db prompts', 'db promptlar')}: {typeof result?.debug?.used_db_prompts === 'boolean' ? String(result?.debug?.used_db_prompts) : '-'}</p>
             </div>
 
             <div className="p-3 rounded-lg bg-gray-50 dark:bg-navy-900/50 border border-light-border dark:border-navy-700">
-              <p className="text-xs text-gray-500 mb-2">{tr('Trace', 'Iz', 'Iz')}</p>
+              <p className="text-xs text-gray-500 mb-2">{tr('Trace', 'Trace', 'Iz')}</p>
               <div className="space-y-2">
                 {(result?.trace?.iterations || []).map((it, idx) => (
                   <div key={idx} className="rounded border border-light-border dark:border-navy-700 bg-white dark:bg-navy-800 px-2 py-2">
-                    <p className="text-xs font-semibold text-gray-800 dark:text-gray-200">{tr('Iteration', 'Qadam', 'Qadam')} {it.iteration ?? idx + 1}</p>
+                    <p className="text-xs font-semibold text-gray-800 dark:text-gray-200">{tr('Iteration', 'Iteration', 'Qadam')} {it.iteration ?? idx + 1}</p>
                     <p className="text-xs text-gray-600 dark:text-gray-300 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{it.model_text || '-'}</p>
                   </div>
                 ))}
                 {(result?.trace?.iterations || []).length === 0 && (
-                  <p className="text-xs text-gray-500">{tr('No trace data yet.', 'Hozircha trace ma’lumoti yo‘q.', 'Hozircha trace ma’lumoti yo‘q.')}</p>
+                  <p className="text-xs text-gray-500">{tr('No trace data yet.', "Hozircha trace ma\'lumoti yo\'q.", "Hozircha trace ma\'lumoti yo\'q.")}</p>
                 )}
               </div>
             </div>

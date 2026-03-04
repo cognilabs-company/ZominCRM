@@ -68,7 +68,7 @@ export const EmptyOrders: React.FC<EmptyOrdersProps> = ({
   <ClientEmptyState
     icon={Package}
     title="No orders yet"
-    description="You haven't placed any orders yet. Start shopping to see your orders here."
+    description="You haven\'t placed any orders yet. Start shopping to see your orders here."
     action={onAction ? (
       <button
         type="button"
@@ -144,7 +144,7 @@ interface EmptyErrorProps {
 
 export const EmptyError: React.FC<EmptyErrorProps> = ({
   title = 'Something went wrong',
-  message = "We couldn't load this content. Please try again.",
+  message = "We couldn\'t load this content. Please try again.",
   onRetry,
   retryLabel
 }) => (

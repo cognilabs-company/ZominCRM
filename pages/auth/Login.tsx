@@ -1,4 +1,4 @@
-﻿import React, { CSSProperties, useState } from 'react';
+import React, { CSSProperties, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -30,15 +30,15 @@ const Login: React.FC = () => {
       setLoading(true);
       setError(null);
       await login(username, password);
-      toast.success(tr('Logged in successfully', 'Muvaffaqiyatli kirildi', 'Muvaffaqiyatli kirildi'));
+      toast.success(tr('Logged in successfully', 'Logged in successfully', 'Muvaffaqiyatli kirildi'));
       navigate('/', { replace: true });
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
-        setError(tr("Invalid username or password.", "Login yoki parol noto'g'ri.", "Login yoki parol noto'g'ri."));
+        setError(tr("Invalid username or password.", "Login yoki parol noto\'g'ri.", "Login yoki parol noto\'g'ri."));
       } else if (err instanceof ApiError && err.status === 403) {
-        setError(tr('Access denied for this account.', 'Bu akkaunt uchun kirish taqiqlangan.', 'Bu akkaunt uchun kirish taqiqlangan.'));
+        setError(tr('Access denied for this account.', 'Access denied for this account.', 'Bu akkaunt uchun kirish taqiqlangan.'));
       } else {
-        setError(err instanceof Error ? err.message : tr('Login failed', 'Kirish muvaffaqiyatsiz', 'Kirish muvaffaqiyatsiz'));
+        setError(err instanceof Error ? err.message : tr('Login failed', 'Login failed', 'Kirish muvaffaqiyatsiz'));
       }
     } finally {
       setLoading(false);
@@ -92,7 +92,7 @@ const Login: React.FC = () => {
                 Zomin <span style={{ color: '#E53935' }}>CRM</span>
               </h1>
               <p className="text-sm text-white/40 mt-1">
-                {tr('Sign in to your account', 'Akkountingizga kiring', "Hisobingizga kiring")}
+                {tr('Sign in to your account', 'Sign in to your account', "Hisobingizga kiring")}
               </p>
             </div>
 
@@ -109,7 +109,7 @@ const Login: React.FC = () => {
               {/* Username */}
               <div>
                 <label className="block text-sm font-medium text-white/60 mb-1.5">
-                  {tr('Username', 'Login', 'Login')}
+                  {tr('Username', 'Username', 'Login')}
                 </label>
                 <div className="relative">
                   <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/45 pointer-events-none" />
@@ -120,7 +120,7 @@ const Login: React.FC = () => {
                     required
                     autoComplete="username"
                     className="w-full pl-10 pr-4 py-3 rounded-xl text-sm !text-white caret-white bg-white/10 border border-white/15 placeholder:text-white/35 transition-all input-glow" style={darkInputStyle}
-                    placeholder={tr('Enter username', 'Login kiriting', 'Login kiriting')}
+                    placeholder={tr('Enter username', 'Enter username', 'Login kiriting')}
                   />
                 </div>
               </div>
@@ -128,7 +128,7 @@ const Login: React.FC = () => {
               {/* Password */}
               <div>
                 <label className="block text-sm font-medium text-white/60 mb-1.5">
-                  {tr('Password', 'Parol', 'Parol')}
+                  {tr('Password', 'Password', 'Parol')}
                 </label>
                 <div className="relative">
                   <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/45 pointer-events-none" />
@@ -166,15 +166,15 @@ const Login: React.FC = () => {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                     </svg>
-                    {tr('Signing in...', 'Kirilmoqda...', 'Kirilmoqda...')}
+                    {tr('Signing in...', 'Signing in...', 'Kirilmoqda...')}
                   </>
-                ) : tr('Sign in', 'Kirish', 'Kirish')}
+                ) : tr('Sign in', 'Sign in', 'Kirish')}
               </button>
             </form>
 
             {/* Footer note */}
             <p className="mt-6 text-center text-xs text-white/25">
-              {tr('Use your admin or superuser credentials', "Admin yoki superuser ma'lumotlarini kiriting", "Admin yoki superuser ma'lumotlarini kiriting")}
+              {tr('Use your admin or superuser credentials', "Admin yoki superuser ma\'lumotlarini kiriting", "Admin yoki superuser ma\'lumotlarini kiriting")}
             </p>
           </div>
         </div>

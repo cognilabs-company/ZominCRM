@@ -140,7 +140,7 @@ const ConversationAutomation: React.FC = () => {
         await Promise.all([loadSettings(), loadFollowUps()]);
       } catch (e) {
         if (handleAuthFailure(e)) return;
-        toast.error(e instanceof Error ? e.message : tr('Failed to load automation settings', 'Avtomatika sozlamalarini yuklab bolmadi', 'Avtomatika sozlamalarini yuklab bolmadi'));
+        toast.error(e instanceof Error ? e.message : tr('Failed to load automation settings', 'Failed to load automation settings', 'Avtomatika sozlamalarini yuklab bolmadi'));
       } finally {
         setLoading(false);
       }
@@ -179,10 +179,10 @@ const ConversationAutomation: React.FC = () => {
           },
         });
       }
-      toast.success(tr('Conversation automation saved', 'Suhbat avtomatikasi saqlandi', 'Suhbat avtomatikasi saqlandi'));
+      toast.success(tr('Conversation automation saved', 'Conversation automation saved', 'Suhbat avtomatikasi saqlandi'));
     } catch (e) {
       if (handleAuthFailure(e)) return;
-      toast.error(e instanceof Error ? e.message : tr('Failed to save settings', 'Sozlamalarni saqlab bolmadi', 'Sozlamalarni saqlab bolmadi'));
+      toast.error(e instanceof Error ? e.message : tr('Failed to save settings', 'Failed to save settings', 'Sozlamalarni saqlab bolmadi'));
     } finally {
       setSaving(false);
     }
@@ -206,10 +206,10 @@ const ConversationAutomation: React.FC = () => {
           },
         });
       }
-      toast.success(tr('Bot resumed for this chat', 'Bu chat uchun bot qayta yoqildi', 'Bu chat uchun bot qayta yoqildi'));
+      toast.success(tr('Bot resumed for this chat', 'Bot resumed for this chat', 'Bu chat uchun bot qayta yoqildi'));
     } catch (e) {
       if (handleAuthFailure(e)) return;
-      toast.error(e instanceof Error ? e.message : tr('Failed to resume bot', 'Botni qayta yoqib bolmadi', 'Botni qayta yoqib bolmadi'));
+      toast.error(e instanceof Error ? e.message : tr('Failed to resume bot', 'Failed to resume bot', 'Botni qayta yoqib bolmadi'));
     } finally {
       setResumingNow(false);
     }
@@ -224,13 +224,13 @@ const ConversationAutomation: React.FC = () => {
       );
       const summary = data.summary || {};
       toast.success(
-        `${tr('Run complete', 'Ishga tushirish tugadi', 'Ishga tushirish tugadi')}: ` +
-        `${tr('sent', 'yuborildi', 'yuborildi')} ${summary.sent || 0}, ` +
-        `${tr('skipped', 'otkazib yuborildi', "otkazib yuborildi")} ${summary.skipped || 0}`
+        `${tr('Run complete', 'Run complete', 'Ishga tushirish tugadi')}: ` +
+        `${tr('sent', 'sent', 'yuborildi')} ${summary.sent || 0}, ` +
+        `${tr('skipped', 'skipped', "otkazib yuborildi")} ${summary.skipped || 0}`
       );
     } catch (e) {
       if (handleAuthFailure(e)) return;
-      toast.error(e instanceof Error ? e.message : tr('Failed to run follow-ups', 'Follow-uplarni ishga tushirib bolmadi', 'Follow-uplarni ishga tushirib bolmadi'));
+      toast.error(e instanceof Error ? e.message : tr('Failed to run follow-ups', 'Failed to run follow-ups', 'Follow-uplarni ishga tushirib bolmadi'));
     } finally {
       setRunningNow(false);
     }
@@ -272,13 +272,13 @@ const ConversationAutomation: React.FC = () => {
           ENDPOINTS.CONVERSATIONS.AUTOMATION_FOLLOW_UP_DETAIL(conversationId, editingRule.id),
           { method: 'PATCH', body: JSON.stringify(payload) }
         );
-        toast.success(tr('Follow-up updated', 'Follow-up yangilandi', 'Follow-up yangilandi'));
+        toast.success(tr('Follow-up updated', 'Follow-up updated', 'Follow-up yangilandi'));
       } else {
         await apiRequest(ENDPOINTS.CONVERSATIONS.AUTOMATION_FOLLOW_UPS(conversationId), {
           method: 'POST',
           body: JSON.stringify(payload),
         });
-        toast.success(tr('Follow-up created', 'Follow-up yaratildi', 'Follow-up yaratildi'));
+        toast.success(tr('Follow-up created', 'Follow-up created', 'Follow-up yaratildi'));
       }
 
       setIsRuleModalOpen(false);
@@ -288,7 +288,7 @@ const ConversationAutomation: React.FC = () => {
       await loadFollowUps();
     } catch (e) {
       if (handleAuthFailure(e)) return;
-      toast.error(e instanceof Error ? e.message : tr('Failed to save follow-up', 'Follow-upni saqlab bolmadi', 'Follow-upni saqlab bolmadi'));
+      toast.error(e instanceof Error ? e.message : tr('Failed to save follow-up', 'Failed to save follow-up', 'Follow-upni saqlab bolmadi'));
     } finally {
       setRuleSaving(false);
     }
@@ -296,32 +296,32 @@ const ConversationAutomation: React.FC = () => {
 
   const deleteRule = async (ruleId: string) => {
     if (!conversationId) return;
-    if (!window.confirm(tr('Delete this follow-up rule?', 'Bu follow-up qoidasi ochirilsinmi?', "Bu follow-up qoidasi ochirilsinmi?"))) return;
+    if (!window.confirm(tr('Delete this follow-up rule?', 'Delete this follow-up rule?', "Bu follow-up qoidasi ochirilsinmi?"))) return;
     try {
       await apiRequest(ENDPOINTS.CONVERSATIONS.AUTOMATION_FOLLOW_UP_DETAIL(conversationId, ruleId), { method: 'DELETE' });
-      toast.success(tr('Follow-up deleted', 'Follow-up ochirildi', "Follow-up ochirildi"));
+      toast.success(tr('Follow-up deleted', 'Follow-up deleted', "Follow-up ochirildi"));
       await loadFollowUps();
     } catch (e) {
       if (handleAuthFailure(e)) return;
-      toast.error(e instanceof Error ? e.message : tr('Failed to delete follow-up', 'Follow-upni ochirib bolmadi', "Follow-upni ochirib bolmadi"));
+      toast.error(e instanceof Error ? e.message : tr('Failed to delete follow-up', 'Failed to delete follow-up', "Follow-upni ochirib bolmadi"));
     }
   };
 
   const stateSummary = useMemo(() => ([
     {
-      label: tr('Interrupted', 'Toxtatilgan', 'Toxtatilgan'),
-      value: settings.state.is_interrupted ? tr('Yes', 'Ha', 'Ha') : tr('No', 'Yoq', "Yoq"),
+      label: tr('Interrupted', 'Interrupted', 'Toxtatilgan'),
+      value: settings.state.is_interrupted ? tr('Yes', 'Yes', 'Ha') : tr('No', 'No', "Yoq"),
     },
     {
-      label: tr('Interrupt until', 'Toxtatish muddati', 'Toxtatish muddati'),
+      label: tr('Interrupt until', 'Interrupt until', 'Toxtatish muddati'),
       value: settings.state.interrupt_until || '-',
     },
     {
-      label: tr('Customer messages while interrupted', 'Toxtatilgandagi mijoz xabarlari', 'Toxtatilgandagi mijoz xabarlari'),
+      label: tr('Customer messages while interrupted', 'Customer messages while interrupted', 'Toxtatilgandagi mijoz xabarlari'),
       value: String(settings.state.customer_messages_while_interrupted ?? 0),
     },
     {
-      label: tr('Last resume reason', 'Oxirgi davom ettirish sababi', 'Oxirgi davom ettirish sababi'),
+      label: tr('Last resume reason', 'Last resume reason', 'Oxirgi davom ettirish sababi'),
       value: settings.state.last_resume_reason || '-',
     },
   ]), [settings.state, tr]);
@@ -329,7 +329,7 @@ const ConversationAutomation: React.FC = () => {
   if (!conversationId) {
     return (
       <Card>
-        <p className="text-sm text-red-600">{tr('Conversation id is required', 'Conversation id kerak', 'Conversation id kerak')}</p>
+        <p className="text-sm text-red-600">{tr('Conversation id is required', 'Conversation id is required', 'Conversation id kerak')}</p>
       </Card>
     );
   }
@@ -339,7 +339,7 @@ const ConversationAutomation: React.FC = () => {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-light-text dark:text-white">
-            {tr('Conversation AI Automation', 'Suhbat AI avtomatikasi', 'Suhbat AI avtomatikasi')}
+            {tr('Conversation AI Automation', 'Conversation AI Automation', 'Suhbat AI avtomatikasi')}
           </h1>
           <p className="text-xs text-gray-500 mt-1">
             {tr('Conversation ID', 'Conversation ID', 'Conversation ID')}: {conversationId}
@@ -351,7 +351,7 @@ const ConversationAutomation: React.FC = () => {
             className="px-3 py-2 rounded-lg text-sm border border-light-border dark:border-navy-600 text-gray-700 dark:text-gray-200 inline-flex items-center gap-2"
           >
             <ArrowLeft size={14} />
-            {tr('Back', 'Orqaga', 'Orqaga')}
+            {tr('Back', 'Back', 'Orqaga')}
           </button>
           <button
             onClick={() => {
@@ -361,7 +361,7 @@ const ConversationAutomation: React.FC = () => {
             className="px-3 py-2 rounded-lg text-sm border border-light-border dark:border-navy-600 text-gray-700 dark:text-gray-200 inline-flex items-center gap-2"
           >
             <RefreshCw size={14} />
-            {tr('Refresh', 'Yangilash', 'Yangilash')}
+            {tr('Refresh', 'Refresh', 'Yangilash')}
           </button>
           <button
             onClick={runFollowUpsNow}
@@ -369,21 +369,21 @@ const ConversationAutomation: React.FC = () => {
             className="px-3 py-2 rounded-lg text-sm bg-gray-100 dark:bg-navy-700 text-gray-700 dark:text-gray-200 disabled:opacity-50 inline-flex items-center gap-2"
           >
             <Play size={14} />
-            {runningNow ? tr('Running...', 'Ishlamoqda...', 'Ishlamoqda...') : tr('Run follow-ups now', 'Follow-uplarni hozir ishga tushirish', 'Follow-uplarni hozir ishga tushirish')}
+            {runningNow ? tr('Running...', 'Running...', 'Ishlamoqda...') : tr('Run follow-ups now', 'Run follow-ups now', 'Follow-uplarni hozir ishga tushirish')}
           </button>
           <button
             onClick={resumeNow}
             disabled={resumingNow}
             className="px-3 py-2 rounded-lg text-sm bg-primary-blue text-white hover:bg-blue-600 disabled:opacity-50"
           >
-            {resumingNow ? tr('Resuming...', 'Qayta yoqilmoqda...', 'Qayta yoqilmoqda...') : tr('Resume bot now', 'Botni hozir yoqish', 'Botni hozir yoqish')}
+            {resumingNow ? tr('Resuming...', 'Resuming...', 'Qayta yoqilmoqda...') : tr('Resume bot now', 'Resume bot now', 'Botni hozir yoqish')}
           </button>
         </div>
       </div>
 
-      <Card title={tr('Current Conversation State', 'Joriy suhbat holati', 'Joriy suhbat holati')}>
+      <Card title={tr('Current Conversation State', 'Current Conversation State', 'Joriy suhbat holati')}>
         {loading ? (
-          <p className="text-sm text-gray-500">{tr('Loading state...', 'Holat yuklanmoqda...', 'Holat yuklanmoqda...')}</p>
+          <p className="text-sm text-gray-500">{tr('Loading state...', 'Loading state...', 'Holat yuklanmoqda...')}</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
             {stateSummary.map((item) => (
@@ -396,28 +396,28 @@ const ConversationAutomation: React.FC = () => {
         )}
       </Card>
 
-      <Card title={tr('Interruption Rules', 'Toxtatish qoidalari', 'Toxtatish qoidalari')}>
+      <Card title={tr('Interruption Rules', 'Interruption Rules', 'Toxtatish qoidalari')}>
         {loading ? (
-          <p className="text-sm text-gray-500">{tr('Loading settings...', 'Sozlamalar yuklanmoqda...', 'Sozlamalar yuklanmoqda...')}</p>
+          <p className="text-sm text-gray-500">{tr('Loading settings...', 'Loading settings...', 'Sozlamalar yuklanmoqda...')}</p>
         ) : (
           <div className="space-y-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Switch
                 checked={settings.do_not_respond_when_interrupted}
                 onChange={(value) => setSettings((prev) => ({ ...prev, do_not_respond_when_interrupted: value }))}
-                label={tr('Do not respond when interrupted', 'Toxtatilganda javob bermasin', 'Toxtatilganda javob bermasin')}
+                label={tr('Do not respond when interrupted', 'Do not respond when interrupted', 'Toxtatilganda javob bermasin')}
               />
               <Switch
                 checked={settings.ignore_first_employee_messages}
                 onChange={(value) => setSettings((prev) => ({ ...prev, ignore_first_employee_messages: value }))}
-                label={tr('Ignore employee interruption messages', 'Xodim interrupt xabarlarini etiborsiz qoldirish', "Xodim interrupt xabarlarini etiborsiz qoldirish")}
+                label={tr('Ignore employee interruption messages', 'Ignore employee interruption messages', "Xodim interrupt xabarlarini etiborsiz qoldirish")}
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs text-gray-500 mb-1">
-                  {tr('Ignore employee messages count', 'Etiborsiz xodim xabarlari soni', 'Etiborsiz xodim xabarlari soni')}
+                  {tr('Ignore employee messages count', 'Ignore employee messages count', 'Etiborsiz xodim xabarlari soni')}
                 </label>
                 <input
                   type="number"
@@ -429,13 +429,13 @@ const ConversationAutomation: React.FC = () => {
               </div>
               <div>
                 <label className="block text-xs text-gray-500 mb-1">
-                  {tr('Interrupt exempt phrases', 'Interruptdan mustasno iboralar', "Interruptdan mustasno iboralar")}
+                  {tr('Interrupt exempt phrases', 'Interrupt exempt phrases', "Interruptdan mustasno iboralar")}
                 </label>
                 <input
                   value={settings.interrupt_exempt_phrases}
                   onChange={(e) => setSettings((prev) => ({ ...prev, interrupt_exempt_phrases: e.target.value }))}
                   className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm text-gray-800 dark:text-gray-200"
-                  placeholder={tr('comma separated phrases', 'vergul bilan ajrating', 'vergul bilan ajrating')}
+                  placeholder={tr('comma separated phrases', 'comma separated phrases', 'vergul bilan ajrating')}
                 />
               </div>
             </div>
@@ -443,20 +443,20 @@ const ConversationAutomation: React.FC = () => {
         )}
       </Card>
 
-      <Card title={tr('Auto Resume Triggers', 'Avto davom ettirish triggerlari', 'Avto davom ettirish triggerlari')}>
+      <Card title={tr('Auto Resume Triggers', 'Auto Resume Triggers', 'Avto davom ettirish triggerlari')}>
         {loading ? (
-          <p className="text-sm text-gray-500">{tr('Loading settings...', 'Sozlamalar yuklanmoqda...', 'Sozlamalar yuklanmoqda...')}</p>
+          <p className="text-sm text-gray-500">{tr('Loading settings...', 'Loading settings...', 'Sozlamalar yuklanmoqda...')}</p>
         ) : (
           <div className="space-y-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Switch
                 checked={settings.resume_by_timer}
                 onChange={(value) => setSettings((prev) => ({ ...prev, resume_by_timer: value }))}
-                label={tr('Resume by timer', 'Taymer boyicha davom etish', "Taymer boyicha davom etish")}
+                label={tr('Resume by timer', 'Resume by timer', "Taymer boyicha davom etish")}
               />
               <div>
                 <label className="block text-xs text-gray-500 mb-1">
-                  {tr('Resume after minutes', 'Necha daqiqadan keyin davom etish', 'Necha daqiqadan keyin davom etish')}
+                  {tr('Resume after minutes', 'Resume after minutes', 'Necha daqiqadan keyin davom etish')}
                 </label>
                 <input
                   type="number"
@@ -472,30 +472,30 @@ const ConversationAutomation: React.FC = () => {
               <Switch
                 checked={settings.resume_by_customer_phrases}
                 onChange={(value) => setSettings((prev) => ({ ...prev, resume_by_customer_phrases: value }))}
-                label={tr('Resume by customer phrases', 'Mijoz iboralari bilan davom etish', 'Mijoz iboralari bilan davom etish')}
+                label={tr('Resume by customer phrases', 'Resume by customer phrases', 'Mijoz iboralari bilan davom etish')}
               />
               <Switch
                 checked={settings.resume_by_employee_phrases}
                 onChange={(value) => setSettings((prev) => ({ ...prev, resume_by_employee_phrases: value }))}
-                label={tr('Resume by employee phrases', 'Xodim iboralari bilan davom etish', 'Xodim iboralari bilan davom etish')}
+                label={tr('Resume by employee phrases', 'Resume by employee phrases', 'Xodim iboralari bilan davom etish')}
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs text-gray-500 mb-1">
-                  {tr('Customer resume phrases', 'Mijoz davom iboralari', 'Mijoz davom iboralari')}
+                  {tr('Customer resume phrases', 'Customer resume phrases', 'Mijoz davom iboralari')}
                 </label>
                 <textarea
                   value={settings.customer_resume_phrases}
                   onChange={(e) => setSettings((prev) => ({ ...prev, customer_resume_phrases: e.target.value }))}
                   className="w-full h-24 bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm text-gray-800 dark:text-gray-200"
-                  placeholder={tr('continue, continue chat, resume', 'davom et, continue, resume', 'davom et, continue, resume')}
+                  placeholder={tr('continue, continue chat, resume', 'continue, continue chat, resume', 'davom et, continue, resume')}
                 />
               </div>
               <div>
                 <label className="block text-xs text-gray-500 mb-1">
-                  {tr('Employee resume phrases', 'Xodim davom iboralari', 'Xodim davom iboralari')}
+                  {tr('Employee resume phrases', 'Employee resume phrases', 'Xodim davom iboralari')}
                 </label>
                 <textarea
                   value={settings.employee_resume_phrases}
@@ -507,7 +507,7 @@ const ConversationAutomation: React.FC = () => {
 
             <div>
               <label className="block text-xs text-gray-500 mb-1">
-                {tr('Resume after customer messages', 'Mijoz xabarlari sonidan keyin davom etish', 'Mijoz xabarlari sonidan keyin davom etish')}
+                {tr('Resume after customer messages', 'Resume after customer messages', 'Mijoz xabarlari sonidan keyin davom etish')}
               </label>
               <input
                 type="number"
@@ -534,45 +534,45 @@ const ConversationAutomation: React.FC = () => {
           disabled={saving || loading}
           className="px-4 py-2 rounded-lg text-sm font-medium bg-primary-blue text-white hover:bg-blue-600 disabled:opacity-50"
         >
-          {saving ? tr('Saving...', 'Saqlanmoqda...', 'Saqlanmoqda...') : tr('Save conversation settings', 'Suhbat sozlamalarini saqlash', 'Suhbat sozlamalarini saqlash')}
+          {saving ? tr('Saving...', 'Saving...', 'Saqlanmoqda...') : tr('Save conversation settings', 'Save conversation settings', 'Suhbat sozlamalarini saqlash')}
         </button>
       </div>
 
       <Card
-        title={tr('Follow-up Rules', 'Follow-up qoidalari', 'Follow-up qoidalari')}
+        title={tr('Follow-up Rules', 'Follow-up Rules', 'Follow-up qoidalari')}
         action={(
           <button
             onClick={openCreateRule}
             className="px-3 py-1.5 rounded-lg text-sm bg-primary-blue text-white hover:bg-blue-600 inline-flex items-center gap-2"
           >
-            {tr('Add Rule', 'Qoida qoshish', 'Qoida qoshish')}
+            {tr('Add Rule', 'Add Rule', 'Qoida qoshish')}
             <Plus size={14} />
           </button>
         )}
       >
         {loading ? (
-          <p className="text-sm text-gray-500">{tr('Loading rules...', 'Qoidalar yuklanmoqda...', 'Qoidalar yuklanmoqda...')}</p>
+          <p className="text-sm text-gray-500">{tr('Loading rules...', 'Loading rules...', 'Qoidalar yuklanmoqda...')}</p>
         ) : followUps.length === 0 ? (
-          <p className="text-sm text-gray-500">{tr('No follow-up rules yet', 'Hozircha follow-up qoidalari yoq', "Hozircha follow-up qoidalari yoq")}</p>
+          <p className="text-sm text-gray-500">{tr('No follow-up rules yet', 'No follow-up rules yet', "Hozircha follow-up qoidalari yoq")}</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="text-xs uppercase text-gray-500 border-b border-light-border dark:border-navy-700">
-                  <th className="py-2 pr-3">{tr('Name', 'Nomi', 'Nomi')}</th>
-                  <th className="py-2 pr-3">{tr('Delay', 'Kechikish', 'Kechikish')}</th>
-                  <th className="py-2 pr-3">{tr('Mode', 'Rejim', 'Rejim')}</th>
-                  <th className="py-2 pr-3">{tr('Active', 'Faol', 'Faol')}</th>
-                  <th className="py-2 text-right">{tr('Actions', 'Amallar', 'Amallar')}</th>
+                  <th className="py-2 pr-3">{tr('Name', 'Name', 'Nomi')}</th>
+                  <th className="py-2 pr-3">{tr('Delay', 'Delay', 'Kechikish')}</th>
+                  <th className="py-2 pr-3">{tr('Mode', 'Mode', 'Rejim')}</th>
+                  <th className="py-2 pr-3">{tr('Active', 'Active', 'Faol')}</th>
+                  <th className="py-2 text-right">{tr('Actions', 'Actions', 'Amallar')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-light-border dark:divide-navy-700">
                 {followUps.map((rule) => (
                   <tr key={rule.id}>
                     <td className="py-3 pr-3 text-sm text-gray-800 dark:text-gray-200">{rule.name}</td>
-                    <td className="py-3 pr-3 text-sm text-gray-800 dark:text-gray-200">{rule.delay_minutes} {tr('min', 'daq', 'daq')}</td>
+                    <td className="py-3 pr-3 text-sm text-gray-800 dark:text-gray-200">{rule.delay_minutes} {tr('min', 'min', 'daq')}</td>
                     <td className="py-3 pr-3 text-sm text-gray-800 dark:text-gray-200">{rule.message_mode}</td>
-                    <td className="py-3 pr-3 text-sm text-gray-800 dark:text-gray-200">{rule.is_active ? tr('Yes', 'Ha', 'Ha') : tr('No', 'Yoq', "Yoq")}</td>
+                    <td className="py-3 pr-3 text-sm text-gray-800 dark:text-gray-200">{rule.is_active ? tr('Yes', 'Yes', 'Ha') : tr('No', 'No', "Yoq")}</td>
                     <td className="py-3 text-right">
                       <div className="inline-flex items-center gap-2">
                         <button onClick={() => openEditRule(rule)} className="p-1.5 text-gray-500 dark:text-gray-300 hover:text-primary-blue dark:hover:text-blue-400 transition-colors">
@@ -594,12 +594,12 @@ const ConversationAutomation: React.FC = () => {
       <Modal
         isOpen={isRuleModalOpen}
         onClose={() => { setIsRuleModalOpen(false); setEditingRule(null); }}
-        title={editingRule ? tr('Edit Follow-up Rule', 'Follow-up qoidasini tahrirlash', 'Follow-up qoidasini tahrirlash') : tr('Create Follow-up Rule', 'Follow-up qoidasini yaratish', 'Follow-up qoidasini yaratish')}
+        title={editingRule ? tr('Edit Follow-up Rule', 'Edit Follow-up Rule', 'Follow-up qoidasini tahrirlash') : tr('Create Follow-up Rule', 'Create Follow-up Rule', 'Follow-up qoidasini yaratish')}
         footer={null}
       >
         <form onSubmit={saveRule} className="space-y-4">
           <div>
-            <label className="block text-xs text-gray-500 mb-1">{tr('Name', 'Nomi', 'Nomi')}</label>
+            <label className="block text-xs text-gray-500 mb-1">{tr('Name', 'Name', 'Nomi')}</label>
             <input
               name="name"
               required
@@ -610,7 +610,7 @@ const ConversationAutomation: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs text-gray-500 mb-1">{tr('Order', 'Tartib', 'Tartib')}</label>
+              <label className="block text-xs text-gray-500 mb-1">{tr('Order', 'Order', 'Tartib')}</label>
               <input
                 name="order"
                 type="number"
@@ -619,7 +619,7 @@ const ConversationAutomation: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">{tr('Delay minutes', 'Kechikish daqiqasi', 'Kechikish daqiqasi')}</label>
+              <label className="block text-xs text-gray-500 mb-1">{tr('Delay minutes', 'Delay minutes', 'Kechikish daqiqasi')}</label>
               <input
                 name="delay_minutes"
                 type="number"
@@ -628,7 +628,7 @@ const ConversationAutomation: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">{tr('Mode', 'Rejim', 'Rejim')}</label>
+              <label className="block text-xs text-gray-500 mb-1">{tr('Mode', 'Mode', 'Rejim')}</label>
               <select
                 name="message_mode"
                 defaultValue={editingRule?.message_mode || 'STATIC_TEXT'}
@@ -641,7 +641,7 @@ const ConversationAutomation: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-xs text-gray-500 mb-1">{tr('Message content', 'Xabar matni', 'Xabar matni')}</label>
+            <label className="block text-xs text-gray-500 mb-1">{tr('Message content', 'Message content', 'Xabar matni')}</label>
             <textarea
               name="message_content"
               defaultValue={editingRule?.message_content || ''}
@@ -650,16 +650,16 @@ const ConversationAutomation: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <Switch checked={ruleIsActive} onChange={setRuleIsActive} label={tr('Active', 'Faol', 'Faol')} />
-            <Switch checked={ruleLlmEnabled} onChange={setRuleLlmEnabled} label={tr('LLM instruction enabled', 'LLM korsatmasi yoqilgan', 'LLM korsatmasi yoqilgan')} />
+            <Switch checked={ruleIsActive} onChange={setRuleIsActive} label={tr('Active', 'Active', 'Faol')} />
+            <Switch checked={ruleLlmEnabled} onChange={setRuleLlmEnabled} label={tr('LLM instruction enabled', 'LLM instruction enabled', 'LLM korsatmasi yoqilgan')} />
           </div>
 
           <div className="flex justify-end gap-2">
             <button type="button" onClick={() => { setIsRuleModalOpen(false); setEditingRule(null); }} className="px-3 py-2 rounded-lg border border-light-border dark:border-navy-600 text-sm">
-              {tr('Cancel', 'Bekor qilish', 'Bekor qilish')}
+              {tr('Cancel', 'Cancel', 'Bekor qilish')}
             </button>
             <button type="submit" disabled={ruleSaving} className="px-3 py-2 rounded-lg bg-primary-blue text-white text-sm disabled:opacity-50">
-              {ruleSaving ? tr('Saving...', 'Saqlanmoqda...', 'Saqlanmoqda...') : tr('Save Rule', 'Qoidani saqlash', 'Qoidani saqlash')}
+              {ruleSaving ? tr('Saving...', 'Saving...', 'Saqlanmoqda...') : tr('Save Rule', 'Save Rule', 'Qoidani saqlash')}
             </button>
           </div>
         </form>

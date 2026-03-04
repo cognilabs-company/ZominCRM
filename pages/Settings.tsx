@@ -17,8 +17,8 @@ const Settings: React.FC = () => {
           <p className="text-sm text-gray-700 dark:text-gray-300">
             {tr(
               'Backend currently has no `/internal/auth/profile` or auth settings endpoints. This page remains local UI only.',
-              "Backendda hozircha `/internal/auth/profile` yoki auth sozlamalari endpointlari yo'q. Bu sahifa vaqtincha lokal UI.",
-              "Backendda hozircha `/internal/auth/profile` yoki auth sozlamalari endpointlari yo'q. Bu sahifa vaqtincha lokal UI."
+              "Backendda hozircha `/internal/auth/profile` yoki auth sozlamalari endpointlari yo\'q. Bu sahifa vaqtincha lokal UI.",
+              "Backendda hozircha `/internal/auth/profile` yoki auth sozlamalari endpointlari yo\'q. Bu sahifa vaqtincha lokal UI."
             )}
           </p>
         </div>
@@ -31,12 +31,12 @@ const Settings: React.FC = () => {
               <div className="w-24 h-24 rounded-full bg-gray-200 dark:bg-navy-700 mb-4 overflow-hidden relative">
                 <div className="w-full h-full flex items-center justify-center text-gray-500"><User size={30} /></div>
               </div>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white">{tr('User', 'Foydalanuvchi', 'Foydalanuvchi')}</h3>
-              <p className="text-sm text-gray-500">{tr('No backend profile endpoint', "Backendda profil endpointi yo'q", "Backendda profil endpointi yo'q")}</p>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">{tr('User', 'User', 'Foydalanuvchi')}</h3>
+              <p className="text-sm text-gray-500">{tr('No backend profile endpoint', "Backendda profil endpointi yo\'q", "Backendda profil endpointi yo\'q")}</p>
             </div>
             <div className="border-t border-light-border dark:border-navy-700 p-4 space-y-3">
-              <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-300"><User size={16} /> <span>{tr('Edit Profile', 'Profilni tahrirlash', 'Profilni tahrirlash')}</span></div>
-              <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-300"><Lock size={16} /> <span>{tr('Change Password', "Parolni o'zgartirish", "Parolni o'zgartirish")}</span></div>
+              <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-300"><User size={16} /> <span>{tr('Edit Profile', 'Edit Profile', 'Profilni tahrirlash')}</span></div>
+              <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-300"><Lock size={16} /> <span>{tr('Change Password', "Parolni o\'zgartirish", "Parolni o\'zgartirish")}</span></div>
             </div>
           </Card>
         </div>
@@ -47,15 +47,15 @@ const Settings: React.FC = () => {
               <p className="text-sm text-gray-600 dark:text-gray-300">
                 {tr(
                   'Notification and account settings will appear here when backend endpoints are added.',
-                  "Backend endpointlari qo'shilganda bildirishnoma va akkaunt sozlamalari shu yerda chiqadi.",
-                  "Backend endpointlari qo'shilganda bildirishnoma va akkaunt sozlamalari shu yerda chiqadi."
+                  "Backend endpointlari qo\'shilganda bildirishnoma va akkaunt sozlamalari shu yerda chiqadi.",
+                  "Backend endpointlari qo\'shilganda bildirishnoma va akkaunt sozlamalari shu yerda chiqadi."
                 )}
               </p>
             </div>
           </Card>
           <div className="flex justify-end">
             <button className="flex items-center gap-2 px-6 py-2.5 bg-primary-blue hover:bg-blue-600 text-white rounded-lg font-medium transition-colors shadow-lg shadow-blue-500/30">
-              <Save size={18} /> {t('save')} {tr('Changes', "o'zgarishlar", "o'zgarishlar")}
+              <Save size={18} /> {t('save')} {tr('Changes', "o\'zgarishlar", "o\'zgarishlar")}
             </button>
           </div>
         </div>

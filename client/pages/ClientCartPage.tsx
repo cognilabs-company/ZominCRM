@@ -1,6 +1,7 @@
-﻿import React from 'react';
+import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowRight, Minus, Plus } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Minus, Plus } from 'lucide-react';
+import { useClientApp } from '../bootstrap/ClientAppContext';
 import { useClientCart } from '../bootstrap/ClientCartContext';
 import { useClientLanguage } from '../bootstrap/ClientLanguageContext';
 import { ClientLocationPicker } from '../components/ClientLocationPicker';
@@ -11,14 +12,105 @@ import { formatAmount, getPaymentMethodLabel } from '../utils';
 export const ClientCartPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { client } = useClientApp();
   const { items, itemsCount, orderDraft, productSubtotal, updateQuantity, removeProduct, setOrderDraft } = useClientCart();
   const { language, t } = useClientLanguage();
   const hasItems = itemsCount > 0;
+  const copy = React.useMemo(() => {
+    if (language === 'ru') {
+      return {
+        savedAddress: 'Сохраненный адрес',
+        savedAddressDescription: 'Если адрес верный, продолжайте. Если изменился, выберите новый на карте.',
+        savedAddressUse: 'Адрес верный',
+        savedAddressChange: 'Изменить на карте',
+        savedAddressActive: 'Заказ будет отправлен на этот адрес.',
+        useSavedAddress: 'Вернуться к сохраненному адресу',
+        customAddressTitle: 'Новый адрес',
+        customAddressDescription: 'Выберите новую точку доставки на карте.',
+      };
+    }
+
+    if (language === 'en') {
+      return {
+        savedAddress: 'Saved address',
+        savedAddressDescription: 'If this address is correct, continue. If not, choose a new one on the map.',
+        savedAddressUse: 'This address is correct',
+        savedAddressChange: 'Change on map',
+        savedAddressActive: 'The order will be sent to this address.',
+        useSavedAddress: 'Use saved address',
+        customAddressTitle: 'New address',
+        customAddressDescription: 'Choose a new delivery point on the map.',
+      };
+    }
+
+    return {
+      savedAddress: 'Saqlangan manzil',
+      savedAddressDescription: 'Agar shu manzil to\'g\'ri bo\'lsa davom eting. O\'zgargan bo\'lsa xaritadan yangisini tanlang.',
+      savedAddressUse: 'Shu manzil to\'g\'ri',
+      savedAddressChange: 'Xaritadan o\'zgartirish',
+      savedAddressActive: 'Buyurtma shu manzilga yuboriladi.',
+      useSavedAddress: 'Saqlangan manzilga qaytish',
+      customAddressTitle: 'Yangi manzil',
+      customAddressDescription: 'Xaritadan yangi yetkazib berish nuqtasini tanlang.',
+    };
+  }, [language]);
+  const savedAddress = client?.address?.trim() || '';
+  const currentAddress = orderDraft.location_text.trim();
+  const hasSavedAddress = savedAddress.length > 0;
+  const hasCustomAddress = Boolean(currentAddress) && currentAddress !== savedAddress;
+  const [editingAddress, setEditingAddress] = React.useState(() => !hasSavedAddress || hasCustomAddress);
+  const [mapExpanded, setMapExpanded] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!hasSavedAddress) {
+      setEditingAddress(true);
+      return;
+    }
+
+    if (!currentAddress) {
+      setOrderDraft({
+        location_text: savedAddress,
+        location_lat: '',
+        location_lng: '',
+      });
+      setEditingAddress(false);
+      return;
+    }
+
+    if (currentAddress === savedAddress && hasCustomAddress === false) {
+      setEditingAddress((prev) => prev && hasCustomAddress);
+    }
+  }, [currentAddress, hasCustomAddress, hasSavedAddress, savedAddress, setOrderDraft]);
+
+  React.useEffect(() => {
+    if (!editingAddress) {
+      setMapExpanded(false);
+    }
+  }, [editingAddress]);
 
   const goToCheckout = React.useCallback(() => {
     if (!hasItems) return;
     navigate('/app/checkout', { state: { from: location.pathname } });
   }, [hasItems, location.pathname, navigate]);
+
+  const handleUseSavedAddress = React.useCallback(() => {
+    setOrderDraft({
+      location_text: savedAddress,
+      location_lat: '',
+      location_lng: '',
+    });
+    setEditingAddress(false);
+    setMapExpanded(false);
+  }, [savedAddress, setOrderDraft]);
+
+  const handleChangeAddress = React.useCallback(() => {
+    setEditingAddress(true);
+    setMapExpanded(true);
+  }, []);
+
+  const handleApplyLocation = React.useCallback((payload: { location_text: string; location_lat: string; location_lng: string }) => {
+    setOrderDraft(payload);
+  }, [setOrderDraft]);
 
   return (
     <ClientPage
@@ -95,22 +187,73 @@ export const ClientCartPage: React.FC = () => {
 
       <ClientPanel className="p-5">
         <div className="grid gap-4">
-          <div>
-            <label className="block text-sm font-medium text-[#31424d]">{t('cart.delivery_address')}</label>
-            <textarea
-              value={orderDraft.location_text}
-              onChange={(event) => setOrderDraft({ location_text: event.target.value })}
-              className="mt-2 h-24 w-full rounded-[22px] border border-[#e7ddd0] bg-[rgba(255,248,240,0.94)] px-4 py-3 text-sm text-[#1f2933] outline-none transition focus:border-[#cb7c45]"
-              placeholder={t('cart.delivery_address_placeholder')}
-            />
-          </div>
+          {hasSavedAddress && !editingAddress ? (
+            <div className="rounded-[28px] border border-[#d7e5df] bg-[linear-gradient(135deg,rgba(233,243,239,0.96)_0%,rgba(245,250,247,0.94)_100%)] p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#40635b]">{copy.savedAddress}</p>
+              <p className="mt-3 text-base font-semibold text-[#1f2933]">{savedAddress}</p>
+              <p className="mt-2 text-sm leading-6 text-[#5b6770]">{copy.savedAddressDescription}</p>
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={handleUseSavedAddress}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#21404d] px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(33,64,77,0.18)] transition hover:brightness-105"
+                >
+                  <CheckCircle2 size={16} />
+                  {copy.savedAddressUse}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleChangeAddress}
+                  className="inline-flex items-center justify-center rounded-2xl border border-[#cfd9d5] bg-white px-4 py-3 text-sm font-semibold text-[#21404d] transition hover:bg-[#f7faf9]"
+                >
+                  {copy.savedAddressChange}
+                </button>
+              </div>
+              <p className="mt-3 text-xs text-[#5c746b]">{copy.savedAddressActive}</p>
+            </div>
+          ) : null}
 
-          <ClientLocationPicker
-            address={orderDraft.location_text}
-            latitude={orderDraft.location_lat}
-            longitude={orderDraft.location_lng}
-            onApply={(payload) => setOrderDraft(payload)}
-          />
+          {!hasSavedAddress ? (
+            <div>
+              <label className="block text-sm font-medium text-[#31424d]">{t('cart.delivery_address')}</label>
+              <textarea
+                value={orderDraft.location_text}
+                onChange={(event) => setOrderDraft({ location_text: event.target.value })}
+                className="mt-2 h-24 w-full rounded-[22px] border border-[#e7ddd0] bg-[rgba(255,248,240,0.94)] px-4 py-3 text-sm text-[#1f2933] outline-none transition focus:border-[#cb7c45]"
+                placeholder={t('cart.delivery_address_placeholder')}
+              />
+            </div>
+          ) : null}
+
+          {hasSavedAddress && editingAddress ? (
+            <div className="rounded-[28px] border border-[#eadfce] bg-[rgba(255,248,240,0.88)] p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#9a6b3a]">{copy.customAddressTitle}</p>
+                  <p className="mt-2 text-sm leading-6 text-[#5b6770]">{copy.customAddressDescription}</p>
+                  <p className="mt-2 text-sm font-medium text-[#1f2933]">{currentAddress || savedAddress}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleUseSavedAddress}
+                  className="inline-flex items-center justify-center rounded-2xl border border-[#d9cdbd] bg-white px-4 py-3 text-sm font-semibold text-[#21404d] transition hover:bg-[#fffaf5]"
+                >
+                  {copy.useSavedAddress}
+                </button>
+              </div>
+            </div>
+          ) : null}
+
+          {(editingAddress || !hasSavedAddress) ? (
+            <ClientLocationPicker
+              address={orderDraft.location_text}
+              latitude={orderDraft.location_lat}
+              longitude={orderDraft.location_lng}
+              onApply={handleApplyLocation}
+              expanded={hasSavedAddress ? mapExpanded : undefined}
+              onExpandedChange={hasSavedAddress ? setMapExpanded : undefined}
+            />
+          ) : null}
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>

@@ -1,4 +1,4 @@
-﻿export type ClientAppStatus = 'loading' | 'ready' | 'error';
+export type ClientAppStatus = 'loading' | 'ready' | 'error';
 
 export type ClientAppMode = 'telegram' | 'preview';
 

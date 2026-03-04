@@ -103,7 +103,7 @@ export const Header: React.FC<{ onMenuClick?: () => void }> = ({ onMenuClick }) 
         <button
           onClick={onMenuClick}
           className="p-2 rounded-lg text-light-muted dark:text-white/60 hover:text-light-text dark:hover:text-white hover:bg-light-bg dark:hover:bg-white/6 border border-light-border/70 dark:border-white/10 transition-colors"
-          title={tr('Menu', 'Menyu', 'Menyu')}
+          title={tr('Menu', 'Menu', 'Menyu')}
         >
           <Menu size={18} />
         </button>
@@ -113,7 +113,7 @@ export const Header: React.FC<{ onMenuClick?: () => void }> = ({ onMenuClick }) 
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-light-muted dark:text-white/30 pointer-events-none" size={16} />
         <input
           type="text"
-          placeholder={tr('Search anything...', 'Poisk...', 'Qidirish...')}
+          placeholder={tr('Search anything...', 'Search anything...', 'Qidirish...')}
           className="w-full bg-light-bg dark:bg-white/5 text-light-text dark:text-white/80 pl-9 pr-4 py-2 rounded-lg border border-light-border dark:border-white/8 text-sm transition-all input-glow placeholder:text-light-muted/60 dark:placeholder:text-white/25"
         />
       </div>
@@ -173,7 +173,7 @@ export const Header: React.FC<{ onMenuClick?: () => void }> = ({ onMenuClick }) 
               <div className="fixed inset-0 z-10" onClick={() => setIsNotifOpen(false)} />
               <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-navy-800 border border-light-border dark:border-white/8 rounded-xl shadow-modal py-0 z-20 overflow-hidden animate-fade-in-up">
                 <div className="px-4 py-3 border-b border-light-border dark:border-white/6 flex items-center justify-between bg-light-bg dark:bg-white/3">
-                  <h4 className="font-semibold text-light-text dark:text-white text-sm">{tr('Notifications', 'Uvedomleniya', 'Bildirishnomalar')}</h4>
+                  <h4 className="font-semibold text-light-text dark:text-white text-sm">{tr('Notifications', 'Notifications', 'Bildirishnomalar')}</h4>
                   {hasUnread && (
                     <span className="text-[10px] bg-primary-red text-white rounded-full px-1.5 py-0.5 font-bold">{unreadCount}</span>
                   )}
@@ -184,7 +184,7 @@ export const Header: React.FC<{ onMenuClick?: () => void }> = ({ onMenuClick }) 
                     <div className="px-4 py-8 text-center">
                       <Bell size={24} className="mx-auto text-light-muted/30 dark:text-white/15 mb-2" />
                       <p className="text-sm text-light-muted dark:text-white/40">
-                        {tr('No notifications yet.', 'Uvedomleniy poka net.', "Hozircha bildirishnoma yo'q.")}
+                        {tr('No notifications yet.', 'No notifications yet.', "Hozircha bildirishnoma yo'q.")}
                       </p>
                     </div>
                   ) : (
@@ -212,7 +212,7 @@ export const Header: React.FC<{ onMenuClick?: () => void }> = ({ onMenuClick }) 
                     disabled={!hasUnread}
                     className="text-xs font-semibold text-primary-blue dark:text-blue-300 hover:text-primary-blueDark dark:hover:text-blue-200 transition-colors disabled:opacity-40"
                   >
-                    {tr('Mark all as read', 'Otmetit vse kak prochitannoe', "Barchasini o'qilgan qilish")}
+                    {tr('Mark all as read', 'Mark all as read', "Barchasini o'qilgan qilish")}
                   </button>
                 </div>
               </div>
@@ -225,10 +225,10 @@ export const Header: React.FC<{ onMenuClick?: () => void }> = ({ onMenuClick }) 
         <button
           onClick={async () => { await logout(); navigate('/login', { replace: true }); }}
           className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-light-muted dark:text-white/60 hover:text-primary-red dark:hover:text-primary-red hover:bg-red-50 dark:hover:bg-red-900/15 border border-transparent hover:border-red-100 dark:hover:border-red-900/30 transition-all group"
-          title={tr('Logout', 'Vyiti', 'Chiqish')}
+          title={tr('Logout', 'Logout', 'Chiqish')}
         >
           <LogOut size={16} className="transition-transform group-hover:translate-x-0.5" />
-          <span className="hidden sm:inline">{tr('Logout', 'Vyiti', 'Chiqish')}</span>
+          <span className="hidden sm:inline">{tr('Logout', 'Logout', 'Chiqish')}</span>
         </button>
       </div>
     </header>

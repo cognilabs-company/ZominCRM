@@ -480,7 +480,7 @@ const Conversations: React.FC = () => {
       };
     }));
     if (!event.delivery.sent && event.delivery.reason === 'adapter_not_configured') {
-      toast.warning(tr('Channel not connected yet.', 'Kanal hali ulanmagan.', 'Kanal hali ulanmagan.'));
+      toast.warning(tr('Channel not connected yet.', 'Channel not connected yet.', 'Kanal hali ulanmagan.'));
       return;
     }
     if (!event.delivery.sent && event.delivery.reason === 'missing_page_id') {
@@ -618,7 +618,7 @@ const Conversations: React.FC = () => {
       setLastSyncAt(new Date());
       setError(null);
     } catch (e) {
-      const message = e instanceof Error ? e.message : tr('Failed to load conversations', 'Suhbatlarni yuklab bo‘lmadi', 'Suhbatlarni yuklab bo‘lmadi');
+      const message = e instanceof Error ? e.message : tr('Failed to load conversations', 'Failed to load conversations', "Suhbatlarni yuklab bo'lmadi");
       setError(message);
       if (!silent) {
         toast.error(message);
@@ -658,7 +658,7 @@ const Conversations: React.FC = () => {
       setLastSyncAt(new Date());
       setError(null);
     } catch (e) {
-      const message = e instanceof Error ? e.message : tr('Failed to load messages', 'Xabarlarni yuklab bo‘lmadi', 'Xabarlarni yuklab bo‘lmadi');
+      const message = e instanceof Error ? e.message : tr('Failed to load messages', 'Failed to load messages', "Xabarlarni yuklab bo'lmadi");
       setError(message);
       toast.error(message);
       setMessages([]);
@@ -685,7 +685,7 @@ const Conversations: React.FC = () => {
       toast.warning(
         e instanceof Error
           ? e.message
-          : tr('Failed to load bot state', 'Bot holatini yuklab bo‘lmadi', 'Bot holatini yuklab bo‘lmadi')
+          : tr('Failed to load bot state', 'Failed to load bot state', "Bot holatini yuklab bo'lmadi")
       );
     } finally {
       setBotRuntimeLoading(false);
@@ -698,8 +698,8 @@ const Conversations: React.FC = () => {
       const input = window.prompt(
         tr(
           'Pause bot for how many minutes? Leave empty or 0 for manual resume only.',
-          'Botni necha daqiqaga to‘xtatish? Bo‘sh qoldiring yoki 0 = faqat qo‘lda resume.',
-          'Botni necha daqiqaga to‘xtatish? Bo‘sh qoldiring yoki 0 = faqat qo‘lda resume.'
+          "Botni necha daqiqaga to'xtatish? Bo'sh qoldiring yoki 0 = faqat qo'lda resume.",
+          "Botni necha daqiqaga to'xtatish? Bo'sh qoldiring yoki 0 = faqat qo'lda resume."
         ),
         '10'
       );
@@ -714,9 +714,9 @@ const Conversations: React.FC = () => {
         }),
       });
       setBotRuntimeState(data.state || null);
-      toast.success(tr('Bot paused for this chat', 'Bu chat uchun bot to‘xtatildi', 'Bu chat uchun bot to‘xtatildi'));
+      toast.success(tr('Bot paused for this chat', 'Bot paused for this chat', "Bu chat uchun bot to'xtatildi"));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : tr('Failed to pause bot', 'Botni to‘xtatib bo‘lmadi', 'Botni to‘xtatib bo‘lmadi'));
+      toast.error(e instanceof Error ? e.message : tr('Failed to pause bot', 'Failed to pause bot', "Botni to'xtatib bo'lmadi"));
     } finally {
       setBotRuntimeSaving(false);
     }
@@ -730,9 +730,9 @@ const Conversations: React.FC = () => {
         body: JSON.stringify({}),
       });
       setBotRuntimeState(data.state || null);
-      toast.success(tr('Bot resumed for this chat', 'Bu chat uchun bot yoqildi', 'Bu chat uchun bot yoqildi'));
+      toast.success(tr('Bot resumed for this chat', 'Bot resumed for this chat', 'Bu chat uchun bot yoqildi'));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : tr('Failed to resume bot', 'Botni yoqib bo‘lmadi', 'Botni yoqib bo‘lmadi'));
+      toast.error(e instanceof Error ? e.message : tr('Failed to resume bot', 'Failed to resume bot', "Botni yoqib bo'lmadi"));
     } finally {
       setBotRuntimeSaving(false);
     }
@@ -924,11 +924,11 @@ const Conversations: React.FC = () => {
         loadConversationBotState(selectedChatId);
       }
       if ((fullResponse.available_delivery_channels || []).length === 0) {
-        toast.warning(tr('No active delivery channel available for this conversation.', 'Bu suhbat uchun faol yetkazish kanali yo‘q.', 'Bu suhbat uchun faol yetkazish kanali yo‘q.'));
+        toast.warning(tr('No active delivery channel available for this conversation.', 'No active delivery channel available for this conversation.', "Bu suhbat uchun faol yetkazish kanali yo'q."));
       }
       setLastSyncAt(new Date());
     } catch (e) {
-      const message = e instanceof Error ? e.message : tr('Failed to send message', 'Xabar yuborib bo‘lmadi', 'Xabar yuborib bo‘lmadi');
+      const message = e instanceof Error ? e.message : tr('Failed to send message', 'Failed to send message', "Xabar yuborib bo'lmadi");
       setError(message);
       toast.error(message);
       setInput(text);
@@ -974,7 +974,7 @@ const Conversations: React.FC = () => {
         )
       );
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : tr('Failed to clear conversation', 'Suhbatni tozalab bolmadi', 'Suhbatni tozalab bolmadi'));
+      toast.error(e instanceof Error ? e.message : tr('Failed to clear conversation', 'Failed to clear conversation', 'Suhbatni tozalab bolmadi'));
     } finally {
       setClearingConversationId(null);
     }
@@ -985,9 +985,9 @@ const Conversations: React.FC = () => {
       <div className={`${mobilePane === 'list' ? 'flex' : 'hidden'} lg:flex w-full lg:w-1/3 flex-col gap-4 min-h-0`}>
         <div className="flex justify-between items-center gap-3">
           <div className="min-w-0">
-            <h1 className="text-2xl font-bold text-light-text dark:text-white">{tr('Conversations', 'Suhbatlar', 'Suhbatlar')}</h1>
+            <h1 className="text-2xl font-bold text-light-text dark:text-white">{tr('Conversations', 'Conversations', 'Suhbatlar')}</h1>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              {tr('Ordered as backend returns', 'Backend qaytargan tartibda', 'Backend qaytargan tartibda')} | {filteredConversations.length}/{conversations.length}
+              {tr('Ordered as backend returns', 'Ordered as backend returns', 'Backend qaytargan tartibda')} | {filteredConversations.length}/{conversations.length}
             </p>
           </div>
           <button
@@ -1001,7 +1001,7 @@ const Conversations: React.FC = () => {
             className="shrink-0 inline-flex items-center gap-1.5 text-xs bg-white dark:bg-navy-800 border border-light-border dark:border-navy-700 rounded-lg px-2.5 py-1.5 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-navy-700"
           >
             <RefreshCw size={12} />
-            {tr('Refresh', 'Yangilash', 'Yangilash')}
+            {tr('Refresh', 'Refresh', 'Yangilash')}
           </button>
         </div>
         <div className="rounded-2xl border border-light-border dark:border-navy-700 bg-white dark:bg-navy-800 p-2 shadow-sm shadow-slate-200/40 dark:shadow-none">
@@ -1010,7 +1010,7 @@ const Conversations: React.FC = () => {
             <input
               value={conversationQuery}
               onChange={(e) => setConversationQuery(e.target.value)}
-              placeholder={tr('Search name / ID', 'Poisk imeni / ID', 'Ism / ID qidirish')}
+              placeholder={tr('Search name / ID', 'Search name / ID', 'Ism / ID qidirish')}
               className="w-full h-9 pl-9 pr-3 rounded-xl border border-light-border dark:border-navy-700 bg-gray-50 dark:bg-navy-900/40 text-sm text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-primary-blue"
             />
           </label>
@@ -1026,19 +1026,19 @@ const Conversations: React.FC = () => {
                     : 'bg-white dark:bg-navy-800 text-gray-600 dark:text-gray-300 border-light-border dark:border-navy-700 hover:bg-gray-50 dark:hover:bg-navy-700'
                 }`}
               >
-                {value === 'all' ? tr('All', 'Vse', 'Barchasi') : value === 'telegram' ? 'Telegram' : 'Instagram'}
+                {value === 'all' ? tr('All', 'All', 'Barchasi') : value === 'telegram' ? 'Telegram' : 'Instagram'}
               </button>
             ))}
           </div>
         </div>
         <div className="flex-1 overflow-hidden flex flex-col bg-white dark:bg-navy-800 border border-light-border dark:border-navy-700 rounded-2xl shadow-sm shadow-slate-200/50 dark:shadow-none transition-colors duration-300">
           <div className="px-4 py-3 border-b border-light-border dark:border-navy-700 bg-gradient-to-r from-gray-50/90 to-white dark:from-navy-900/50 dark:to-navy-800 text-xs text-gray-500 dark:text-gray-400">
-            {tr('Live conversation list', 'Jonli suhbatlar ro‘yxati', 'Jonli suhbatlar ro‘yxati')}
+            {tr('Live conversation list', 'Live conversation list', "Jonli suhbatlar ro'yxati")}
           </div>
           <div className="overflow-y-auto flex-1 p-1.5">
-            {loadingConversations && <p className="px-3 py-6 text-sm text-gray-500">{tr('Loading conversations...', 'Suhbatlar yuklanmoqda...', 'Suhbatlar yuklanmoqda...')}</p>}
+            {loadingConversations && <p className="px-3 py-6 text-sm text-gray-500">{tr('Loading conversations...', 'Loading conversations...', 'Suhbatlar yuklanmoqda...')}</p>}
             {!loadingConversations && filteredConversations.length === 0 && (
-              <p className="px-3 py-6 text-sm text-gray-500">{tr('No conversations found.', 'Suhbatlar topilmadi.', 'Suhbatlar topilmadi.')}</p>
+              <p className="px-3 py-6 text-sm text-gray-500">{tr('No conversations found.', 'No conversations found.', 'Suhbatlar topilmadi.')}</p>
             )}
             {filteredConversations.map((chat) => {
               const unread = chat.unreadCount || 0;
@@ -1111,7 +1111,7 @@ const Conversations: React.FC = () => {
                 type="button"
                 onClick={() => setMobilePane('list')}
                 className="inline-flex lg:hidden items-center justify-center p-1.5 rounded-lg border border-light-border dark:border-navy-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-navy-700"
-                title={tr('Back to list', 'Назад к списку', "Ro'yxatga qaytish")}
+                title={tr('Back to list', 'Back to list', "Ro'yxatga qaytish")}
               >
                 <ChevronLeft size={16} />
               </button>
@@ -1121,7 +1121,7 @@ const Conversations: React.FC = () => {
                 </div>
               )}
               <div className="min-w-0">
-                <h3 className="font-bold text-light-text dark:text-white truncate">{selectedConversation?.clientName || tr('Select conversation', 'Suhbatni tanlang', 'Suhbatni tanlang')}</h3>
+                <h3 className="font-bold text-light-text dark:text-white truncate">{selectedConversation?.clientName || tr('Select conversation', 'Select conversation', 'Suhbatni tanlang')}</h3>
                 {selectedConversation && (
                   <div className="text-[11px] text-gray-500 dark:text-gray-400 truncate">
                     {selectedConversation.channel} | {selectedConversation.id.slice(0, 12)}
@@ -1137,23 +1137,23 @@ const Conversations: React.FC = () => {
                   } dark:bg-navy-700 dark:border-navy-600 dark:text-gray-300`}
                 >
                   {selectedConversation.channel_account_id
-                    ? `${tr('Page', 'Sahifa', 'Sahifa')}: ${selectedConversation.channel_account_id}`
-                    : tr('Instagram page missing', 'Instagram sahifa ID yoq', "Instagram sahifa ID yo'q")}
+                    ? `${tr('Page', 'Page', 'Sahifa')}: ${selectedConversation.channel_account_id}`
+                    : tr('Instagram page missing', 'Instagram page missing', "Instagram sahifa ID yo'q")}
                 </span>
               )}
               {selectedConversation && botRuntimeState?.is_paused && (
                 <span className="text-xs px-2 py-0.5 rounded-full border bg-red-50 border-red-200 text-red-700">
-                  {tr('Paused by operator', 'Operator tomonidan to‘xtatilgan', 'Operator tomonidan to‘xtatilgan')}
+                  {tr('Paused by operator', 'Paused by operator', "Operator tomonidan to'xtatilgan")}
                 </span>
               )}
               {selectedConversation && botRuntimeState?.trigger_effect?.action === 'deactivate' && (
                 <span className="text-xs px-2 py-0.5 rounded-full border bg-amber-50 border-amber-200 text-amber-700">
-                  {tr('Trigger-deactivated', 'Trigger bilan o‘chirilgan', 'Trigger bilan o‘chirilgan')}
+                  {tr('Trigger-deactivated', 'Trigger-deactivated', "Trigger bilan o'chirilgan")}
                 </span>
               )}
               {selectedConversation && botRuntimeState?.pause_until && (
                 <span className="text-xs px-2 py-0.5 rounded-full border bg-gray-100 border-gray-200 text-gray-700 dark:bg-navy-700 dark:border-navy-600 dark:text-gray-300">
-                  {tr('Until', 'Gacha', 'Gacha')}: {new Date(botRuntimeState.pause_until).toLocaleTimeString()}
+                  {tr('Until', 'Until', 'Gacha')}: {new Date(botRuntimeState.pause_until).toLocaleTimeString()}
                 </span>
               )}
             </div>
@@ -1168,8 +1168,8 @@ const Conversations: React.FC = () => {
                   <ArchiveX size={12} />
                   <span className="hidden sm:inline">
                     {clearingConversationId === selectedConversation.id
-                      ? tr('Clearing...', 'Tozalanmoqda...', 'Tozalanmoqda...')
-                      : tr('Clear Chat', 'Chatni tozalash', 'Chatni tozalash')}
+                      ? tr('Clearing...', 'Clearing...', 'Tozalanmoqda...')
+                      : tr('Clear Chat', 'Clear Chat', 'Chatni tozalash')}
                   </span>
                 </button>
               )}
@@ -1182,16 +1182,16 @@ const Conversations: React.FC = () => {
                       ? 'bg-green-50 border-green-200 text-green-700'
                       : 'bg-red-50 border-red-200 text-red-700'
                   }`}
-                  title={botRuntimeState?.is_paused ? tr('Resume bot', 'Botni yoqish', 'Botni yoqish') : tr('Pause bot', 'Botni to‘xtatish', 'Botni to‘xtatish')}
+                  title={botRuntimeState?.is_paused ? tr('Resume bot', 'Resume bot', 'Botni yoqish') : tr('Pause bot', 'Pause bot', "Botni to'xtatish")}
                 >
                   <span className={`inline-block h-2.5 w-2.5 rounded-full ${botRuntimeState?.is_paused ? 'bg-green-500' : 'bg-red-500'}`} />
                   {botRuntimeSaving
-                    ? tr('Updating...', 'Yangilanmoqda...', 'Yangilanmoqda...')
+                    ? tr('Updating...', 'Updating...', 'Yangilanmoqda...')
                     : botRuntimeLoading
-                      ? tr('Loading...', 'Yuklanmoqda...', 'Yuklanmoqda...')
+                      ? tr('Loading...', 'Loading...', 'Yuklanmoqda...')
                       : botRuntimeState?.is_paused
-                        ? tr('Resume Bot', 'Botni yoqish', 'Botni yoqish')
-                        : tr('Pause Bot', 'Botni to‘xtatish', 'Botni to‘xtatish')}
+                        ? tr('Resume Bot', 'Resume Bot', 'Botni yoqish')
+                        : tr('Pause Bot', 'Pause Bot', "Botni to'xtatish")}
                 </button>
               )}
               <button
@@ -1203,7 +1203,7 @@ const Conversations: React.FC = () => {
                   loadConversationBotState(selectedChatId);
                 }}
                 className="inline-flex items-center justify-center h-8 w-8 rounded-full border border-light-border dark:border-navy-600 text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-navy-700"
-                title={lastSyncAt ? `${tr('Synced', 'Sinxronlangan', 'Sinxronlangan')} ${lastSyncAt.toLocaleTimeString()}` : tr('Refresh', 'Yangilash', 'Yangilash')}
+                title={lastSyncAt ? `${tr('Synced', 'Synced', 'Sinxronlangan')} ${lastSyncAt.toLocaleTimeString()}` : tr('Refresh', 'Refresh', 'Yangilash')}
               >
                 <RefreshCw size={13} />
               </button>
@@ -1216,10 +1216,10 @@ const Conversations: React.FC = () => {
               onScroll={handleMessageAreaScroll}
               className="h-full overflow-y-auto p-3 sm:p-4 space-y-3 bg-gradient-to-b from-gray-50 to-white dark:from-navy-900/60 dark:to-navy-900/20"
             >
-            {loadingMessages && <p className="text-sm text-gray-500 px-1">{tr('Loading messages...', 'Xabarlar yuklanmoqda...', 'Xabarlar yuklanmoqda...')}</p>}
-            {!loadingMessages && !selectedConversation && <p className="text-sm text-gray-500 px-1">{tr('Pick a conversation to start.', 'Boshlash uchun suhbatni tanlang.', 'Boshlash uchun suhbatni tanlang.')}</p>}
-            {!loadingMessages && selectedConversation && messages.length === 0 && <p className="text-sm text-gray-500 px-1">{tr('No messages yet.', 'Hozircha xabarlar yo‘q.', 'Hozircha xabarlar yo‘q.')}</p>}
-            {messages.map((m, index) => {
+            {loadingMessages && <p className="text-sm text-gray-500 px-1">{tr('Loading messages...', 'Loading messages...', 'Xabarlar yuklanmoqda...')}</p>}
+            {!loadingMessages && !selectedConversation && <p className="text-sm text-gray-500 px-1">{tr('Pick a conversation to start.', 'Pick a conversation to start.', 'Boshlash uchun suhbatni tanlang.')}</p>}
+            {!loadingMessages && selectedConversation && messages.length === 0 && <p className="text-sm text-gray-500 px-1">{tr('No messages yet.', 'No messages yet.', 'Hozircha xabarlar yoâ€™q.')}</p>}
+            {!loadingMessages && selectedConversation && messages.length === 0 && <p className="text-sm text-gray-500 px-1">{tr('No messages yet.', 'No messages yet.', "Hozircha xabarlar yo'q.")}</p>}
               const isClient = m.role === 'client';
               const isAdminMessage = m.role === 'admin';
               const isBotMessage = m.role === 'bot';
@@ -1230,12 +1230,12 @@ const Conversations: React.FC = () => {
               const hasAttachments = attachments.length > 0;
               const visibleText = getDisplayMessageText(m, attachments);
               const roleLabel = isClient
-                ? tr('Client', 'Klient', 'Mijoz')
+                ? tr('Client', 'Client', 'Mijoz')
                 : isAdminMessage
                   ? tr('Admin', 'Admin', 'Admin')
                   : isBotMessage
-                    ? tr('AI Assistant', 'AI yordamchi', 'AI yordamchi')
-                    : tr('System', 'Sistema', 'Tizim');
+                    ? tr('AI Assistant', 'AI Assistant', 'AI yordamchi')
+                    : tr('System', 'System', 'Tizim');
 
               const bubbleClass = isClient
                 ? 'bg-white dark:bg-navy-800 text-gray-800 dark:text-gray-100 rounded-tl-md border border-light-border dark:border-navy-700 shadow-sm'
@@ -1315,7 +1315,7 @@ const Conversations: React.FC = () => {
                               >
                                 <img
                                   src={url}
-                                  alt={tr('Attachment image', 'Prikreplenie izobrazhenie', 'Biriktirilgan rasm')}
+                                  alt={tr('Attachment image', 'Attachment image', 'Biriktirilgan rasm')}
                                   className="max-h-64 w-auto max-w-full rounded-lg border border-black/5 dark:border-white/10 object-cover bg-white/40"
                                   loading="lazy"
                                 />
@@ -1358,7 +1358,7 @@ const Conversations: React.FC = () => {
                               }`}
                             >
                               <Paperclip size={13} />
-                              <span className="truncate max-w-[220px]">{tr('Open attachment', 'Otkryt vloshenie', 'Birikmani ochish')}</span>
+                              <span className="truncate max-w-[220px]">{tr('Open attachment', 'Open attachment', 'Birikmani ochish')}</span>
                             </a>
                           );
                         })}
@@ -1378,7 +1378,7 @@ const Conversations: React.FC = () => {
                       {!isClient && m.role === 'admin' && (
                         <span className={`inline-flex items-center gap-1 text-[10px] block ${m.delivery?.sent ? 'text-green-200' : m.delivery?.reason === 'sending' ? 'text-blue-100' : 'text-red-200'}`}>
                           {m.delivery?.sent ? <CheckCheck size={11} /> : m.delivery?.reason === 'sending' ? <Check size={11} /> : <AlertCircle size={11} />}
-                          {m.delivery?.sent ? tr('Sent', 'Yuborildi', 'Yuborildi') : m.delivery?.reason === 'sending' ? tr('Sending...', 'Yuborilmoqda...', 'Yuborilmoqda...') : tr('Failed', 'Xato', 'Xato')}
+                          {m.delivery?.sent ? tr('Sent', 'Sent', 'Yuborildi') : m.delivery?.reason === 'sending' ? tr('Sending...', 'Sending...', 'Yuborilmoqda...') : tr('Failed', 'Failed', 'Xato')}
                         </span>
                       )}
                     </div>
@@ -1406,10 +1406,10 @@ const Conversations: React.FC = () => {
                     scrollToBottom('smooth');
                   }}
                   className="inline-flex items-center gap-2 rounded-full h-11 px-3 bg-white/95 dark:bg-navy-800/95 border border-light-border dark:border-navy-600 text-gray-700 dark:text-gray-100 shadow-lg backdrop-blur-sm hover:bg-white dark:hover:bg-navy-700 transition-colors"
-                  title={tr('Go to bottom', 'Vniz', 'Pastga tushish')}
+                  title={tr('Go to bottom', 'Go to bottom', 'Pastga tushish')}
                 >
                   <ChevronDown size={16} />
-                  <span className="text-xs font-medium hidden sm:inline">{tr('Bottom', 'Vniz', 'Pastga')}</span>
+                  <span className="text-xs font-medium hidden sm:inline">{tr('Bottom', 'Bottom', 'Pastga')}</span>
                 </button>
               </div>
             )}
@@ -1419,7 +1419,7 @@ const Conversations: React.FC = () => {
             {error && <p className="text-xs text-red-600 mb-2">{error}</p>}
             <div className="rounded-2xl border border-light-border dark:border-navy-700 bg-gray-50 dark:bg-navy-900/40 p-2 shadow-sm">
               <div className="flex gap-2 items-end">
-              <button className="hidden p-2 text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-gray-200" title={tr('Attachments not implemented', 'Fayl yuborish hali yo‘q', 'Fayl yuborish hali yo‘q')}> 
+              <button className="hidden p-2 text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-gray-200" title={tr('Attachments not implemented', 'Attachments not implemented', "Fayl yuborish hali yo'q")}> 
                 <Paperclip size={20} />
               </button>
               <div className="flex-1 bg-white dark:bg-navy-800 rounded-xl p-2 border border-light-border dark:border-navy-700 focus-within:border-blue-300 dark:focus-within:border-blue-500/40">
@@ -1434,7 +1434,7 @@ const Conversations: React.FC = () => {
                   }}
                    className="w-full bg-transparent border-none focus:outline-none text-sm text-gray-800 dark:text-gray-200 resize-none h-10"
                    rows={1}
-                   placeholder={tr('Type a message... (Enter to send)', 'Xabar yozing... (Yuborish uchun Enter)', 'Xabar yozing... (Yuborish uchun Enter)')}
+                   placeholder={tr('Type a message... (Enter to send)', 'Type a message... (Enter to send)', 'Xabar yozing... (Yuborish uchun Enter)')}
                    disabled={!selectedChatId || sending}
                  />
               </div>

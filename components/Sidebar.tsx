@@ -45,7 +45,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onCloseMob
   const renderNav = (isMobile = false) => (
     <nav className="relative flex-1 overflow-y-auto py-3 px-2">
       <p className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-white/25 select-none">
-        {tr('Menu', 'Меню', 'Menyu')}
+        {tr('Menu', 'Menu', 'Menyu')}
       </p>
       <ul className="space-y-0.5">
         {NAV_ITEMS.map((item) =>
@@ -94,7 +94,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onCloseMob
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-gray-900 dark:text-white truncate leading-tight">
-            {user?.first_name ? `${user.first_name} ${user.last_name || ''}`.trim() : user?.username || tr('User', 'Пользователь', 'Foydalanuvchi')}
+            {user?.first_name ? `${user.first_name} ${user.last_name || ''}`.trim() : user?.username || tr('User', 'User', 'Foydalanuvchi')}
           </p>
           <p className="text-[11px] text-gray-500 dark:text-white/40 font-medium uppercase tracking-wide truncate">
             {user?.role || '-'}
@@ -142,7 +142,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onCloseMob
           <button
             onClick={onCloseMobile}
             className="ml-auto p-2 rounded-lg text-gray-500 hover:text-gray-900 dark:text-white/60 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5"
-            title={tr('Close', 'Закрыть', 'Yopish')}
+            title={tr('Close', 'Close', 'Yopish')}
           >
             <X size={18} />
           </button>

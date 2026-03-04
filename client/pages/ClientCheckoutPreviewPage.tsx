@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AlertTriangle, ArrowLeft, CheckCircle2, ReceiptText } from 'lucide-react';
 import { clientApiRequest } from '../api/clientApi';
@@ -52,7 +52,7 @@ export const ClientCheckoutPreviewPage: React.FC = () => {
       payload.client = {
         full_name: client.full_name,
         phone: client.phone,
-        address: client.address,
+        address: orderDraft.location_text || client.address,
         preferred_language: language,
       };
     }

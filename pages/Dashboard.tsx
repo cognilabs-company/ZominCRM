@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { Card } from '../components/ui/Card';
@@ -231,13 +231,13 @@ const Dashboard: React.FC = () => {
 
   const validateFilters = useCallback(() => {
     if (filterMode === 'date' && !singleDate) {
-      toast.warning(tr('Please select a date.', 'Vyberite datu.', 'Sanani tanlang.'));
+      toast.warning(tr('Please select a date.', 'Please select a date.', 'Sanani tanlang.'));
       return false;
     }
 
     if (filterMode === 'range') {
       if (!dateFrom || !dateTo) {
-        toast.warning(tr('Please select date range.', 'Vyberite diapazon dat.', 'Sana oraligini tanlang.'));
+        toast.warning(tr('Please select date range.', 'Please select date range.', 'Sana oraligini tanlang.'));
         return false;
       }
       if (dateFrom > dateTo) {
@@ -286,7 +286,7 @@ const Dashboard: React.FC = () => {
       const data = await apiRequest<DashboardStatsResponse>(withQuery(ENDPOINTS.DASHBOARD.STATS));
       setStats(data || {});
     } catch (e) {
-      const message = e instanceof Error ? e.message : tr('Failed to load dashboard', 'Ne udalos zagruzit panel', 'Bosh sahifani yuklab bolmadi');
+      const message = e instanceof Error ? e.message : tr('Failed to load dashboard', 'Failed to load dashboard', 'Bosh sahifani yuklab bolmadi');
       setError(message);
       toast.error(message);
     } finally {
@@ -325,9 +325,9 @@ const Dashboard: React.FC = () => {
       link.remove();
       window.URL.revokeObjectURL(objectUrl);
 
-      toast.success(tr('Dashboard export downloaded.', 'Otchet zagruzhen.', 'Dashboard hisoboti yuklab olindi.'));
+      toast.success(tr('Dashboard export downloaded.', 'Dashboard export downloaded.', 'Dashboard hisoboti yuklab olindi.'));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : tr('Failed to download export.', 'Ne udalos skachat otchet.', 'Eksportni yuklab bolmadi.'));
+      toast.error(e instanceof Error ? e.message : tr('Failed to download export.', 'Failed to download export.', 'Eksportni yuklab bolmadi.'));
     } finally {
       setDownloading(false);
     }
@@ -395,25 +395,25 @@ const Dashboard: React.FC = () => {
 
   const loadedRange = useMemo(() => {
     if (stats.date_from || stats.date_to) return `${stats.date_from || '-'} - ${stats.date_to || '-'}`;
-    if (filterMode === 'weekly') return tr('Last 7 days', 'Poslednie 7 dney', 'Oxirgi 7 kun');
-    if (filterMode === 'monthly') return tr('Last 30 days', 'Poslednie 30 dney', 'Oxirgi 30 kun');
+    if (filterMode === 'weekly') return tr('Last 7 days', 'Last 7 days', 'Oxirgi 7 kun');
+    if (filterMode === 'monthly') return tr('Last 30 days', 'Last 30 days', 'Oxirgi 30 kun');
     if (filterMode === 'date') return singleDate;
     return `${dateFrom} - ${dateTo}`;
   }, [dateFrom, dateTo, filterMode, singleDate, stats.date_from, stats.date_to, tr]);
 
   // Dynamic chart titles based on filter mode
   const ordersTrendTitle = useMemo(() => {
-    if (filterMode === 'weekly') return tr('Orders Trend (Weekly)', 'Buyurtmalar trendi (Haftalik)', 'Buyurtmalar trendi (Haftalik)');
-    if (filterMode === 'monthly') return tr('Orders Trend (Monthly)', 'Buyurtmalar trendi (Oylik)', 'Buyurtmalar trendi (Oylik)');
-    if (filterMode === 'date') return tr('Orders Trend (Today)', 'Buyurtmalar trendi (Bugun)', 'Buyurtmalar trendi (Bugun)');
-    return tr('Orders Trend', 'Buyurtmalar trendi', 'Buyurtmalar trendi');
+    if (filterMode === 'weekly') return tr('Orders Trend (Weekly)', 'Orders Trend (Weekly)', 'Buyurtmalar trendi (Haftalik)');
+    if (filterMode === 'monthly') return tr('Orders Trend (Monthly)', 'Orders Trend (Monthly)', 'Buyurtmalar trendi (Oylik)');
+    if (filterMode === 'date') return tr('Orders Trend (Today)', 'Orders Trend (Today)', 'Buyurtmalar trendi (Bugun)');
+    return tr('Orders Trend', 'Orders Trend', 'Buyurtmalar trendi');
   }, [filterMode, tr]);
 
   const revenueTrendTitle = useMemo(() => {
-    if (filterMode === 'weekly') return tr('Weekly Revenue', 'Haftalik tushum', 'Haftalik tushum');
-    if (filterMode === 'monthly') return tr('Monthly Revenue', 'Oylik tushum', 'Oylik tushum');
-    if (filterMode === 'date') return tr('Today\'s Revenue', 'Bugungi tushum', 'Bugungi tushum');
-    return tr('Revenue Trend', 'Tushum trendi', 'Tushum trendi');
+    if (filterMode === 'weekly') return tr('Weekly Revenue', 'Weekly Revenue', 'Haftalik tushum');
+    if (filterMode === 'monthly') return tr('Monthly Revenue', 'Monthly Revenue', 'Oylik tushum');
+    if (filterMode === 'date') return tr('Today\'s Revenue', 'Today\'s Revenue', 'Bugungi tushum');
+    return tr('Revenue Trend', 'Revenue Trend', 'Tushum trendi');
   }, [filterMode, tr]);
 
   const showCharts = true;
@@ -430,28 +430,28 @@ const Dashboard: React.FC = () => {
     {
       title: t('total_orders'),
       value: String(stats.total_orders ?? 0),
-      sub: tr('Orders in selected period', 'Zakazy v vybrannom periode', 'Tanlangan davrdagi buyurtmalar'),
+      sub: tr('Orders in selected period', 'Orders in selected period', 'Tanlangan davrdagi buyurtmalar'),
       icon: ShoppingBag,
       color: 'text-blue-500',
     },
     {
-      title: tr('Product Revenue', 'Выручка по товарам', 'Mahsulot tushumi'),
+      title: tr('Product Revenue', 'Product Revenue', 'Mahsulot tushumi'),
       value: `${revenuePeriodValue.toLocaleString()} UZS`,
       sub: tr(
         `Selected period revenue. Actual today: ${(stats.revenue_today_actual ?? 0).toLocaleString()} UZS`,
-        `Выручка за период. Фактически сегодня: ${(stats.revenue_today_actual ?? 0).toLocaleString()} UZS`,
+        `Vyruchka za vybrannyy period. Fakticheski segodnya: ${(stats.revenue_today_actual ?? 0).toLocaleString()} UZS`,
         `Tanlangan davr tushumi. Haqiqiy bugun: ${(stats.revenue_today_actual ?? 0).toLocaleString()} UZS`
       ),
       icon: DollarSign,
       color: 'text-green-500',
     },
     {
-      title: tr('Pending Amount', 'Summa v ozhidanii', "Kutilayotgan to'lov summasi"),
+      title: tr('Pending Amount', 'Pending Amount', "Kutilayotgan to\'lov summasi"),
       value: `${(stats.pending_payments_amount ?? 0).toLocaleString()} UZS`,
       sub: tr(
         `${stats.pending_payments ?? 0} pending payment orders (tap to open)`,
         `${stats.pending_payments ?? 0} zakazov s ozhidayushchey oplatoy (otkryt)`,
-        `${stats.pending_payments ?? 0} ta kutilayotgan to'lov buyurtmasi (ochish)`
+        `${stats.pending_payments ?? 0} ta kutilayotgan to\'lov buyurtmasi (ochish)`
       ),
       icon: Clock,
       color: 'text-orange-500',
@@ -460,7 +460,7 @@ const Dashboard: React.FC = () => {
     {
       title: t('in_delivery'),
       value: String(stats.in_delivery ?? 0),
-      sub: tr('Orders currently in delivery', 'Zakazy v processe dostavki', 'Yetkazib berilayotgan buyurtmalar'),
+      sub: tr('Orders currently in delivery', 'Orders currently in delivery', 'Yetkazib berilayotgan buyurtmalar'),
       icon: Truck,
       color: 'text-purple-500',
     },
@@ -476,10 +476,10 @@ const Dashboard: React.FC = () => {
         <div className="p-4 md:p-5 flex flex-col gap-4">
           <div className="flex flex-wrap gap-2">
             {([
-              ['date', tr('Today / Date', 'Segodnya / Data', 'Bugun / Sana')],
-              ['weekly', tr('Weekly', 'Nedelya', 'Haftalik')],
-              ['monthly', tr('Monthly', 'Mesyac', 'Oylik')],
-              ['range', tr('Custom Range', 'Svoy period', 'Maxsus davr')],
+              ['date', tr('Today / Date', 'Today / Date', 'Bugun / Sana')],
+              ['weekly', tr('Weekly', 'Weekly', 'Haftalik')],
+              ['monthly', tr('Monthly', 'Monthly', 'Oylik')],
+              ['range', tr('Custom Range', 'Custom Range', 'Maxsus davr')],
             ] as Array<[DashboardFilterMode, string]>).map(([mode, label]) => (
               <button
                 key={mode}
@@ -499,7 +499,7 @@ const Dashboard: React.FC = () => {
             <div className="flex flex-wrap gap-3 w-full md:w-auto">
               {filterMode === 'date' && (
                 <div className="flex-1 md:flex-none">
-                  <label className="block text-xs font-medium text-gray-500 mb-1.5">{tr('Date', 'Data', 'Sana')}</label>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">{tr('Date', 'Date', 'Sana')}</label>
                   <input
                     type="date"
                     value={singleDate}
@@ -512,7 +512,7 @@ const Dashboard: React.FC = () => {
               {filterMode === 'range' && (
                 <>
                   <div className="flex-1 md:flex-none">
-                    <label className="block text-xs font-medium text-gray-500 mb-1.5">{tr('From', 'Ot', 'Dan')}</label>
+                    <label className="block text-xs font-medium text-gray-500 mb-1.5">{tr('From', 'From', 'Dan')}</label>
                     <input
                       type="date"
                       value={dateFrom}
@@ -521,7 +521,7 @@ const Dashboard: React.FC = () => {
                     />
                   </div>
                   <div className="flex-1 md:flex-none">
-                    <label className="block text-xs font-medium text-gray-500 mb-1.5">{tr('To', 'Do', 'Gacha')}</label>
+                    <label className="block text-xs font-medium text-gray-500 mb-1.5">{tr('To', 'To', 'Gacha')}</label>
                     <input
                       type="date"
                       value={dateTo}
@@ -537,8 +537,8 @@ const Dashboard: React.FC = () => {
                   <Calendar size={16} />
                   <span>
                     {filterMode === 'weekly'
-                      ? tr('Rolling 7-day period', 'Skruglyayushchiysya period 7 dney', 'Sirganuvchi 7 kunlik davr')
-                      : tr('Rolling 30-day period', 'Skruglyayushchiysya period 30 dney', 'Sirganuvchi 30 kunlik davr')}
+                      ? tr('Rolling 7-day period', 'Rolling 7-day period', 'Sirganuvchi 7 kunlik davr')
+                      : tr('Rolling 30-day period', 'Rolling 30-day period', 'Sirganuvchi 30 kunlik davr')}
                   </span>
                 </div>
               )}
@@ -556,7 +556,7 @@ const Dashboard: React.FC = () => {
                 className="flex-1 md:flex-none inline-flex justify-center items-center gap-2 rounded-lg bg-white dark:bg-navy-800 border border-light-border dark:border-navy-600 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-navy-700 hover:text-primary-blue transition-all shadow-sm disabled:opacity-50"
               >
                 <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
-                {tr('Refresh', 'Obnovit', 'Yangilash')}
+                {tr('Refresh', 'Refresh', 'Yangilash')}
               </button>
               <button
                 type="button"
@@ -566,7 +566,7 @@ const Dashboard: React.FC = () => {
               >
                 <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                 <Download size={15} className="relative z-10" />
-                <span className="relative z-10">{downloading ? tr('Exporting...', 'Eksport...', 'Yuklanmoqda...') : tr('Export XLS', 'Eksport XLS', 'XLS Yuklash')}</span>
+                <span className="relative z-10">{downloading ? tr('Exporting...', 'Exporting...', 'Yuklanmoqda...') : tr('Export XLS', 'Export XLS', 'XLS Yuklash')}</span>
               </button>
             </div>
           </div>
@@ -595,19 +595,19 @@ const Dashboard: React.FC = () => {
       {showDepositCards ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card accent="amber">
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{tr('Deposit Held', 'Удерживаемый депозит', 'Ushlab turilgan depozit')}</p>
+            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{tr('Deposit Held', 'Deposit Held', 'Ushlab turilgan depozit')}</p>
             <h3 className="mt-2 text-2xl font-bold text-light-text dark:text-white">{loading ? '...' : `${depositHeldValue.toLocaleString()} UZS`}</h3>
-            <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">{tr('Current bottle deposit held from clients', 'Текущий депозит за тару на удержании', 'Mijozlardan ushlab turilgan joriy idish depoziti')}</p>
+            <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">{tr('Current bottle deposit held from clients', 'Current bottle deposit held from clients', 'Mijozlardan ushlab turilgan joriy idish depoziti')}</p>
           </Card>
           <Card accent="blue">
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{tr('Deposit Charged', 'Начисленный депозит', 'Hisoblangan depozit')}</p>
+            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{tr('Deposit Charged', 'Deposit Charged', 'Hisoblangan depozit')}</p>
             <h3 className="mt-2 text-2xl font-bold text-light-text dark:text-white">{loading ? '...' : `${depositChargedValue.toLocaleString()} UZS`}</h3>
-            <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">{tr('Deposit charged in selected period', 'Депозит, начисленный за период', 'Tanlangan davrda hisoblangan depozit')}</p>
+            <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">{tr('Deposit charged in selected period', 'Deposit charged in selected period', 'Tanlangan davrda hisoblangan depozit')}</p>
           </Card>
           <Card accent="emerald">
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{tr('Deposit Refunded', 'Возвращенный депозит', 'Qaytarilgan depozit')}</p>
+            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{tr('Deposit Refunded', 'Deposit Refunded', 'Qaytarilgan depozit')}</p>
             <h3 className="mt-2 text-2xl font-bold text-light-text dark:text-white">{loading ? '...' : `${depositRefundedValue.toLocaleString()} UZS`}</h3>
-            <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">{tr('Deposit refunded in selected period', 'Депозит, возвращенный за период', 'Tanlangan davrda qaytarilgan depozit')}</p>
+            <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">{tr('Deposit refunded in selected period', 'Deposit refunded in selected period', 'Tanlangan davrda qaytarilgan depozit')}</p>
           </Card>
         </div>
       ) : null}
@@ -616,7 +616,7 @@ const Dashboard: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card title={ordersTrendTitle} className="min-h-[350px]">
             {orderTrend.length === 0 ? (
-              <p className="text-sm text-gray-500">{tr('No trend data.', 'Net trend dannyh.', 'Trend malumotlari yoq.')}</p>
+              <p className="text-sm text-gray-500">{tr('No trend data.', 'No trend data.', 'Trend malumotlari yoq.')}</p>
             ) : (
               <div className="h-[300px] w-full mt-4">
                 <ResponsiveContainer width="100%" height="100%">
@@ -633,7 +633,7 @@ const Dashboard: React.FC = () => {
                     />
                     <Tooltip
                       cursor={{ fill: 'transparent' }}
-                      formatter={(value) => [toNumber(value), tr('Orders', 'Zakazy', 'Buyurtmalar')]}
+                      formatter={(value) => [toNumber(value), tr('Orders', 'Orders', 'Buyurtmalar')]}
                       contentStyle={{ backgroundColor: '#101B2D', borderColor: '#1A2C45', color: '#fff' }}
                     />
                     <Bar dataKey="value" fill="#E53935" radius={[4, 4, 0, 0]} minPointSize={2} />
@@ -645,7 +645,7 @@ const Dashboard: React.FC = () => {
 
           <Card title={revenueTrendTitle} className="min-h-[350px]">
             {revenueTrend.length === 0 ? (
-              <p className="text-sm text-gray-500">{tr('No trend data.', 'Net trend dannyh.', 'Trend malumotlari yoq.')}</p>
+              <p className="text-sm text-gray-500">{tr('No trend data.', 'No trend data.', 'Trend malumotlari yoq.')}</p>
             ) : (
               <div className="h-[300px] w-full mt-4">
                 <ResponsiveContainer width="100%" height="100%">
@@ -661,7 +661,7 @@ const Dashboard: React.FC = () => {
                       tickFormatter={(value) => `${Math.round(Number(value) / 1000)}k`}
                     />
                     <Tooltip
-                      formatter={(value) => [`${toNumber(value).toLocaleString()} UZS`, tr('Revenue', 'Vyruchka', 'Tushum')]}
+                      formatter={(value) => [`${toNumber(value).toLocaleString()} UZS`, tr('Revenue', 'Revenue', 'Tushum')]}
                       contentStyle={{ backgroundColor: '#101B2D', borderColor: '#1A2C45', color: '#fff' }}
                     />
                     <Line type="monotone" dataKey="value" stroke="#2F6BFF" strokeWidth={3} dot={{ r: 3 }} connectNulls />
@@ -674,7 +674,7 @@ const Dashboard: React.FC = () => {
       )}
 
       {stats.recent_activity && stats.recent_activity.length > 0 ? (
-        <Card title={tr('Recent Activity', 'Последняя активность', 'So‘nggi faollik')}>
+        <Card title={tr('Recent Activity', 'Recent Activity', "So\'nggi faollik")}>
           <div className="space-y-3">
             {stats.recent_activity.slice(0, 8).map((item) => (
               <div key={item.id} className="flex items-start justify-between gap-4 rounded-lg border border-light-border dark:border-navy-700 bg-gray-50 dark:bg-navy-900/40 px-4 py-3">

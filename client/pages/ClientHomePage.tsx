@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Droplets, Package, ShoppingBag, WalletCards } from 'lucide-react';
 import { useClientApp } from '../bootstrap/ClientAppContext';

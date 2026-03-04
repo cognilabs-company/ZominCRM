@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Card } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
 import { Badge } from '../components/ui/Badge';
@@ -47,7 +47,7 @@ const InstagramPages: React.FC = () => {
       const list = Array.isArray(data) ? data : (data.results || []);
       setRows(list);
     } catch (e) {
-      const message = e instanceof Error ? e.message : tr('Failed to load Instagram pages', 'Instagram sahifalarni yuklab bolmadi', 'Instagram sahifalarni yuklab bolmadi');
+      const message = e instanceof Error ? e.message : tr('Failed to load Instagram pages', 'Failed to load Instagram pages', 'Instagram sahifalarni yuklab bolmadi');
       setError(message);
       toast.error(message);
     } finally {
@@ -107,12 +107,12 @@ const InstagramPages: React.FC = () => {
         });
       }
 
-      toast.success(editing ? tr('Instagram page updated', 'Instagram sahifa yangilandi', 'Instagram sahifa yangilandi') : tr('Instagram page created', 'Instagram sahifa yaratildi', 'Instagram sahifa yaratildi'));
+      toast.success(editing ? tr('Instagram page updated', 'Instagram page updated', 'Instagram sahifa yangilandi') : tr('Instagram page created', 'Instagram page created', 'Instagram sahifa yaratildi'));
       setIsModalOpen(false);
       setEditing(null);
       await loadRows();
     } catch (e) {
-      const message = e instanceof Error ? e.message : tr('Failed to save Instagram page', 'Instagram sahifani saqlab bolmadi', 'Instagram sahifani saqlab bolmadi');
+      const message = e instanceof Error ? e.message : tr('Failed to save Instagram page', 'Failed to save Instagram page', 'Instagram sahifani saqlab bolmadi');
       setError(message);
       toast.error(message);
     } finally {
@@ -121,15 +121,15 @@ const InstagramPages: React.FC = () => {
   };
 
   const onDelete = async (row: InstagramPageCredential) => {
-    const ok = window.confirm(tr('Delete this Instagram page credential?', 'Instagram credential ochirilsinmi?', 'Instagram credential ochirilsinmi?'));
+    const ok = window.confirm(tr('Delete this Instagram page credential?', 'Delete this Instagram page credential?', 'Instagram credential ochirilsinmi?'));
     if (!ok) return;
     try {
       setDeletingId(row.id);
       await apiRequest(ENDPOINTS.INSTAGRAM.PAGE_DETAIL(row.id), { method: 'DELETE' });
-      toast.success(tr('Instagram page deleted', 'Instagram sahifa ochirildi', 'Instagram sahifa ochirildi'));
+      toast.success(tr('Instagram page deleted', 'Instagram page deleted', 'Instagram sahifa ochirildi'));
       setRows((prev) => prev.filter((x) => x.id !== row.id));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : tr('Failed to delete Instagram page', 'Instagram sahifani ochirib bolmadi', 'Instagram sahifani ochirib bolmadi'));
+      toast.error(e instanceof Error ? e.message : tr('Failed to delete Instagram page', 'Failed to delete Instagram page', 'Instagram sahifani ochirib bolmadi'));
     } finally {
       setDeletingId(null);
     }
@@ -140,7 +140,7 @@ const InstagramPages: React.FC = () => {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-light-text dark:text-white inline-flex items-center gap-2">
           <Instagram size={24} className="text-pink-500" />
-          {tr('Instagram Pages', 'Instagram sahifalari', 'Instagram sahifalari')}
+          {tr('Instagram Pages', 'Instagram Pages', 'Instagram sahifalari')}
         </h1>
         <button
           onClick={openCreate}
@@ -170,18 +170,18 @@ const InstagramPages: React.FC = () => {
             <thead>
               <tr className="bg-gray-50 dark:bg-navy-900/50 text-xs uppercase text-gray-500 dark:text-gray-400 border-b border-light-border dark:border-navy-700">
                 <th className="px-6 py-4 font-semibold">Page ID</th>
-                <th className="px-6 py-4 font-semibold">{tr('Page Name', 'Sahifa nomi', 'Sahifa nomi')}</th>
-                <th className="px-6 py-4 font-semibold">{tr('Access Token', 'Access token', 'Access token')}</th>
-                <th className="px-6 py-4 font-semibold">{tr('Status', 'Holat', 'Holat')}</th>
-                <th className="px-6 py-4 font-semibold">{tr('Updated', 'Yangilangan', 'Yangilangan')}</th>
+                <th className="px-6 py-4 font-semibold">{tr('Page Name', 'Page Name', 'Sahifa nomi')}</th>
+                <th className="px-6 py-4 font-semibold">{tr('Access Token', 'Access Token', 'Access token')}</th>
+                <th className="px-6 py-4 font-semibold">{tr('Status', 'Status', 'Holat')}</th>
+                <th className="px-6 py-4 font-semibold">{tr('Updated', 'Updated', 'Yangilangan')}</th>
                 <th className="px-6 py-4 font-semibold text-right">{t('actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-light-border dark:divide-navy-700">
               {loading ? (
-                <tr><td colSpan={6} className="px-6 py-10 text-center text-gray-400">{tr('Loading Instagram pages...', 'Instagram sahifalar yuklanmoqda...', 'Instagram sahifalar yuklanmoqda...')}</td></tr>
+                <tr><td colSpan={6} className="px-6 py-10 text-center text-gray-400">{tr('Loading Instagram pages...', 'Loading Instagram pages...', 'Instagram sahifalar yuklanmoqda...')}</td></tr>
               ) : filteredRows.length === 0 ? (
-                <tr><td colSpan={6} className="px-6 py-10 text-center text-gray-400">{tr('No pages found', 'Sahifalar topilmadi', 'Sahifalar topilmadi')}</td></tr>
+                <tr><td colSpan={6} className="px-6 py-10 text-center text-gray-400">{tr('No pages found', 'No pages found', 'Sahifalar topilmadi')}</td></tr>
               ) : (
                 filteredRows.map((row) => (
                   <tr key={row.id} className="hover:bg-gray-50 dark:hover:bg-navy-700/50 transition-colors">
@@ -195,16 +195,16 @@ const InstagramPages: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 text-sm">
                       <Badge variant={row.is_active ? 'success' : 'default'}>
-                        {row.is_active ? tr('Active', 'Faol', 'Faol') : tr('Inactive', 'Nofaol', 'Nofaol')}
+                        {row.is_active ? tr('Active', 'Active', 'Faol') : tr('Inactive', 'Inactive', 'Nofaol')}
                       </Badge>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{row.updated_at ? new Date(row.updated_at).toLocaleString() : '-'}</td>
                     <td className="px-6 py-4 text-right">
                       <div className="inline-flex items-center gap-2">
-                        <button onClick={() => openEdit(row)} className="p-1.5 text-gray-500 dark:text-gray-300 hover:text-primary-blue dark:hover:text-blue-400 transition-colors" title={tr('Edit', 'Tahrirlash', 'Tahrirlash')}>
+                        <button onClick={() => openEdit(row)} className="p-1.5 text-gray-500 dark:text-gray-300 hover:text-primary-blue dark:hover:text-blue-400 transition-colors" title={tr('Edit', 'Edit', 'Tahrirlash')}>
                           <Edit2 size={16} />
                         </button>
-                        <button onClick={() => onDelete(row)} disabled={deletingId === row.id} className="p-1.5 text-gray-500 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 transition-colors disabled:opacity-50" title={tr('Delete', 'Ochirish', 'Ochirish')}>
+                        <button onClick={() => onDelete(row)} disabled={deletingId === row.id} className="p-1.5 text-gray-500 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 transition-colors disabled:opacity-50" title={tr('Delete', 'Delete', 'Ochirish')}>
                           <Trash2 size={16} />
                         </button>
                       </div>
@@ -220,7 +220,7 @@ const InstagramPages: React.FC = () => {
       <Modal
         isOpen={isModalOpen}
         onClose={() => { setIsModalOpen(false); setEditing(null); }}
-        title={editing ? tr('Edit Instagram Page', 'Instagram sahifani tahrirlash', 'Instagram sahifani tahrirlash') : tr('New Instagram Page', 'Yangi Instagram sahifa', 'Yangi Instagram sahifa')}
+        title={editing ? tr('Edit Instagram Page', 'Edit Instagram Page', 'Instagram sahifani tahrirlash') : tr('New Instagram Page', 'New Instagram Page', 'Yangi Instagram sahifa')}
         footer={null}
       >
         <form onSubmit={onSave} className="space-y-4">
@@ -234,12 +234,12 @@ const InstagramPages: React.FC = () => {
               className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white disabled:opacity-60"
             />
             {editing && (
-              <p className="text-[11px] text-gray-500 mt-1">{tr('Page ID cannot be changed in edit mode', 'Edit rejimida Page ID ozgarmaydi', 'Edit rejimida Page ID ozgarmaydi')}</p>
+              <p className="text-[11px] text-gray-500 mt-1">{tr('Page ID cannot be changed in edit mode', 'Page ID cannot be changed in edit mode', 'Edit rejimida Page ID ozgarmaydi')}</p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Page Name', 'Sahifa nomi', 'Sahifa nomi')}</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Page Name', 'Page Name', 'Sahifa nomi')}</label>
             <input
               name="page_name"
               defaultValue={editing?.page_name || ''}
@@ -248,7 +248,7 @@ const InstagramPages: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Access Token', 'Access token', 'Access token')}</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Access Token', 'Access Token', 'Access token')}</label>
             <textarea
               name="access_token"
               defaultValue={editing?.access_token || ''}
@@ -258,7 +258,7 @@ const InstagramPages: React.FC = () => {
 
           <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
             <input name="is_active" type="checkbox" defaultChecked={editing ? editing.is_active : true} />
-            {tr('Active', 'Faol', 'Faol')}
+            {tr('Active', 'Active', 'Faol')}
           </label>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-light-border dark:border-navy-700">
@@ -274,7 +274,7 @@ const InstagramPages: React.FC = () => {
               type="submit"
               className="px-4 py-2 rounded-lg text-sm font-medium bg-primary-blue text-white hover:bg-blue-600 transition-colors disabled:opacity-50"
             >
-              {saving ? tr('Saving...', 'Saqlanmoqda...', 'Saqlanmoqda...') : t('save')}
+              {saving ? tr('Saving...', 'Saving...', 'Saqlanmoqda...') : t('save')}
             </button>
           </div>
         </form>

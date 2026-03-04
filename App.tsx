@@ -73,7 +73,7 @@ const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #E53935, #C62828)' }}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a10 10 0 1 1 0 20A10 10 0 0 1 12 2" /><path d="M8 9.05v-.1" /><path d="M16 9.05v-.1" /><path d="M8.5 14a3.5 3.5 0 0 0 7 0" /></svg>
           </div>
-          <p className="text-sm text-white/40">{tr('Loading...', 'Yuklanmoqda...', 'Yuklanmoqda...')}</p>
+          <p className="text-sm text-white/40">{tr('Loading...', 'Loading...', 'Yuklanmoqda...')}</p>
         </div>
       </div>
     );
