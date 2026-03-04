@@ -137,15 +137,12 @@ const Products: React.FC = () => {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editing, setEditing] = useState<ApiProduct | null>(null);
   const [formState, setFormState] = useState<ProductFormState>(emptyForm);
-  const [primaryImageFile, setPrimaryImageFile] = useState<File | null>(null);
-  const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
-  const [primaryPreviewUrl, setPrimaryPreviewUrl] = useState<string | null>(null);
-  const [galleryPreviewUrls, setGalleryPreviewUrls] = useState<string[]>([]);
+  const [uploadFiles, setUploadFiles] = useState<File[]>([]);
+  const [uploadPreviewUrls, setUploadPreviewUrls] = useState<string[]>([]);
   const [removeImage, setRemoveImage] = useState(false);
   const [removeImageIds, setRemoveImageIds] = useState<string[]>([]);
   const [replaceGallery, setReplaceGallery] = useState(false);
-  const primaryInputRef = useRef<HTMLInputElement | null>(null);
-  const galleryInputRef = useRef<HTMLInputElement | null>(null);
+  const uploadInputRef = useRef<HTMLInputElement | null>(null);
   const [detailProduct, setDetailProduct] = useState<ApiProduct | null>(null);
   const [detailIndex, setDetailIndex] = useState(0);
 
@@ -173,30 +170,19 @@ const Products: React.FC = () => {
   }, [onlyLowStock]);
 
   useEffect(() => {
-    if (!primaryImageFile) {
-      setPrimaryPreviewUrl(null);
+    if (!uploadFiles.length) {
+      setUploadPreviewUrls([]);
       return;
     }
-    const objectUrl = URL.createObjectURL(primaryImageFile);
-    setPrimaryPreviewUrl(objectUrl);
-    return () => URL.revokeObjectURL(objectUrl);
-  }, [primaryImageFile]);
-
-  useEffect(() => {
-    if (!galleryFiles.length) {
-      setGalleryPreviewUrls([]);
-      return;
-    }
-    const objectUrls = galleryFiles.map((file) => URL.createObjectURL(file));
-    setGalleryPreviewUrls(objectUrls);
+    const objectUrls = uploadFiles.map((file) => URL.createObjectURL(file));
+    setUploadPreviewUrls(objectUrls);
     return () => objectUrls.forEach((url) => URL.revokeObjectURL(url));
-  }, [galleryFiles]);
+  }, [uploadFiles]);
 
   useEffect(() => {
     if (!editing) {
       setFormState(emptyForm);
-      setPrimaryImageFile(null);
-      setGalleryFiles([]);
+      setUploadFiles([]);
       setRemoveImage(false);
       setRemoveImageIds([]);
       setReplaceGallery(false);
@@ -214,8 +200,7 @@ const Products: React.FC = () => {
       bottle_deposit_uzs: String(editing.bottle_deposit_uzs ?? 0),
       is_active: editing.is_active !== false,
     });
-    setPrimaryImageFile(null);
-    setGalleryFiles([]);
+    setUploadFiles([]);
     setRemoveImage(false);
     setRemoveImageIds([]);
     setReplaceGallery(false);
@@ -232,10 +217,10 @@ const Products: React.FC = () => {
   );
 
   const displayPrimaryImage = useMemo(() => {
-    if (primaryPreviewUrl) return primaryPreviewUrl;
+    if (uploadPreviewUrls[0]) return uploadPreviewUrls[0];
     if (removeImage) return null;
     return getPrimaryImage(editing);
-  }, [editing, primaryPreviewUrl, removeImage]);
+  }, [editing, removeImage, uploadPreviewUrls]);
 
   const detailMedia = useMemo(() => getProductMedia(detailProduct), [detailProduct]);
 
@@ -249,15 +234,13 @@ const Products: React.FC = () => {
   );
 
   const resetImageInputs = () => {
-    if (primaryInputRef.current) primaryInputRef.current.value = '';
-    if (galleryInputRef.current) galleryInputRef.current.value = '';
+    if (uploadInputRef.current) uploadInputRef.current.value = '';
   };
 
   const openCreate = () => {
     setEditing(null);
     setFormState(emptyForm);
-    setPrimaryImageFile(null);
-    setGalleryFiles([]);
+    setUploadFiles([]);
     setRemoveImage(false);
     setRemoveImageIds([]);
     setReplaceGallery(false);
@@ -275,8 +258,7 @@ const Products: React.FC = () => {
     setIsEditorOpen(false);
     setEditing(null);
     setFormState(emptyForm);
-    setPrimaryImageFile(null);
-    setGalleryFiles([]);
+    setUploadFiles([]);
     setRemoveImage(false);
     setRemoveImageIds([]);
     setReplaceGallery(false);
@@ -316,7 +298,7 @@ const Products: React.FC = () => {
       setSaving(true);
       setError(null);
 
-      const hasMediaChanges = Boolean(primaryImageFile || galleryFiles.length || removeImage || removeImageIds.length || replaceGallery);
+      const hasMediaChanges = Boolean(uploadFiles.length || removeImage || removeImageIds.length || replaceGallery);
 
       if (hasMediaChanges) {
         const payload = new FormData();
@@ -331,8 +313,11 @@ const Products: React.FC = () => {
         payload.append('is_active', String(formState.is_active));
         payload.append('actor', 'frontend-ui');
 
-        if (primaryImageFile) payload.append('image', primaryImageFile);
-        galleryFiles.forEach((file) => payload.append('images', file));
+        if (uploadFiles.length === 1 && !editing) {
+          payload.append('image', uploadFiles[0]);
+        } else {
+          uploadFiles.forEach((file) => payload.append('images', file));
+        }
         if (replaceGallery) payload.append('replace_images', 'true');
         if (removeImage) payload.append('remove_image', 'true');
         if (removeImageIds.length) payload.append('remove_image_ids', JSON.stringify(removeImageIds));
@@ -580,7 +565,7 @@ const Products: React.FC = () => {
                   )}
                   <div className="absolute inset-x-0 bottom-0 bg-[linear-gradient(180deg,transparent_0%,rgba(0,0,0,0.66)_100%)] px-5 pb-5 pt-12 text-white">
                     <p className="text-lg font-semibold">{formState.name || tr('New product', 'ÐÐ¾Ð²Ñ‹Ð¹ Ñ‚Ð¾Ð²Ð°Ñ€', 'Yangi mahsulot')}</p>
-                    <p className="mt-1 text-sm text-white/76">{formState.size_liters || '-'}L Â· {(existingGalleryImages.length + galleryFiles.length) || 0} {tr('photos', 'Ñ„Ð¾Ñ‚Ð¾', 'rasm')}</p>
+                    <p className="mt-1 text-sm text-white/76">{formState.size_liters || '-'}L / {(existingGalleryImages.length + uploadFiles.length) || 0} {tr('photos', 'Ñ„Ð¾Ñ‚Ð¾', 'rasm')}</p>
                   </div>
                 </div>
               </div>
@@ -588,50 +573,44 @@ const Products: React.FC = () => {
               <div className="rounded-[28px] border border-light-border bg-white/80 p-5 shadow-sm dark:border-navy-700 dark:bg-navy-900/40">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Cover photo', 'Ð“Ð»Ð°Ð²Ð½Ð¾Ðµ Ñ„Ð¾Ñ‚Ð¾', 'Asosiy rasm')}</p>
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{tr('Shown first in the catalog and client app.', 'Ð­Ñ‚Ð¾ Ñ„Ð¾Ñ‚Ð¾ Ð¿Ð¾ÐºÐ°Ð·Ñ‹Ð²Ð°ÐµÑ‚ÑÑ Ð¿ÐµÑ€Ð²Ñ‹Ð¼ Ð² Ð°Ð´Ð¼Ð¸Ð½ÐºÐµ Ð¸ WebApp.', 'Bu rasm admin va WebAppda birinchi koâ€˜rinadi.')}</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Product photos', 'Ð¤Ð¾Ñ‚Ð¾ Ñ‚Ð¾Ð²Ð°Ñ€Ð°', 'Mahsulot rasmlari')}</p>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{tr('Upload one or many images. If several files are selected, the first becomes the main photo automatically.', 'Ð—Ð°Ð³Ñ€ÑƒÐ·Ð¸Ñ‚Ðµ Ð¾Ð´Ð½Ð¾ Ð¸Ð»Ð¸ Ð½ÐµÑÐºÐ¾Ð»ÑŒÐºÐ¾ Ð¸Ð·Ð¾Ð±Ñ€Ð°Ð¶ÐµÐ½Ð¸Ð¹. Ð•ÑÐ»Ð¸ Ð²Ñ‹Ð±Ñ€Ð°Ð½Ð¾ Ð½ÐµÑÐºÐ¾Ð»ÑŒÐºÐ¾ Ñ„Ð°Ð¹Ð»Ð¾Ð², Ð¿ÐµÑ€Ð²Ñ‹Ð¹ ÑÑ‚Ð°Ð½ÐµÑ‚ Ð¾ÑÐ½Ð¾Ð²Ð½Ñ‹Ð¼ Ñ„Ð¾Ñ‚Ð¾.', 'Bitta yoki bir nechta rasm yuklang. Bir nechta fayl tanlansa, birinchisi avtomatik asosiy rasm boâ€˜ladi.')}</p>
                   </div>
                   <label className="cursor-pointer rounded-2xl bg-[#21404d] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1a3340]">
-                    <span className="inline-flex items-center gap-2"><Upload size={15} />{tr('Choose photo', 'Ð—Ð°Ð³Ñ€ÑƒÐ·Ð¸Ñ‚ÑŒ', 'Yuklash')}</span>
-                    <input ref={primaryInputRef} type="file" accept="image/*" className="hidden" onChange={(event) => setPrimaryImageFile(event.target.files?.[0] || null)} />
+                    <span className="inline-flex items-center gap-2"><Upload size={15} />{tr('Choose images', 'Ð’Ñ‹Ð±Ñ€Ð°Ñ‚ÑŒ Ñ„Ð¾Ñ‚Ð¾', 'Rasmlarni tanlash')}</span>
+                    <input ref={uploadInputRef} type="file" accept="image/*" multiple className="hidden" onChange={(event) => setUploadFiles(Array.from(event.target.files || []))} />
                   </label>
                 </div>
-                <div className="mt-4 rounded-2xl border border-dashed border-[#d8c7b2] bg-[rgba(255,248,240,0.94)] px-4 py-3 text-sm text-[#5b6770]">
-                  {primaryImageFile ? primaryImageFile.name : tr('Choose a clear cover photo for the product.', 'Ð’Ñ‹Ð±ÐµÑ€Ð¸Ñ‚Ðµ Ð°ÐºÐºÑƒÑ€Ð°Ñ‚Ð½Ð¾Ðµ Ð¾ÑÐ½Ð¾Ð²Ð½Ð¾Ðµ Ñ„Ð¾Ñ‚Ð¾ Ñ‚Ð¾Ð²Ð°Ñ€Ð°.', 'Mahsulot uchun toza asosiy rasm tanlang.')}
+                <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-[#5b6770]">
+                  <span className="rounded-full bg-[rgba(255,248,240,0.94)] px-3 py-1.5 font-semibold text-[#21404d]">
+                    {existingGalleryImages.length} {tr('current', 'текущих', 'mavjud')}
+                  </span>
+                  <span className="rounded-full bg-[rgba(236,242,255,0.94)] px-3 py-1.5 font-semibold text-[#355cbb]">
+                    {uploadFiles.length} {tr('new', 'новых', 'yangi')}
+                  </span>
+                  {uploadFiles.length ? (
+                    <span className="rounded-full bg-[rgba(232,241,238,0.95)] px-3 py-1.5 font-semibold text-[#40635b]">
+                      {tr('First selected image will be used as the main photo.', 'Первое выбранное фото станет основным.', 'Birinchi tanlangan rasm asosiy rasm bo‘ladi.')}
+                    </span>
+                  ) : null}
                 </div>
-                {primaryImageFile ? (
-                  <button type="button" onClick={() => { setPrimaryImageFile(null); if (primaryInputRef.current) primaryInputRef.current.value = ''; }} className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-rose-600 transition hover:text-rose-700">
+                {uploadFiles.length ? (
+                  <div className="mt-4 rounded-2xl border border-dashed border-[#d8c7b2] bg-[rgba(255,248,240,0.94)] px-4 py-3 text-sm text-[#5b6770]">
+                    {uploadFiles.map((file) => file.name).join(', ')}
+                  </div>
+                ) : null}
+                {uploadFiles.length ? (
+                  <button type="button" onClick={() => { setUploadFiles([]); if (uploadInputRef.current) uploadInputRef.current.value = ''; }} className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-rose-600 transition hover:text-rose-700">
                     <X size={14} />
-                    {tr('Remove selected file', 'Ð£Ð±Ñ€Ð°Ñ‚ÑŒ Ð²Ñ‹Ð±Ñ€Ð°Ð½Ð½Ñ‹Ð¹ Ñ„Ð°Ð¹Ð»', 'Tanlangan faylni olib tashlash')}
+                    {tr('Remove selected files', 'Убрать выбранные файлы', 'Tanlangan fayllarni olib tashlash')}
                   </button>
                 ) : null}
                 {editing && getPrimaryImage(editing) ? (
                   <label className="mt-3 inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                     <input type="checkbox" checked={removeImage} onChange={(event) => setRemoveImage(event.target.checked)} />
-                    {tr('Remove current main photo on save', 'Ð£Ð´Ð°Ð»Ð¸Ñ‚ÑŒ Ñ‚ÐµÐºÑƒÑ‰ÐµÐµ Ñ„Ð¾Ñ‚Ð¾ Ð¿Ñ€Ð¸ ÑÐ¾Ñ…Ñ€Ð°Ð½ÐµÐ½Ð¸Ð¸', 'Saqlashda joriy asosiy rasmni olib tashlash')}
+                    {tr('Remove current main photo on save', 'Удалить текущее основное фото при сохранении', 'Saqlashda joriy asosiy rasmni olib tashlash')}
                   </label>
                 ) : null}
-              </div>
-
-              <div className="rounded-[28px] border border-light-border bg-white/80 p-5 shadow-sm dark:border-navy-700 dark:bg-navy-900/40">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Gallery photos', 'Ð“Ð°Ð»ÐµÑ€ÐµÑ', 'Galereya')}</p>
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{tr('Add more angles if needed.', 'Ð”Ð¾Ð±Ð°Ð²ÑŒÑ‚Ðµ Ð´Ð¾Ð¿Ð¾Ð»Ð½Ð¸Ñ‚ÐµÐ»ÑŒÐ½Ñ‹Ðµ Ñ„Ð¾Ñ‚Ð¾ Ð´Ð»Ñ Ð±Ð¾Ð»ÐµÐµ ÑÐ¸Ð»ÑŒÐ½Ð¾Ð¹ Ð¿Ð¾Ð´Ð°Ñ‡Ð¸ Ñ‚Ð¾Ð²Ð°Ñ€Ð°.', 'Mahsulotni yaxshiroq koâ€˜rsatish uchun qoâ€˜shimcha rasmlar qoâ€˜shing.')}</p>
-                  </div>
-                  <label className="cursor-pointer rounded-2xl bg-white px-4 py-2 text-sm font-semibold text-[#21404d] shadow-[0_10px_20px_rgba(33,64,77,0.12)] transition hover:bg-[#fff5ea]">
-                    <span className="inline-flex items-center gap-2"><Images size={15} />{tr('Add gallery', 'Ð”Ð¾Ð±Ð°Ð²Ð¸Ñ‚ÑŒ Ñ„Ð¾Ñ‚Ð¾', 'Rasm qoâ€˜shish')}</span>
-                    <input ref={galleryInputRef} type="file" accept="image/*" multiple className="hidden" onChange={(event) => setGalleryFiles(Array.from(event.target.files || []))} />
-                  </label>
-                </div>
-                <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-[#5b6770]">
-                  <span className="rounded-full bg-[rgba(255,248,240,0.94)] px-3 py-1.5 font-semibold text-[#21404d]">
-                    {existingGalleryImages.length} {tr('current', 'Ã‘â€šÃÂµÃÂºÃ‘Æ’Ã‘â€°ÃÂ¸Ã‘â€¦', 'mavjud')}
-                  </span>
-                  <span className="rounded-full bg-[rgba(236,242,255,0.94)] px-3 py-1.5 font-semibold text-[#355cbb]">
-                    {galleryFiles.length} {tr('new', 'ÃÂ½ÃÂ¾ÃÂ²Ã‘â€¹Ã‘â€¦', 'yangi')}
-                  </span>
-                </div>
                 {editing?.images?.length ? (
                   <label className="mt-4 inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                     <input type="checkbox" checked={replaceGallery} onChange={(event) => { setReplaceGallery(event.target.checked); if (event.target.checked) setRemoveImageIds([]); }} />
@@ -647,17 +626,17 @@ const Products: React.FC = () => {
                       </button>
                     </div>
                   ))}
-                  {galleryPreviewUrls.map((url, index) => (
+                  {uploadPreviewUrls.map((url, index) => (
                     <div key={`${url}-${index}`} className="group relative overflow-hidden rounded-2xl border border-primary-blue/30 bg-blue-50 shadow-sm">
                       <img src={url} alt={`Upload ${index + 1}`} className="h-24 w-full object-cover" />
-                      <button type="button" onClick={() => setGalleryFiles((current) => current.filter((_, fileIndex) => fileIndex !== index))} className="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition group-hover:opacity-100">
+                      <button type="button" onClick={() => setUploadFiles((current) => current.filter((_, fileIndex) => fileIndex !== index))} className="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition group-hover:opacity-100">
                         <X size={14} />
                       </button>
                     </div>
                   ))}
-                  {!existingGalleryImages.length && !galleryPreviewUrls.length ? (
+                  {!existingGalleryImages.length && !uploadPreviewUrls.length ? (
                     <div className="col-span-full rounded-2xl border border-dashed border-light-border bg-gray-50 px-4 py-6 text-center text-sm text-gray-500 dark:border-navy-700 dark:bg-navy-900/40">
-                      {tr('No gallery photos yet.', 'ÐŸÐ¾ÐºÐ° Ð½ÐµÑ‚ Ñ„Ð¾Ñ‚Ð¾ Ð³Ð°Ð»ÐµÑ€ÐµÐ¸.', 'Hali galereya rasmlari yoâ€˜q.')}
+                      {tr('No product photos yet.', 'Пока нет фотографий товара.', 'Hali mahsulot rasmlari yo‘q.')}
                     </div>
                   ) : null}
                 </div>
