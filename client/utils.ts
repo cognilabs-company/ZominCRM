@@ -1,4 +1,4 @@
-﻿import { ClientOrderStatus, ClientPaymentMethod, ClientUiLanguage } from './types';
+import { ClientBottleMovement, ClientBottleSummary, ClientOrderStatus, ClientPaymentMethod, ClientUiLanguage } from './types';
 
 const localeMap: Record<ClientUiLanguage, string> = {
   uz: 'uz-UZ',
@@ -29,6 +29,12 @@ export const formatDate = (value?: string | null, language: ClientUiLanguage = '
 };
 
 export const formatOrderRef = (orderId?: string | null) => (orderId ? `#${orderId.slice(0, 8)}` : '-');
+
+export const getBottleDepositHeldTotal = (summary?: ClientBottleSummary | null) =>
+  Number(summary?.deposit_held_total_uzs ?? summary?.total_deposit_held_uzs ?? 0);
+
+export const getBottleMovementCount = (movement?: ClientBottleMovement | null) =>
+  Math.abs(Number(movement?.bottles_delta ?? movement?.quantity ?? 0));
 
 export const getOrderStatusLabel = (status?: ClientOrderStatus | string | null, language: ClientUiLanguage = 'uz') => {
   const labels: Record<string, Record<ClientUiLanguage, string>> = {
@@ -135,4 +141,3 @@ export const parseNumericInput = (value: string) => {
   const numeric = Number(trimmed);
   return Number.isFinite(numeric) ? numeric : null;
 };
-

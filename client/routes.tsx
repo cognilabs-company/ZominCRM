@@ -78,10 +78,18 @@ export const clientRouteDefinitions: ClientRouteDefinition[] = [
   },
   {
     id: 'bottles',
-    path: 'bottles',
+    path: 'idishlar',
     navLabelKey: 'nav.bottles',
     icon: Droplets,
     showInNav: true,
+    element: <ClientBottlesPage />,
+  },
+  {
+    id: 'bottles-legacy',
+    path: 'bottles',
+    navLabelKey: 'nav.bottles',
+    icon: Droplets,
+    showInNav: false,
     element: <ClientBottlesPage />,
   },
   {

@@ -5,7 +5,7 @@ import { useClientApp } from '../bootstrap/ClientAppContext';
 import { useClientLanguage } from '../bootstrap/ClientLanguageContext';
 import { ClientBottomNav } from './ClientBottomNav';
 import { ClientPanel } from './ClientPanel';
-import { formatAmount, formatOrderRef, getOrderStatusLabel } from '../utils';
+import { formatAmount, formatOrderRef, getBottleDepositHeldTotal, getOrderStatusLabel } from '../utils';
 
 const FlagIcon: React.FC<{ code: 'uz' | 'ru' | 'en' }> = ({ code }) => {
   if (code === 'uz') {
@@ -64,7 +64,7 @@ export const ClientAppLayout: React.FC = () => {
   const { language, setLanguage, t } = useClientLanguage();
 
   const displayName = client?.full_name || telegramUser?.first_name || telegramUser?.username || t('layout.telegram_client');
-  const depositHeld = bottleSummary?.total_deposit_held_uzs || 0;
+  const depositHeld = getBottleDepositHeldTotal(bottleSummary);
   const languageOptions = [
     { code: 'uz' },
     { code: 'ru' },

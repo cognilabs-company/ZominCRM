@@ -6,14 +6,14 @@ import { useClientCart } from '../bootstrap/ClientCartContext';
 import { useClientLanguage } from '../bootstrap/ClientLanguageContext';
 import { ClientPage } from '../components/ClientPage';
 import { ClientPanel } from '../components/ClientPanel';
-import { formatAmount, formatOrderRef } from '../utils';
+import { formatAmount, formatOrderRef, getBottleDepositHeldTotal } from '../utils';
 
 export const ClientHomePage: React.FC = () => {
   const navigate = useNavigate();
   const { client, bottleSummary, activeOrder, isAuthenticated, status, mode, openInTelegramUrl } = useClientApp();
   const { itemsCount, productSubtotal } = useClientCart();
   const { language, t } = useClientLanguage();
-  const depositHeld = bottleSummary?.total_deposit_held_uzs ?? 0;
+  const depositHeld = getBottleDepositHeldTotal(bottleSummary);
 
   const quickActions = [
     {
@@ -41,7 +41,7 @@ export const ClientHomePage: React.FC = () => {
       key: 'bottles',
       title: t('home.quick.bottles.title'),
       description: t('home.quick.bottles.description'),
-      to: '/app/bottles',
+      to: '/app/idishlar',
       icon: Droplets,
     },
   ];

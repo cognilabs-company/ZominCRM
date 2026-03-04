@@ -45,7 +45,10 @@ export interface ClientProfile {
 
 export interface ClientBottleSummary {
   total_outstanding_bottles_count: number;
-  total_deposit_held_uzs: number;
+  deposit_held_total_uzs?: number;
+  total_deposit_held_uzs?: number;
+  total_deposit_charged_uzs?: number;
+  total_deposit_refunded_uzs?: number;
 }
 
 export interface ClientOrderItem {
@@ -115,7 +118,10 @@ export interface ClientBottleBalance {
   client_id: string;
   product_id: string;
   product_name: string;
+  product_sku?: string;
   product_size_liters?: string | null;
+  requires_returnable_bottle?: boolean;
+  bottle_deposit_uzs?: number;
   outstanding_bottles_count: number;
   deposit_held_uzs: number;
   total_deposit_charged_uzs: number;
@@ -125,12 +131,22 @@ export interface ClientBottleBalance {
 
 export interface ClientBottleMovement {
   id: string;
-  movement_type: 'DELIVERY' | 'REFUND' | 'MANUAL_ADJUST' | string;
-  quantity: number;
+  client_id?: string;
+  movement_type: 'DELIVERY' | 'ORDER_DELIVERED' | 'REFUND' | 'MANUAL_ADJUST' | string;
+  order_quantity?: number;
+  bottles_delta?: number;
+  quantity?: number;
   deposit_delta_uzs: number;
+  balance_before_count?: number;
+  balance_after_count?: number;
+  deposit_before_uzs?: number;
+  deposit_after_uzs?: number;
+  actor?: string;
+  note?: string;
   created_at: string;
   product_id?: string;
   product_name?: string;
+  product_sku?: string;
   product_size_liters?: string | null;
   order_id?: string | null;
 }

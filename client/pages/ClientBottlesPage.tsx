@@ -6,7 +6,14 @@ import { useClientLanguage } from '../bootstrap/ClientLanguageContext';
 import { ClientPage } from '../components/ClientPage';
 import { ClientPanel } from '../components/ClientPanel';
 import { ClientBottlesResponse } from '../types';
-import { formatAmount, formatDateTime, formatOrderRef, getMovementLabel } from '../utils';
+import {
+  formatAmount,
+  formatDateTime,
+  formatOrderRef,
+  getBottleDepositHeldTotal,
+  getBottleMovementCount,
+  getMovementLabel,
+} from '../utils';
 
 export const ClientBottlesPage: React.FC = () => {
   const { sessionToken, isAuthenticated, openInTelegramUrl } = useClientApp();
@@ -79,7 +86,7 @@ export const ClientBottlesPage: React.FC = () => {
           </ClientPanel>
           <ClientPanel className="bg-[linear-gradient(135deg,rgba(233,243,239,0.96)_0%,rgba(224,236,233,0.92)_100%)] p-4">
             <p className="text-xs uppercase tracking-[0.2em] text-[#40635b]">{t('bottles.deposit_held')}</p>
-            <p className="mt-2 text-2xl font-semibold text-[#1f2933]">{formatAmount(data.summary.total_deposit_held_uzs, language)}</p>
+            <p className="mt-2 text-2xl font-semibold text-[#1f2933]">{formatAmount(getBottleDepositHeldTotal(data.summary), language)}</p>
           </ClientPanel>
           <ClientPanel className="col-span-2 bg-[linear-gradient(135deg,rgba(235,240,244,0.94)_0%,rgba(226,232,240,0.92)_100%)] p-4">
             <p className="text-xs uppercase tracking-[0.2em] text-[#5a6d7c]">{t('bottles.balances_description')}</p>
@@ -131,18 +138,32 @@ export const ClientBottlesPage: React.FC = () => {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-sm font-semibold text-[#1f2933]">{getMovementLabel(movement.movement_type, language)}</p>
-                  <p className="mt-1 text-sm text-[#5b6770]">{movement.product_name || '-'} {movement.product_size_liters ? `· ${movement.product_size_liters}L` : ''}</p>
+                  <p className="mt-1 text-sm text-[#5b6770]">{movement.product_name || '-'}{movement.product_size_liters ? ` · ${movement.product_size_liters}L` : ''}</p>
                   <p className="mt-1 text-xs text-[#7b8790]">{movement.order_id ? formatOrderRef(movement.order_id) : t('bottles.no_order_reference')}</p>
                 </div>
                 <div className="text-right">
                   <p className={`text-sm font-semibold ${movement.deposit_delta_uzs < 0 ? 'text-rose-600' : 'text-emerald-600'}`}>{formatAmount(movement.deposit_delta_uzs, language)}</p>
-                  <p className="mt-1 text-xs text-[#7b8790]">{t('bottles.delta_label', { count: movement.quantity })}</p>
+                  <p className="mt-1 text-xs text-[#7b8790]">{t('bottles.delta_label', { count: getBottleMovementCount(movement) })}</p>
                 </div>
               </div>
               <div className="mt-3 flex items-center justify-between gap-3 text-xs text-[#5b6770]">
                 <p>{formatDateTime(movement.created_at, language)}</p>
                 <p>{movement.order_id ? formatOrderRef(movement.order_id) : t('bottles.no_order_reference')}</p>
               </div>
+              {(typeof movement.balance_before_count === 'number' && typeof movement.balance_after_count === 'number') ||
+              (typeof movement.deposit_before_uzs === 'number' && typeof movement.deposit_after_uzs === 'number') ? (
+                <div className="mt-2 space-y-1 text-xs text-[#7b8790]">
+                  {typeof movement.balance_before_count === 'number' && typeof movement.balance_after_count === 'number' ? (
+                    <p>{t('bottles.balance_transition', { from: movement.balance_before_count, to: movement.balance_after_count })}</p>
+                  ) : null}
+                  {typeof movement.deposit_before_uzs === 'number' && typeof movement.deposit_after_uzs === 'number' ? (
+                    <p>{t('bottles.deposit_transition', {
+                      from: formatAmount(movement.deposit_before_uzs, language),
+                      to: formatAmount(movement.deposit_after_uzs, language),
+                    })}</p>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           )) : (
             <div className="rounded-[24px] bg-[rgba(255,248,240,0.94)] px-4 py-3 text-sm text-[#5b6770]">{t('bottles.no_movements')}</div>
