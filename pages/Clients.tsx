@@ -705,7 +705,7 @@ const Clients: React.FC = () => {
               <option value="">{tr('Select product', 'Select product', 'Mahsulotni tanlang')}</option>
               {bottleBalances.map((balance) => (
                 <option key={balance.id} value={balance.product_id}>
-                  {balance.product_name} {balance.product_size_liters ? `Ãƒâ€šÃ‚Â· ${balance.product_size_liters}L` : ''} Ãƒâ€šÃ‚Â· {balance.outstanding_bottles_count}
+                  {balance.product_name}{balance.product_size_liters ? ` - ${balance.product_size_liters}L` : ''} - {balance.outstanding_bottles_count}
                 </option>
               ))}
             </select>

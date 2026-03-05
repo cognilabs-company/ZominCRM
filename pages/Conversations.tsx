@@ -1218,8 +1218,8 @@ const Conversations: React.FC = () => {
             >
             {loadingMessages && <p className="text-sm text-gray-500 px-1">{tr('Loading messages...', 'Loading messages...', 'Xabarlar yuklanmoqda...')}</p>}
             {!loadingMessages && !selectedConversation && <p className="text-sm text-gray-500 px-1">{tr('Pick a conversation to start.', 'Pick a conversation to start.', 'Boshlash uchun suhbatni tanlang.')}</p>}
-            {!loadingMessages && selectedConversation && messages.length === 0 && <p className="text-sm text-gray-500 px-1">{tr('No messages yet.', 'No messages yet.', 'Hozircha xabarlar yoâ€™q.')}</p>}
             {!loadingMessages && selectedConversation && messages.length === 0 && <p className="text-sm text-gray-500 px-1">{tr('No messages yet.', 'No messages yet.', "Hozircha xabarlar yo'q.")}</p>}
+            {!loadingMessages && selectedConversation && messages.length > 0 && messages.map((m, index) => {
               const isClient = m.role === 'client';
               const isAdminMessage = m.role === 'admin';
               const isBotMessage = m.role === 'bot';
