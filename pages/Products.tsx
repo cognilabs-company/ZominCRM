@@ -157,7 +157,7 @@ const Products: React.FC = () => {
       const response = await apiRequest<{ results?: ApiProduct[] }>(`${ENDPOINTS.PRODUCTS.LIST_CREATE}${query}`);
       setProducts(response.results || []);
     } catch (loadError) {
-      const message = loadError instanceof Error ? loadError.message : tr('Failed to load products', 'Failed to load products', "Mahsulotlarni yuklab bo\'lmadi");
+      const message = loadError instanceof Error ? loadError.message : tr('Failed to load products', 'Не удалось загрузить товары', "Mahsulotlarni yuklab bo'lmadi");
       setError(message);
       toast.error(message);
     } finally {
@@ -232,6 +232,13 @@ const Products: React.FC = () => {
     }),
     [products]
   );
+  const editorPrice = Number(formState.price_uzs || 0);
+  const editorStock = Number(formState.count || 0);
+  const editorMinThreshold = Number(formState.min_stock_threshold || 0);
+  const editorDeposit = formState.requires_returnable_bottle ? Number(formState.bottle_deposit_uzs || 0) : 0;
+  const editorStatus: ApiProduct['availability_status'] =
+    editorStock <= 0 ? 'out_of_stock' : editorStock <= editorMinThreshold ? 'low_stock' : 'in_stock';
+  const editorMediaCount = existingGalleryImages.length + uploadFiles.length;
 
   const resetImageInputs = () => {
     if (uploadInputRef.current) uploadInputRef.current.value = '';
@@ -282,9 +289,9 @@ const Products: React.FC = () => {
   };
 
   const availabilityBadge = (status: ApiProduct['availability_status']) => {
-    if (status === 'in_stock') return <Badge variant="success">{tr('In stock', 'In stock', 'Mavjud')}</Badge>;
-    if (status === 'low_stock') return <Badge variant="warning">{tr('Low stock', 'Low stock', 'Kam qolgan')}</Badge>;
-    return <Badge variant="error">{tr('Out of stock', 'Out of stock', 'Tugagan')}</Badge>;
+    if (status === 'in_stock') return <Badge variant="success">{tr('In stock', 'В наличии', 'Mavjud')}</Badge>;
+    if (status === 'low_stock') return <Badge variant="warning">{tr('Low stock', 'Мало остатка', 'Kam qolgan')}</Badge>;
+    return <Badge variant="error">{tr('Out of stock', 'Нет в наличии', 'Tugagan')}</Badge>;
   };
 
   const handleSearch = (event: React.FormEvent) => {
@@ -313,7 +320,7 @@ const Products: React.FC = () => {
         payload.append('is_active', String(formState.is_active));
         payload.append('actor', 'frontend-ui');
 
-        if (uploadFiles.length === 1 && !editing) {
+        if (uploadFiles.length === 1) {
           payload.append('image', uploadFiles[0]);
         } else {
           uploadFiles.forEach((file) => payload.append('images[]', file));
@@ -348,11 +355,11 @@ const Products: React.FC = () => {
       await loadProducts();
       toast.success(
         editing
-          ? tr('Product updated.', 'Product updated.', 'Mahsulot yangilandi.')
-          : tr('Product created.', 'Mahsulot yaratildi.'),
+          ? tr('Product updated.', 'Товар обновлён.', 'Mahsulot yangilandi.')
+          : tr('Product created.', 'Товар создан.', 'Mahsulot yaratildi.'),
       );
     } catch (saveError) {
-      const message = saveError instanceof Error ? saveError.message : tr('Failed to save product', 'Failed to save product', "Mahsulotni saqlab bo'lmadi");
+      const message = saveError instanceof Error ? saveError.message : tr('Failed to save product', 'Не удалось сохранить товар', "Mahsulotni saqlab bo'lmadi");
       setError(message);
       toast.error(message);
     } finally {
@@ -361,7 +368,7 @@ const Products: React.FC = () => {
   };
 
   const handleDeactivate = async (product: ApiProduct) => {
-    if (!window.confirm(tr(`Deactivate "${product.name}"?`, `Deactivate "${product.name}"?`, `"${product.name}" mahsulotini nofaol qilinsinmi?`))) return;
+    if (!window.confirm(tr(`Deactivate "${product.name}"?`, `Деактивировать "${product.name}"?`, `"${product.name}" mahsulotini nofaol qilinsinmi?`))) return;
 
     try {
       await apiRequest(ENDPOINTS.PRODUCTS.DETAIL(product.id), {
@@ -369,9 +376,9 @@ const Products: React.FC = () => {
         body: JSON.stringify({ is_active: false }),
       });
       await loadProducts();
-        toast.success(tr('Product deactivated.', 'Product deactivated.', 'Mahsulot nofaol qilindi.'));
+        toast.success(tr('Product deactivated.', 'Товар деактивирован.', 'Mahsulot nofaol qilindi.'));
     } catch (deactivateError) {
-        const message = deactivateError instanceof Error ? deactivateError.message : tr('Failed to deactivate product', 'Failed to deactivate product', "Mahsulotni nofaol qilib bo'lmadi");
+        const message = deactivateError instanceof Error ? deactivateError.message : tr('Failed to deactivate product', 'Не удалось деактивировать товар', "Mahsulotni nofaol qilib bo'lmadi");
       setError(message);
       toast.error(message);
     }
@@ -447,15 +454,15 @@ const Products: React.FC = () => {
         <form onSubmit={handleSearch} className="border-b border-light-border bg-white p-4 dark:border-navy-700 dark:bg-navy-800">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div>
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Products catalog', 'Products catalog', 'Mahsulotlar katalogi')}</p>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Products catalog', 'Каталог товаров', 'Mahsulotlar katalogi')}</p>
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                {tr('Cleaner cards in the list, full details on open.', 'Cleaner cards in the list, full details on open.', "Ro\'yxatda faqat kerakli ma\'lumot, to\'liq tafsilot ichkarida.")}
+                {tr('Cleaner cards in the list, full details on open.', 'В списке только главное, полные детали внутри карточки.', "Ro'yxatda faqat kerakli ma'lumot, to'liq tafsilot ichkarida.")}
               </p>
             </div>
             <div className="flex flex-col gap-3 md:flex-row md:items-center">
               <label className="inline-flex items-center gap-2 rounded-lg border border-light-border bg-gray-50 px-3 py-2 text-sm text-gray-700 dark:border-navy-600 dark:bg-navy-900 dark:text-gray-300">
                 <input type="checkbox" checked={onlyLowStock} onChange={(event) => setOnlyLowStock(event.target.checked)} />
-                {tr('Low stock only', 'Low stock only', 'Faqat kam qolganlar')}
+                {tr('Low stock only', 'Только мало остатка', 'Faqat kam qolganlar')}
               </label>
               <div className="relative min-w-[18rem]">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
@@ -473,9 +480,9 @@ const Products: React.FC = () => {
 
         <div className="p-4">
           {loading ? (
-            <div className="py-12 text-center text-sm text-gray-500">{tr('Loading products...', 'Loading products...', 'Mahsulotlar yuklanmoqda...')}</div>
+            <div className="py-12 text-center text-sm text-gray-500">{tr('Loading products...', 'Товары загружаются...', 'Mahsulotlar yuklanmoqda...')}</div>
           ) : products.length === 0 ? (
-            <div className="py-12 text-center text-sm text-gray-500">{tr('No products found.', 'No products found.', 'Mahsulotlar topilmadi.')}</div>
+            <div className="py-12 text-center text-sm text-gray-500">{tr('No products found.', 'Товары не найдены.', 'Mahsulotlar topilmadi.')}</div>
           ) : (
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
               {products.map((product) => {
@@ -503,7 +510,7 @@ const Products: React.FC = () => {
                           </div>
                           <div className="flex flex-wrap items-center gap-2">
                             {availabilityBadge(product.availability_status)}
-                            {product.is_active === false ? <Badge variant="default">{tr('Inactive', 'Inactive', 'Nofaol')}</Badge> : null}
+                            {product.is_active === false ? <Badge variant="default">{tr('Inactive', 'Неактивный', 'Nofaol')}</Badge> : null}
                           </div>
                         </div>
 
@@ -536,16 +543,16 @@ const Products: React.FC = () => {
                           ) : null}
                         </div>
 
-                        <div className="flex flex-wrap gap-2">
-                          <button type="button" onClick={() => openDetail(product)} className="inline-flex min-w-[112px] items-center justify-center gap-2 rounded-xl border border-light-border px-4 py-3 text-sm font-medium text-gray-700 transition hover:border-primary-blue hover:text-primary-blue dark:border-navy-600 dark:text-gray-200">
+                        <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_44px] gap-2">
+                          <button type="button" onClick={() => openDetail(product)} className="inline-flex w-full min-w-0 items-center justify-center gap-2 rounded-xl border border-light-border px-3 py-3 text-sm font-medium text-gray-700 transition hover:border-primary-blue hover:text-primary-blue dark:border-navy-600 dark:text-gray-200">
                             <Eye size={15} />
                               {tr('Open', 'Открыть', 'Ochish')}
                           </button>
-                          <button type="button" onClick={() => openEdit(product)} className="inline-flex min-w-[132px] items-center justify-center gap-2 rounded-xl bg-[#21404d] px-4 py-3 text-sm font-medium text-white transition hover:brightness-105">
+                          <button type="button" onClick={() => openEdit(product)} className="inline-flex w-full min-w-0 items-center justify-center gap-2 rounded-xl bg-[#21404d] px-3 py-3 text-sm font-medium text-white transition hover:brightness-105">
                             <Edit2 size={15} />
                               {tr('Edit', 'Изменить', 'Tahrirlash')}
                           </button>
-                          <button type="button" onClick={() => void handleDeactivate(product)} className="inline-flex items-center justify-center rounded-xl bg-rose-50 px-4 py-3 text-rose-600 transition hover:bg-rose-100 dark:bg-rose-950/20 dark:text-rose-300">
+                          <button type="button" onClick={() => void handleDeactivate(product)} className="inline-flex h-[48px] w-11 items-center justify-center rounded-xl bg-rose-50 text-rose-600 transition hover:bg-rose-100 dark:bg-rose-950/20 dark:text-rose-300">
                             <Trash2 size={15} />
                           </button>
                         </div>
@@ -777,74 +784,58 @@ const Products: React.FC = () => {
                 <div className="grid grid-cols-2 gap-3">
                   <Card className="bg-[linear-gradient(135deg,rgba(255,247,237,0.96)_0%,rgba(255,255,255,1)_100%)]">
                     <p className="text-xs uppercase tracking-[0.2em] text-[#9a6b3a]">SKU</p>
-                    <p className="mt-2 text-base font-semibold text-[#1f2933]">{detailProduct.sku || '-'}</p>
+                    <p className="mt-2 text-base font-semibold text-[#1f2933]">{formState.sku || tr('Auto', 'Авто', 'Avto')}</p>
                   </Card>
                   <Card className="bg-[linear-gradient(135deg,rgba(236,242,255,0.96)_0%,rgba(255,255,255,1)_100%)]">
                     <p className="text-xs uppercase tracking-[0.2em] text-[#355cbb]">{tr('Updated', 'Обновлено', 'Yangilangan')}</p>
-                    <p className="mt-2 text-base font-semibold text-[#1f2933]">{formatUpdatedAt(detailProduct.updated_at)}</p>
+                    <p className="mt-2 text-base font-semibold text-[#1f2933]">
+                      {editing ? formatUpdatedAt(editing.updated_at) : tr('Not saved yet', 'Ещё не сохранено', 'Hali saqlanmagan')}
+                    </p>
                   </Card>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <Card>
                     <p className="text-xs uppercase tracking-[0.2em] text-[#40635b]">{t('price')}</p>
-                    <p className="mt-2 text-xl font-semibold text-[#1f2933]">{detailProduct.price_uzs.toLocaleString()} UZS</p>
+                    <p className="mt-2 text-xl font-semibold text-[#1f2933]">{editorPrice.toLocaleString()} UZS</p>
                   </Card>
                   <Card>
                     <p className="text-xs uppercase tracking-[0.2em] text-[#5a6d7c]">{t('stock')}</p>
-                    <p className="mt-2 text-xl font-semibold text-[#1f2933]">{detailProduct.count}</p>
+                    <p className="mt-2 text-xl font-semibold text-[#1f2933]">{editorStock}</p>
                   </Card>
                 </div>
 
                 <Card className="space-y-4">
                   <div className="flex flex-wrap items-center gap-2">
-                    {availabilityBadge(detailProduct.availability_status)}
-                    {detailProduct.is_active === false ? <Badge variant="default">{tr('Inactive', 'Неактивный', 'Nofaol')}</Badge> : null}
-                    {detailProduct.requires_returnable_bottle ? <Badge variant="info">{tr('Returnable bottle', 'Возвратная тара', 'Qaytariladigan idish')}</Badge> : null}
+                    {availabilityBadge(editorStatus)}
+                    {formState.is_active ? null : <Badge variant="default">{tr('Inactive', 'Неактивный', 'Nofaol')}</Badge>}
+                    {formState.requires_returnable_bottle ? <Badge variant="info">{tr('Returnable bottle', 'Возвратная тара', 'Qaytariladigan idish')}</Badge> : null}
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <p className="text-gray-500">{tr('Size', 'Размер', 'Hajm')}</p>
-                      <p className="mt-1 font-semibold text-[#1f2933]">{detailProduct.size_liters}L</p>
+                      <p className="mt-1 font-semibold text-[#1f2933]">{formState.size_liters || '-'}L</p>
                     </div>
                     <div>
                       <p className="text-gray-500">{tr('Min threshold', 'Минимальный порог', 'Minimal chegara')}</p>
-                      <p className="mt-1 font-semibold text-[#1f2933]">{detailProduct.min_stock_threshold}</p>
+                      <p className="mt-1 font-semibold text-[#1f2933]">{editorMinThreshold}</p>
                     </div>
                     <div>
                       <p className="text-gray-500">{tr('Bottle deposit', 'Депозит за бутыль', 'Idish depoziti')}</p>
                       <p className="mt-1 font-semibold text-[#1f2933]">
-                        {detailProduct.requires_returnable_bottle ? `${detailProduct.bottle_deposit_uzs.toLocaleString()} UZS` : tr('Not required', 'Не требуется', 'Talab qilinmaydi')}
+                        {formState.requires_returnable_bottle ? `${editorDeposit.toLocaleString()} UZS` : tr('Not required', 'Не требуется', 'Talab qilinmaydi')}
                       </p>
                     </div>
                     <div>
                       <p className="text-gray-500">{tr('Photos', 'Фото', 'Rasmlar')}</p>
-                      <p className="mt-1 font-semibold text-[#1f2933]">{detailMedia.length}</p>
+                      <p className="mt-1 font-semibold text-[#1f2933]">{editorMediaCount}</p>
                     </div>
                   </div>
                 </Card>
 
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      closeDetail();
-                      openEdit(detailProduct);
-                    }}
-                    className="inline-flex items-center gap-2 rounded-2xl bg-[#21404d] px-4 py-3 text-sm font-semibold text-white transition hover:brightness-105"
-                  >
-                    <Edit2 size={16} />
-                    {tr('Edit product', 'Изменить товар', 'Mahsulotni tahrirlash')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void handleDeactivate(detailProduct)}
-                    className="inline-flex items-center gap-2 rounded-2xl bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-600 transition hover:bg-rose-100 dark:bg-rose-950/20 dark:text-rose-300"
-                  >
-                    <Trash2 size={16} />
-                    {tr('Deactivate', 'Деактивировать', 'Nofaol qilish')}
-                  </button>
+                <div className="rounded-2xl border border-light-border bg-[rgba(248,252,251,0.88)] px-4 py-3 text-sm text-[#4b5663]">
+                  {tr('Review changes, then save the product.', 'Проверьте изменения и сохраните товар.', "O'zgarishlarni tekshiring va mahsulotni saqlang.")}
                 </div>
               </div>
             </section>
@@ -853,7 +844,7 @@ const Products: React.FC = () => {
           <div className="flex justify-end gap-3 border-t border-light-border pt-4 dark:border-navy-700">
             <button type="button" onClick={closeEditor} className="rounded-lg px-4 py-2 text-sm text-gray-600 transition hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-navy-700">{t('cancel')}</button>
             <button disabled={saving} type="submit" className="rounded-lg bg-primary-blue px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-600 disabled:opacity-50">
-              {saving ? tr('Saving...', 'Saving...', 'Saqlanmoqda...') : t('save')}
+              {saving ? tr('Saving...', 'Сохранение...', 'Saqlanmoqda...') : t('save')}
             </button>
           </div>
         </form>
