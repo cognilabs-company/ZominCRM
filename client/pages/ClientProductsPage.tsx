@@ -39,10 +39,10 @@ const getProductImages = (product: ClientProduct) => {
     slides.push({ id, candidates });
   };
 
-  addSlide(`${product.id}-primary`, [product.image_url, product.image_thumb_url]);
+  addSlide(`${product.id}-primary`, [product.image_thumb_url, product.image_url]);
 
   (product.images || []).forEach((image, index) => {
-    addSlide(image.id || `${product.id}-gallery-${index}`, [image.url, image.thumb_url]);
+    addSlide(image.id || `${product.id}-gallery-${index}`, [image.thumb_url, image.url]);
   });
 
   return slides;

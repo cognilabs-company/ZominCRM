@@ -59,10 +59,10 @@ const emptyForm: ProductFormState = {
 
 const getPrimaryImageCandidates = (product?: Pick<ApiProduct, 'image_url' | 'image_thumb_url' | 'images'> | null) =>
   [
-    product?.image_url,
-    product?.images?.[0]?.url,
     product?.image_thumb_url,
     product?.images?.[0]?.thumb_url,
+    product?.image_url,
+    product?.images?.[0]?.url,
   ]
     .map((value) => resolveAdminMediaUrl(value || null))
     .filter((value): value is string => Boolean(value))
@@ -329,7 +329,9 @@ const Products: React.FC = () => {
       if (hasMediaChanges) {
         const payload = new FormData();
         payload.append('name', formState.name.trim());
-        payload.append('sku', formState.sku.trim());
+        if (editing || formState.sku.trim()) {
+          payload.append('sku', formState.sku.trim());
+        }
         payload.append('size_liters', formState.size_liters.trim());
         payload.append('price_uzs', String(Number(formState.price_uzs || 0)));
         payload.append('count', String(Number(formState.count || 0)));
@@ -353,20 +355,24 @@ const Products: React.FC = () => {
           body: payload,
         });
       } else {
+        const jsonPayload: Record<string, unknown> = {
+          name: formState.name.trim(),
+          size_liters: formState.size_liters.trim(),
+          price_uzs: Number(formState.price_uzs || 0),
+          count: Number(formState.count || 0),
+          min_stock_threshold: Number(formState.min_stock_threshold || 5),
+          requires_returnable_bottle: formState.requires_returnable_bottle,
+          bottle_deposit_uzs: formState.requires_returnable_bottle ? Number(formState.bottle_deposit_uzs || 0) : 0,
+          is_active: formState.is_active,
+          actor: 'frontend-ui',
+        };
+        if (editing || formState.sku.trim()) {
+          jsonPayload.sku = formState.sku.trim();
+        }
+
         await apiRequest(editing ? ENDPOINTS.PRODUCTS.DETAIL(editing.id) : ENDPOINTS.PRODUCTS.LIST_CREATE, {
           method: editing ? 'PATCH' : 'POST',
-          body: JSON.stringify({
-            name: formState.name.trim(),
-            sku: formState.sku.trim(),
-            size_liters: formState.size_liters.trim(),
-            price_uzs: Number(formState.price_uzs || 0),
-            count: Number(formState.count || 0),
-            min_stock_threshold: Number(formState.min_stock_threshold || 5),
-            requires_returnable_bottle: formState.requires_returnable_bottle,
-            bottle_deposit_uzs: formState.requires_returnable_bottle ? Number(formState.bottle_deposit_uzs || 0) : 0,
-            is_active: formState.is_active,
-            actor: 'frontend-ui',
-          }),
+          body: JSON.stringify(jsonPayload),
         });
       }
 
@@ -714,15 +720,21 @@ const Products: React.FC = () => {
                       className="w-full rounded-lg border border-light-border bg-gray-50 px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary-blue dark:border-navy-600 dark:bg-navy-900 dark:text-white"
                     />
                   </div>
-                  <div>
-                    <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">SKU</label>
-                    <input
-                      value={formState.sku}
-                      onChange={(event) => setFormState((current) => ({ ...current, sku: event.target.value }))}
-                      placeholder={tr('Leave empty to auto-generate', 'Оставьте пустым для авто-генерации', "Avto yaratish uchun bo'sh qoldiring")}
-                      className="w-full rounded-lg border border-light-border bg-gray-50 px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary-blue dark:border-navy-600 dark:bg-navy-900 dark:text-white"
-                    />
-                  </div>
+                  {editing ? (
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">SKU</label>
+                      <input
+                        value={formState.sku}
+                        onChange={(event) => setFormState((current) => ({ ...current, sku: event.target.value }))}
+                        placeholder={tr('Leave empty to auto-generate', 'Оставьте пустым для авто-генерации', "Avto yaratish uchun bo'sh qoldiring")}
+                        className="w-full rounded-lg border border-light-border bg-gray-50 px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary-blue dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                      />
+                    </div>
+                  ) : (
+                    <div className="md:col-span-2 rounded-2xl border border-light-border bg-[rgba(248,252,251,0.88)] px-4 py-3 text-sm text-[#4b5663]">
+                      {tr('SKU will be generated automatically after saving.', 'SKU будет сгенерирован автоматически после сохранения.', "Saqlangandan keyin SKU avtomatik yaratiladi.")}
+                    </div>
+                  )}
                   <div>
                     <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{tr('Size liters', 'Объем (литр)', 'Hajmi (litr)')}</label>
                     <input
