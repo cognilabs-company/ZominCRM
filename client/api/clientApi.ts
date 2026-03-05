@@ -70,7 +70,11 @@ export const resolveClientMediaUrl = (value?: string | null) => {
   if (!value) return null;
 
   try {
-    return new URL(value, resolveClientApiOrigin()).toString();
+    const url = new URL(value, resolveClientApiOrigin());
+    if (typeof window !== 'undefined' && window.location.protocol === 'https:' && url.protocol === 'http:') {
+      url.protocol = 'https:';
+    }
+    return url.toString();
   } catch {
     return value;
   }

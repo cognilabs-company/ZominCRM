@@ -13,24 +13,39 @@ import { SkeletonProductList } from '../components/ClientSkeleton';
 import { ClientProduct, ClientProductsResponse } from '../types';
 import { formatAmount, getAvailabilityLabel } from '../utils';
 
+type ProductImageSlide = {
+  id: string;
+  candidates: string[];
+};
+
+const toProductMediaCandidate = (value?: string | null) => resolveClientMediaUrl(value) || value || null;
+
 const getProductImages = (product: ClientProduct) => {
-  const items: Array<{ id: string; url: string }> = [];
-  const seen = new Set<string>();
+  const slides: ProductImageSlide[] = [];
+  const slideSignatures = new Set<string>();
 
-  const primaryImage = product.image_thumb_url || product.image_url;
-  if (primaryImage && !seen.has(primaryImage)) {
-    seen.add(primaryImage);
-    items.push({ id: `${product.id}-primary`, url: resolveClientMediaUrl(primaryImage) || primaryImage });
-  }
+  const addSlide = (id: string, values: Array<string | null | undefined>) => {
+    const candidates = values
+      .map((value) => toProductMediaCandidate(value))
+      .filter((value): value is string => Boolean(value))
+      .filter((value, index, array) => array.indexOf(value) === index);
 
-  (product.images || []).forEach((image) => {
-    const nextUrl = image.thumb_url || image.url;
-    if (!nextUrl || seen.has(nextUrl)) return;
-    seen.add(nextUrl);
-    items.push({ id: image.id, url: resolveClientMediaUrl(nextUrl) || nextUrl });
+    if (!candidates.length) return;
+
+    const signature = candidates.join('|');
+    if (slideSignatures.has(signature)) return;
+
+    slideSignatures.add(signature);
+    slides.push({ id, candidates });
+  };
+
+  addSlide(`${product.id}-primary`, [product.image_url, product.image_thumb_url]);
+
+  (product.images || []).forEach((image, index) => {
+    addSlide(image.id || `${product.id}-gallery-${index}`, [image.url, image.thumb_url]);
   });
 
-  return items;
+  return slides;
 };
 
 type ProductCatalogCardProps = {
@@ -61,9 +76,15 @@ const ProductCatalogCard: React.FC<ProductCatalogCardProps> = ({
     setFailedUrls({});
   }, [product.id, product.image_thumb_url, product.image_url, product.images]);
 
+  React.useEffect(() => {
+    if (!media.length && activeImageIndex !== 0) {
+      setActiveImageIndex(0);
+    }
+  }, [activeImageIndex, media.length]);
+
+  const currentSlide = media[activeImageIndex];
+  const currentImageUrl = currentSlide?.candidates.find((candidate) => !failedUrls[candidate]) || null;
   const galleryCount = media.length;
-  const currentImage = media[activeImageIndex];
-  const currentImageUrl = currentImage && !failedUrls[currentImage.url] ? currentImage.url : null;
   const photoBadgeLabel =
     galleryCount > 1
       ? t('products.photo_badge_gallery', { count: galleryCount })
@@ -76,6 +97,17 @@ const ProductCatalogCard: React.FC<ProductCatalogCardProps> = ({
       : currentImageUrl
         ? t('products.photo_status_ready')
         : t('products.photo_status_empty');
+
+  React.useEffect(() => {
+    if (currentImageUrl || galleryCount < 2) return;
+    const nextIndex = media.findIndex((slide, index) => {
+      if (index === activeImageIndex) return false;
+      return slide.candidates.some((candidate) => !failedUrls[candidate]);
+    });
+    if (nextIndex !== -1) {
+      setActiveImageIndex(nextIndex);
+    }
+  }, [activeImageIndex, currentImageUrl, failedUrls, galleryCount, media]);
 
   const shiftImage = (direction: number) => {
     if (galleryCount < 2) return;
@@ -91,7 +123,7 @@ const ProductCatalogCard: React.FC<ProductCatalogCardProps> = ({
             alt={product.name}
             className="h-full w-full object-cover"
             onError={() => {
-              setFailedUrls((current) => (currentImage ? { ...current, [currentImage.url]: true } : current));
+              setFailedUrls((current) => (currentImageUrl ? { ...current, [currentImageUrl]: true } : current));
             }}
           />
         ) : (

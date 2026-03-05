@@ -57,14 +57,19 @@ const emptyForm: ProductFormState = {
   is_active: true,
 };
 
+const getPrimaryImageCandidates = (product?: Pick<ApiProduct, 'image_url' | 'image_thumb_url' | 'images'> | null) =>
+  [
+    product?.image_url,
+    product?.images?.[0]?.url,
+    product?.image_thumb_url,
+    product?.images?.[0]?.thumb_url,
+  ]
+    .map((value) => resolveAdminMediaUrl(value || null))
+    .filter((value): value is string => Boolean(value))
+    .filter((value, index, array) => array.indexOf(value) === index);
+
 const getPrimaryImage = (product?: Pick<ApiProduct, 'image_url' | 'image_thumb_url' | 'images'> | null) =>
-  resolveAdminMediaUrl(
-    product?.image_thumb_url ||
-      product?.images?.[0]?.thumb_url ||
-      product?.image_url ||
-      product?.images?.[0]?.url ||
-      null
-  );
+  getPrimaryImageCandidates(product)[0] || null;
 
 const getProductMedia = (product?: Pick<ApiProduct, 'image_url' | 'images'> | null) => {
   const items: ApiProductImage[] = [];
@@ -94,17 +99,31 @@ const ProductThumbnail: React.FC<{
   badgeLabel?: string | null;
   className?: string;
 }> = ({ product, fallbackLabel, badgeLabel, className = 'h-24 w-24 rounded-[24px]' }) => {
-  const [imageFailed, setImageFailed] = useState(false);
-  const imageUrl = imageFailed ? null : getPrimaryImage(product);
+  const imageCandidates = useMemo(() => getPrimaryImageCandidates(product), [product]);
+  const [imageIndex, setImageIndex] = useState(0);
+  const [imageExhausted, setImageExhausted] = useState(false);
+  const imageUrl = !imageExhausted ? imageCandidates[imageIndex] || null : null;
 
   useEffect(() => {
-    setImageFailed(false);
+    setImageIndex(0);
+    setImageExhausted(false);
   }, [product?.image_url, product?.image_thumb_url, product?.images]);
 
   return (
     <div className={`relative overflow-hidden border border-white/70 bg-[linear-gradient(145deg,#21404d_0%,#3d6c77_58%,#d9a25f_100%)] shadow-[0_12px_24px_rgba(33,64,77,0.16)] ${className}`}>
       {imageUrl ? (
-        <img src={imageUrl} alt={product?.name || fallbackLabel} className="h-full w-full object-cover" onError={() => setImageFailed(true)} />
+        <img
+          src={imageUrl}
+          alt={product?.name || fallbackLabel}
+          className="h-full w-full object-cover"
+          onError={() => {
+            if (imageIndex + 1 >= imageCandidates.length) {
+              setImageExhausted(true);
+              return;
+            }
+            setImageIndex((current) => current + 1);
+          }}
+        />
       ) : (
         <div className="absolute inset-0 flex items-center justify-center text-white">
           <div className="text-center">

@@ -60,7 +60,11 @@ export const resolveAdminMediaUrl = (value?: string | null) => {
   if (!value) return null;
 
   try {
-    return new URL(value, resolveApiOrigin()).toString();
+    const url = new URL(value, resolveApiOrigin());
+    if (typeof window !== 'undefined' && window.location.protocol === 'https:' && url.protocol === 'http:') {
+      url.protocol = 'https:';
+    }
+    return url.toString();
   } catch {
     return value;
   }
