@@ -2,8 +2,9 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { Card } from '../components/ui/Card';
+import { Modal } from '../components/ui/Modal';
 import { useToast } from '../context/ToastContext';
-import { ShoppingBag, DollarSign, Clock, Truck, Download, RefreshCw, Calendar } from 'lucide-react';
+import { ShoppingBag, DollarSign, Clock, Truck, Download, RefreshCw, Calendar, Search, Languages, Phone, UserRound } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from 'recharts';
 import { ENDPOINTS, apiRequest, getHeaders } from '../services/api';
 
@@ -41,6 +42,53 @@ interface DashboardStatsResponse {
     status?: string;
     updated_at?: string;
   }>;
+}
+
+interface DashboardDepositBalance {
+  id: string;
+  client_id: string;
+  product_id: string;
+  product_name: string;
+  product_sku?: string;
+  product_size_liters?: string | number | null;
+  requires_returnable_bottle?: boolean;
+  bottle_deposit_uzs?: number;
+  outstanding_bottles_count: number;
+  deposit_held_uzs: number;
+  total_deposit_charged_uzs: number;
+  total_deposit_refunded_uzs: number;
+  updated_at?: string;
+}
+
+interface DashboardDepositClientRow {
+  client_id: string;
+  client_name: string;
+  client_phone?: string | null;
+  client_username?: string | null;
+  client_platform?: string | null;
+  client_preferred_language?: string | null;
+  balances_count: number;
+  total_outstanding_bottles_count: number;
+  deposit_held_total_uzs: number;
+  total_deposit_charged_uzs: number;
+  total_deposit_refunded_uzs: number;
+  last_updated_at?: string | null;
+  balances: DashboardDepositBalance[];
+}
+
+interface DashboardDepositsResponse {
+  summary?: {
+    client_count?: number;
+    total_outstanding_bottles_count?: number;
+    total_deposit_held_uzs?: number;
+    total_deposit_charged_uzs?: number;
+    total_deposit_refunded_uzs?: number;
+  };
+  count?: number;
+  total?: number;
+  limit?: number;
+  offset?: number;
+  results?: DashboardDepositClientRow[];
 }
 
 type DashboardFilterMode = 'weekly' | 'monthly' | 'date' | 'range';
@@ -228,6 +276,12 @@ const Dashboard: React.FC = () => {
   const [singleDate, setSingleDate] = useState(todayIso);
   const [dateFrom, setDateFrom] = useState(todayIso);
   const [dateTo, setDateTo] = useState(todayIso);
+  const [depositsModalOpen, setDepositsModalOpen] = useState(false);
+  const [depositSearch, setDepositSearch] = useState('');
+  const [depositsLoading, setDepositsLoading] = useState(false);
+  const [depositsError, setDepositsError] = useState<string | null>(null);
+  const [depositsData, setDepositsData] = useState<DashboardDepositsResponse>({});
+  const [depositsOffset, setDepositsOffset] = useState(0);
 
   const validateFilters = useCallback(() => {
     if (filterMode === 'date' && !singleDate) {
@@ -333,11 +387,50 @@ const Dashboard: React.FC = () => {
     }
   }, [todayIso, toast, tr, validateFilters, withQuery]);
 
+  const loadDeposits = useCallback(async (offset = 0, append = false) => {
+    try {
+      setDepositsLoading(true);
+      if (!append) {
+        setDepositsError(null);
+      }
+
+      const params = new URLSearchParams();
+      params.set('limit', '50');
+      params.set('offset', String(offset));
+      if (depositSearch.trim()) {
+        params.set('q', depositSearch.trim());
+      }
+
+      const data = await apiRequest<DashboardDepositsResponse>(`${ENDPOINTS.DASHBOARD.DEPOSITS}?${params.toString()}`);
+      setDepositsData((prev) => ({
+        ...data,
+        results: append ? [...(prev.results || []), ...(data.results || [])] : (data.results || []),
+      }));
+      setDepositsOffset(offset);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : tr('Failed to load deposits.', 'Failed to load deposits.', 'Depozit tafsilotlarini yuklab bolmadi.');
+      setDepositsError(message);
+      if (!append) {
+        setDepositsData({});
+      }
+    } finally {
+      setDepositsLoading(false);
+    }
+  }, [depositSearch, tr]);
+
   useEffect(() => {
     if (hasInitialLoadRef.current) return;
     hasInitialLoadRef.current = true;
     loadStats();
   }, [loadStats]);
+
+  useEffect(() => {
+    if (!depositsModalOpen) return;
+    const timeoutId = window.setTimeout(() => {
+      void loadDeposits(0, false);
+    }, 250);
+    return () => window.clearTimeout(timeoutId);
+  }, [depositSearch, depositsModalOpen, loadDeposits]);
 
   // Auto-reload when the filter mode changes (after initial load)
   const filterModeRef = useRef(filterMode);
@@ -425,6 +518,9 @@ const Dashboard: React.FC = () => {
     hasMetric(stats, ['deposit_held_total_uzs', 'deposit_held_uzs', 'bottle_deposit_held_uzs']) ||
     hasMetric(stats, ['deposit_charged_period_uzs', 'deposit_charged_uzs', 'bottle_deposit_charged_period_uzs', 'bottle_deposit_charged_uzs']) ||
     hasMetric(stats, ['deposit_refunded_period_uzs', 'deposit_refunded_uzs', 'bottle_deposit_refunded_period_uzs', 'bottle_deposit_refunded_uzs']);
+  const depositsSummary = depositsData.summary;
+  const depositRows = depositsData.results || [];
+  const canLoadMoreDeposits = (depositsData.total || 0) > depositRows.length;
 
   const kpiCards = [
     {
@@ -595,9 +691,18 @@ const Dashboard: React.FC = () => {
       {showDepositCards ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card accent="amber">
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{tr('Deposit Held', 'Deposit Held', 'Ushlab turilgan depozit')}</p>
-            <h3 className="mt-2 text-2xl font-bold text-light-text dark:text-white">{loading ? '...' : `${depositHeldValue.toLocaleString()} UZS`}</h3>
-            <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">{tr('Current bottle deposit held from clients', 'Current bottle deposit held from clients', 'Mijozlardan ushlab turilgan joriy idish depoziti')}</p>
+            <button
+              type="button"
+              onClick={() => {
+                setDepositsModalOpen(true);
+                void loadDeposits(0, false);
+              }}
+              className="w-full text-left"
+            >
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{tr('Deposit Held', 'Deposit Held', 'Ushlab turilgan depozit')}</p>
+              <h3 className="mt-2 text-2xl font-bold text-light-text dark:text-white">{loading ? '...' : `${depositHeldValue.toLocaleString()} UZS`}</h3>
+              <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">{tr('Current bottle deposit held from clients. Tap for details.', 'Current bottle deposit held from clients. Tap for details.', 'Mijozlardan ushlab turilgan joriy idish depoziti. Tafsilotlarni ochish uchun bosing.')}</p>
+            </button>
           </Card>
           <Card accent="blue">
             <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{tr('Deposit Charged', 'Deposit Charged', 'Hisoblangan depozit')}</p>
@@ -691,6 +796,181 @@ const Dashboard: React.FC = () => {
           </div>
         </Card>
       ) : null}
+
+      <Modal
+        isOpen={depositsModalOpen}
+        onClose={() => setDepositsModalOpen(false)}
+        title={tr('Deposit Details', 'Deposit Details', 'Depozit tafsilotlari')}
+        maxWidthClass="max-w-5xl"
+      >
+        <div className="space-y-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div className="flex-1">
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">{tr('Search clients', 'Search clients', 'Mijozlarni qidirish')}</label>
+              <div className="flex items-center gap-2 rounded-xl border border-light-border dark:border-navy-700 bg-gray-50 dark:bg-navy-900/40 px-3 py-2">
+                <Search size={16} className="text-gray-400" />
+                <input
+                  type="text"
+                  value={depositSearch}
+                  onChange={(e) => setDepositSearch(e.target.value)}
+                  placeholder={tr('Name, phone, username', 'Name, phone, username', 'Ism, telefon, username')}
+                  className="w-full bg-transparent text-sm text-gray-800 outline-none placeholder:text-gray-400 dark:text-gray-100"
+                />
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => void loadDeposits(0, false)}
+              disabled={depositsLoading}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-light-border dark:border-navy-700 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:bg-navy-900 dark:text-gray-200 dark:hover:bg-navy-800 disabled:opacity-50"
+            >
+              <RefreshCw size={15} className={depositsLoading ? 'animate-spin' : ''} />
+              {tr('Refresh', 'Refresh', 'Yangilash')}
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+            <div className="rounded-xl border border-light-border dark:border-navy-700 bg-gray-50 dark:bg-navy-900/40 px-4 py-3">
+              <p className="text-xs uppercase tracking-[0.18em] text-gray-400">{tr('Clients', 'Clients', 'Mijozlar')}</p>
+              <p className="mt-2 text-xl font-semibold text-light-text dark:text-white">{(depositsSummary?.client_count ?? 0).toLocaleString()}</p>
+            </div>
+            <div className="rounded-xl border border-light-border dark:border-navy-700 bg-gray-50 dark:bg-navy-900/40 px-4 py-3">
+              <p className="text-xs uppercase tracking-[0.18em] text-gray-400">{tr('Outstanding Bottles', 'Outstanding Bottles', 'Qolgan idishlar')}</p>
+              <p className="mt-2 text-xl font-semibold text-light-text dark:text-white">{(depositsSummary?.total_outstanding_bottles_count ?? 0).toLocaleString()}</p>
+            </div>
+            <div className="rounded-xl border border-light-border dark:border-navy-700 bg-gray-50 dark:bg-navy-900/40 px-4 py-3">
+              <p className="text-xs uppercase tracking-[0.18em] text-gray-400">{tr('Deposit Held', 'Deposit Held', 'Ushlab turilgan depozit')}</p>
+              <p className="mt-2 text-xl font-semibold text-light-text dark:text-white">{`${(depositsSummary?.total_deposit_held_uzs ?? depositHeldValue).toLocaleString()} UZS`}</p>
+            </div>
+            <div className="rounded-xl border border-light-border dark:border-navy-700 bg-gray-50 dark:bg-navy-900/40 px-4 py-3">
+              <p className="text-xs uppercase tracking-[0.18em] text-gray-400">{tr('Refunded', 'Refunded', 'Qaytarilgan')}</p>
+              <p className="mt-2 text-xl font-semibold text-light-text dark:text-white">{`${(depositsSummary?.total_deposit_refunded_uzs ?? 0).toLocaleString()} UZS`}</p>
+            </div>
+          </div>
+
+          {depositsError ? (
+            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{depositsError}</div>
+          ) : null}
+
+          {depositsLoading && depositRows.length === 0 ? (
+            <div className="rounded-xl border border-light-border dark:border-navy-700 bg-gray-50 dark:bg-navy-900/40 px-4 py-6 text-sm text-gray-500">
+              {tr('Loading deposit details...', 'Loading deposit details...', 'Depozit tafsilotlari yuklanmoqda...')}
+            </div>
+          ) : null}
+
+          {!depositsLoading && !depositsError && depositRows.length === 0 ? (
+            <div className="rounded-xl border border-light-border dark:border-navy-700 bg-gray-50 dark:bg-navy-900/40 px-4 py-6 text-sm text-gray-500">
+              {tr('No deposit balances found.', 'No deposit balances found.', 'Depozit balansi topilmadi.')}
+            </div>
+          ) : null}
+
+          <div className="space-y-4">
+            {depositRows.map((row) => (
+              <div key={row.client_id} className="rounded-2xl border border-light-border dark:border-navy-700 bg-white dark:bg-navy-900/50 p-5">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="space-y-3">
+                    <div>
+                      <h3 className="text-lg font-semibold text-light-text dark:text-white">{row.client_name || '-'}</h3>
+                      <div className="mt-2 flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
+                        {row.client_phone ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 dark:bg-navy-800">
+                            <Phone size={12} />
+                            {row.client_phone}
+                          </span>
+                        ) : null}
+                        {row.client_username ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 dark:bg-navy-800">
+                            <UserRound size={12} />
+                            @{row.client_username}
+                          </span>
+                        ) : null}
+                        {row.client_preferred_language ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 dark:bg-navy-800">
+                            <Languages size={12} />
+                            {row.client_preferred_language}
+                          </span>
+                        ) : null}
+                        {row.client_platform ? (
+                          <span className="rounded-full bg-gray-100 px-3 py-1 capitalize dark:bg-navy-800">{row.client_platform}</span>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                      <div className="rounded-xl bg-gray-50 px-3 py-2 dark:bg-navy-800">
+                        <p className="text-xs uppercase tracking-[0.18em] text-gray-400">{tr('Products', 'Products', 'Mahsulotlar')}</p>
+                        <p className="mt-1 text-sm font-semibold text-light-text dark:text-white">{row.balances_count}</p>
+                      </div>
+                      <div className="rounded-xl bg-gray-50 px-3 py-2 dark:bg-navy-800">
+                        <p className="text-xs uppercase tracking-[0.18em] text-gray-400">{tr('Outstanding', 'Outstanding', 'Qolgan')}</p>
+                        <p className="mt-1 text-sm font-semibold text-light-text dark:text-white">{row.total_outstanding_bottles_count}</p>
+                      </div>
+                      <div className="rounded-xl bg-gray-50 px-3 py-2 dark:bg-navy-800">
+                        <p className="text-xs uppercase tracking-[0.18em] text-gray-400">{tr('Held', 'Held', 'Ushlangan')}</p>
+                        <p className="mt-1 text-sm font-semibold text-light-text dark:text-white">{`${row.deposit_held_total_uzs.toLocaleString()} UZS`}</p>
+                      </div>
+                      <div className="rounded-xl bg-gray-50 px-3 py-2 dark:bg-navy-800">
+                        <p className="text-xs uppercase tracking-[0.18em] text-gray-400">{tr('Refunded', 'Refunded', 'Qaytarilgan')}</p>
+                        <p className="mt-1 text-sm font-semibold text-light-text dark:text-white">{`${row.total_deposit_refunded_uzs.toLocaleString()} UZS`}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl bg-amber-50 px-4 py-3 text-right dark:bg-amber-500/10">
+                    <p className="text-xs uppercase tracking-[0.18em] text-amber-700 dark:text-amber-300">{tr('Last updated', 'Last updated', 'Oxirgi yangilanish')}</p>
+                    <p className="mt-1 text-sm font-semibold text-amber-900 dark:text-amber-100">
+                      {row.last_updated_at ? new Date(row.last_updated_at).toLocaleString() : '-'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-5 overflow-x-auto">
+                  <table className="min-w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-light-border dark:border-navy-700 text-left text-xs uppercase tracking-[0.16em] text-gray-400">
+                        <th className="pb-3 pr-4">{tr('Product', 'Product', 'Mahsulot')}</th>
+                        <th className="pb-3 pr-4">{tr('Size', 'Size', 'Hajmi')}</th>
+                        <th className="pb-3 pr-4">{tr('Outstanding', 'Outstanding', 'Qolgan')}</th>
+                        <th className="pb-3 pr-4">{tr('Deposit held', 'Deposit held', 'Ushlangan depozit')}</th>
+                        <th className="pb-3 pr-4">{tr('Charged', 'Charged', 'Hisoblangan')}</th>
+                        <th className="pb-3">{tr('Refunded', 'Refunded', 'Qaytarilgan')}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {row.balances.map((balance) => (
+                        <tr key={balance.id} className="border-b border-light-border/70 dark:border-navy-800 last:border-0">
+                          <td className="py-3 pr-4">
+                            <div className="font-medium text-light-text dark:text-white">{balance.product_name}</div>
+                            <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">{balance.product_sku || '-'}</div>
+                          </td>
+                          <td className="py-3 pr-4 text-gray-600 dark:text-gray-300">{balance.product_size_liters || '-'}</td>
+                          <td className="py-3 pr-4 text-gray-600 dark:text-gray-300">{balance.outstanding_bottles_count}</td>
+                          <td className="py-3 pr-4 text-gray-600 dark:text-gray-300">{`${balance.deposit_held_uzs.toLocaleString()} UZS`}</td>
+                          <td className="py-3 pr-4 text-gray-600 dark:text-gray-300">{`${balance.total_deposit_charged_uzs.toLocaleString()} UZS`}</td>
+                          <td className="py-3 text-gray-600 dark:text-gray-300">{`${balance.total_deposit_refunded_uzs.toLocaleString()} UZS`}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {canLoadMoreDeposits ? (
+            <div className="flex justify-center">
+              <button
+                type="button"
+                onClick={() => void loadDeposits(depositsOffset + (depositsData.limit || 50), true)}
+                disabled={depositsLoading}
+                className="inline-flex items-center gap-2 rounded-xl border border-light-border dark:border-navy-700 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:bg-navy-900 dark:text-gray-200 dark:hover:bg-navy-800 disabled:opacity-50"
+              >
+                {depositsLoading ? tr('Loading...', 'Loading...', 'Yuklanmoqda...') : tr('Load more', 'Load more', 'Yana yuklash')}
+              </button>
+            </div>
+          ) : null}
+        </div>
+      </Modal>
     </div>
   );
 };

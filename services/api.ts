@@ -82,6 +82,7 @@ export const ENDPOINTS = {
   DASHBOARD: {
     STATS: `${API_BASE_URL}/dashboard/stats/`,
     STATS_EXPORT: `${API_BASE_URL}/dashboard/stats/export.xlsx`,
+    DEPOSITS: `${API_BASE_URL}/dashboard/deposits/`,
     PENDING_PAYMENTS: `${API_BASE_URL}/dashboard/pending-payments/`,
     USERS: `${API_BASE_URL}/dashboard/users/`,
     USER_DETAIL: (id: string) => `${API_BASE_URL}/dashboard/users/${id}/`,
