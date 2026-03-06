@@ -109,6 +109,7 @@ export const ENDPOINTS = {
     LIST: `${API_BASE_URL}/clients/`,
     UPSERT: `${API_BASE_URL}/clients/upsert/`,
     BOTTLE_BALANCES: (id: string) => `${API_BASE_URL}/clients/${id}/bottle-balances/`,
+    BOTTLE_RETURNS: (id: string) => `${API_BASE_URL}/clients/${id}/bottle-returns/`,
     BOTTLE_REFUNDS: (id: string) => `${API_BASE_URL}/clients/${id}/bottle-refunds/`,
   },
   LEADS: {

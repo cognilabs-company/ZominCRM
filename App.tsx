@@ -18,6 +18,7 @@ const Settings = React.lazy(() => import('./pages/Settings'));
 const AITools = React.lazy(() => import('./pages/AITools'));
 const Products = React.lazy(() => import('./pages/Products'));
 const Clients = React.lazy(() => import('./pages/Clients'));
+const BottleController = React.lazy(() => import('./pages/BottleController'));
 const Leads = React.lazy(() => import('./pages/Leads'));
 const Users = React.lazy(() => import('./pages/Users'));
 const AICredentials = React.lazy(() => import('./pages/AICredentials'));
@@ -163,6 +164,7 @@ const App: React.FC = () => {
                           <Route path="/orders" element={<Navigate to="/admin-app/orders" replace />} />
                           <Route path="/products" element={<Navigate to="/admin-app/products" replace />} />
                           <Route path="/clients" element={<Navigate to="/admin-app/clients" replace />} />
+                          <Route path="/bottles" element={<Navigate to="/admin-app/bottles" replace />} />
                           <Route path="/leads" element={<Navigate to="/admin-app/leads" replace />} />
                           <Route path="/payments" element={<Navigate to="/admin-app/payments" replace />} />
                           <Route path="/couriers" element={<Navigate to="/admin-app/couriers" replace />} />
@@ -179,6 +181,7 @@ const App: React.FC = () => {
                           <Route path="/admin-app/orders" element={<RequirePermission permission="orders.access"><Orders /></RequirePermission>} />
                           <Route path="/admin-app/products" element={<RequirePermission permission="products.access"><Products /></RequirePermission>} />
                           <Route path="/admin-app/clients" element={<RequirePermission permission="crm.access"><Clients /></RequirePermission>} />
+                          <Route path="/admin-app/bottles" element={<RequirePermission permission="crm.access"><BottleController /></RequirePermission>} />
                           <Route path="/admin-app/leads" element={<RequireAdmin><Leads /></RequireAdmin>} />
                           <Route path="/admin-app/payments" element={<RequirePermission permission="payments.access"><Payments /></RequirePermission>} />
                           <Route path="/admin-app/couriers" element={<RequirePermission permission="couriers.access"><Couriers /></RequirePermission>} />

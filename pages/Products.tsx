@@ -943,6 +943,64 @@ const Products: React.FC = () => {
                 ) : null}
               </div>
               <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <Card className="bg-[linear-gradient(135deg,rgba(255,247,237,0.96)_0%,rgba(255,255,255,1)_100%)]">
+                    <p className="text-xs uppercase tracking-[0.2em] text-[#9a6b3a]">SKU</p>
+                    <p className="mt-2 text-base font-semibold text-[#1f2933]">{detailProduct.sku || '-'}</p>
+                  </Card>
+                  <Card className="bg-[linear-gradient(135deg,rgba(236,242,255,0.96)_0%,rgba(255,255,255,1)_100%)]">
+                    <p className="text-xs uppercase tracking-[0.2em] text-[#355cbb]">{tr('Updated', 'Обновлено', 'Yangilangan')}</p>
+                    <p className="mt-2 text-base font-semibold text-[#1f2933]">{formatUpdatedAt(detailProduct.updated_at)}</p>
+                  </Card>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <Card>
+                    <p className="text-xs uppercase tracking-[0.2em] text-[#40635b]">{t('price')}</p>
+                    <p className="mt-2 text-xl font-semibold text-[#1f2933]">{detailProduct.price_uzs.toLocaleString()} UZS</p>
+                  </Card>
+                  <Card>
+                    <p className="text-xs uppercase tracking-[0.2em] text-[#5a6d7c]">{t('stock')}</p>
+                    <p className="mt-2 text-xl font-semibold text-[#1f2933]">{detailProduct.count}</p>
+                  </Card>
+                </div>
+
+                <Card className="space-y-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {availabilityBadge(detailProduct.availability_status)}
+                    {detailProduct.is_active ? null : <Badge variant="default">{tr('Inactive', 'Неактивный', 'Nofaol')}</Badge>}
+                    {detailProduct.requires_returnable_bottle ? <Badge variant="info">{tr('Returnable bottle', 'Возвратная тара', 'Qaytariladigan idish')}</Badge> : null}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-gray-500">{tr('Size', 'Размер', 'Hajm')}</p>
+                      <p className="mt-1 font-semibold text-[#1f2933]">{detailProduct.size_liters || '-'}L</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">{tr('Min threshold', 'Минимальный порог', 'Minimal chegara')}</p>
+                      <p className="mt-1 font-semibold text-[#1f2933]">{detailProduct.min_stock_threshold}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">{tr('Bottle deposit', 'Депозит за бутыль', 'Idish depoziti')}</p>
+                      <p className="mt-1 font-semibold text-[#1f2933]">
+                        {detailProduct.requires_returnable_bottle ? `${detailProduct.bottle_deposit_uzs.toLocaleString()} UZS` : tr('Not required', 'Не требуется', 'Talab qilinmaydi')}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">{tr('Photos', 'Фото', 'Rasmlar')}</p>
+                      <p className="mt-1 font-semibold text-[#1f2933]">{detailMedia.length}</p>
+                    </div>
+                  </div>
+                </Card>
+
+                <div className="rounded-2xl border border-light-border bg-[rgba(248,252,251,0.88)] px-4 py-4 text-sm text-[#4b5663]">
+                  {tr(
+                    'This modal is for quick product review. Use edit if you need to change stock, price, bottle rules, or images.',
+                    'Это окно для быстрого просмотра товара. Для изменения остатков, цены, правил тары или изображений используйте редактирование.',
+                    'Bu oyna mahsulotni tez ko‘rish uchun. Qoldiq, narx, idish qoidalari yoki rasmlarni o‘zgartirish kerak bo‘lsa, tahrirlashdan foydalaning.'
+                  )}
+                </div>
               </div>
             </div>
           </div>
