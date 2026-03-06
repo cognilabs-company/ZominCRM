@@ -695,7 +695,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       {showDepositCards ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           <Card accent="amber" className="h-full">
             <button
               type="button"
