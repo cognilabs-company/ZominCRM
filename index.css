@@ -180,19 +180,23 @@ body {
 
 .nav-item {
   border-left: 3px solid transparent;
+  border: 1px solid transparent;
   transition: all 0.16s ease;
 }
 
 .nav-item:hover {
   background: rgba(229, 57, 53, 0.07);
   border-left-color: rgba(229, 57, 53, 0.35);
+  border-color: rgba(229, 57, 53, 0.12);
   color: #EF5350;
 }
 
 .nav-active {
   background: linear-gradient(90deg, rgba(229, 57, 53, 0.18) 0%, rgba(229, 57, 53, 0.04) 100%);
   border-left: 3px solid #E53935 !important;
+  border-color: rgba(229, 57, 53, 0.18) !important;
   color: #EF5350 !important;
+  box-shadow: inset 0 0 0 1px rgba(229, 57, 53, 0.1), 0 10px 24px rgba(229, 57, 53, 0.08);
 }
 
 .card-lift {

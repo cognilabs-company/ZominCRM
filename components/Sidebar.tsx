@@ -14,6 +14,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onCloseMob
   const { t, language } = useLanguage();
   const { user, hasPermission, isAdmin } = useAuth();
   const tr = (en: string, ru: string, uz: string) => (language === 'ru' ? ru : language === 'uz' ? uz : en);
+  const getAdminNavPath = (path: string) => (path === '/' ? '/admin-app' : `/admin-app${path}`);
 
   const canAccessNavItem = (id: string) => {
     if (!user) return false;
@@ -52,7 +53,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onCloseMob
           canAccessNavItem(item.id) ? (
             <li key={item.id}>
               <NavLink
-                to={item.path}
+                to={getAdminNavPath(item.path)}
                 end={item.path === '/'}
                 onClick={() => {
                   if (isMobile) onCloseMobile?.();
@@ -69,7 +70,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onCloseMob
                     <span className={`shrink-0 transition-colors ${isActive ? 'text-primary-red' : ''}`}>
                       <item.icon size={17} strokeWidth={isActive ? 2.2 : 1.8} />
                     </span>
-                    <span className="truncate">{t(item.labelKey)}</span>
+                    <span className={`truncate ${isActive ? 'font-semibold' : ''}`}>{t(item.labelKey)}</span>
                   </>
                 )}
               </NavLink>

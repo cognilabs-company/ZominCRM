@@ -123,6 +123,10 @@ interface BotRuntimeResponse {
   state?: BotRuntimeState;
 }
 
+interface LoadMessagesOptions {
+  forceScrollToBottom?: boolean;
+}
+
 const FALLBACK_CLIENT_PREFIX = 'Mijoz ';
 
 const buildFallbackClientName = (seed?: string | null) => {
@@ -632,10 +636,11 @@ const Conversations: React.FC = () => {
     }
   }, [mapConversation, selectedChatId, selectConversation, toast, tr]);
 
-  const loadMessages = useCallback(async (conversationId: string) => {
+  const loadMessages = useCallback(async (conversationId: string, options?: LoadMessagesOptions) => {
     if (msgInFlightRef.current) return;
     msgInFlightRef.current = true;
     const seq = ++messageLoadSeqRef.current;
+    const shouldAutoScroll = Boolean(options?.forceScrollToBottom) || shouldStickToBottomRef.current;
     try {
       setLoadingMessages(true);
       const data = await apiRequest<ApiMessage[] | { results?: ApiMessage[] }>(ENDPOINTS.CONVERSATIONS.MESSAGES(conversationId));
@@ -653,8 +658,15 @@ const Conversations: React.FC = () => {
             : c
         )));
       }
-      shouldStickToBottomRef.current = true;
-      window.setTimeout(() => scrollToBottom('auto'), 60);
+      if (shouldAutoScroll) {
+        shouldStickToBottomRef.current = true;
+        window.setTimeout(() => {
+          scrollToBottom('auto');
+          setShowScrollToBottom(false);
+        }, 60);
+      } else {
+        setShowScrollToBottom(list.length > 0);
+      }
       setLastSyncAt(new Date());
       setError(null);
     } catch (e) {
@@ -883,7 +895,7 @@ const Conversations: React.FC = () => {
     if (selectedChatId) {
       activeConversationRef.current = selectedChatId;
       shouldStickToBottomRef.current = true;
-      loadMessages(selectedChatId);
+      loadMessages(selectedChatId, { forceScrollToBottom: true });
       loadConversationBotState(selectedChatId);
       openDetailSocket(selectedChatId);
       markConversationRead(selectedChatId);
