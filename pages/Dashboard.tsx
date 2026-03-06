@@ -695,50 +695,63 @@ const Dashboard: React.FC = () => {
       </div>
 
       {showDepositCards ? (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <Card accent="amber" className="h-full">
+        <Card
+          title={tr('Deposit Overview', 'Deposit Overview', 'Depozit overview')}
+          action={
             <button
               type="button"
               onClick={() => {
                 setDepositsModalOpen(true);
                 void loadDeposits(0, false);
               }}
-              className="flex h-full w-full flex-col text-left"
+              className="rounded-lg border border-light-border bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-navy-700 dark:bg-navy-900 dark:text-gray-200 dark:hover:bg-navy-800"
             >
+              {tr('Details', 'Details', 'Tafsilotlar')}
+            </button>
+          }
+        >
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+            <div className="rounded-2xl border border-amber-200 bg-[linear-gradient(135deg,rgba(255,247,237,0.95)_0%,rgba(255,255,255,1)_100%)] p-5 dark:border-amber-500/20 dark:bg-[linear-gradient(135deg,rgba(120,53,15,0.18)_0%,rgba(15,23,42,0.8)_100%)]">
               <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{tr('Deposit Held Now', 'Deposit Held Now', 'Hozir ushlab turilgan depozit')}</p>
-              <h3 className="mt-2 text-2xl font-bold text-light-text dark:text-white">{loading ? '...' : `${depositHeldValue.toLocaleString()} UZS`}</h3>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <span className="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
-                  {tr('Bottles now', 'Bottles now', 'Hozirgi idishlar')}: {depositHeldBottlesCount}
+              <h3 className="mt-2 text-3xl font-bold text-light-text dark:text-white">{loading ? '...' : `${depositHeldValue.toLocaleString()} UZS`}</h3>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <span className="inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
+                  {tr('Bottles', 'Bottles', 'Idishlar')}: {depositHeldBottlesCount}
                 </span>
-                <span className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 dark:bg-blue-500/10 dark:text-blue-300">
-                  {tr('Clients now', 'Clients now', 'Hozirgi mijozlar')}: {depositHoldersCount}
+                <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800 dark:bg-blue-500/15 dark:text-blue-300">
+                  {tr('Clients', 'Clients', 'Mijozlar')}: {depositHoldersCount}
                 </span>
               </div>
-              <p className="mt-auto pt-4 text-xs text-gray-500 dark:text-gray-400">{tr('Current deposit held from clients. Tap for details.', 'Current deposit held from clients. Tap for details.', 'Mijozlardan hozir ushlab turilgan depozit. Tafsilotlar uchun bosing.')}</p>
-            </button>
-          </Card>
-          <Card accent="blue" className="h-full">
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{tr('Bottles With Clients', 'Bottles With Clients', 'Mijozlarda qolgan idishlar')}</p>
-            <h3 className="mt-2 text-2xl font-bold text-light-text dark:text-white">{loading ? '...' : depositHeldBottlesCount.toLocaleString()}</h3>
-            <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">{tr('Bottles clients are still holding right now.', 'Bottles clients are still holding right now.', 'Mijozlarda hozir qolib turgan idishlar soni.')}</p>
-          </Card>
-          <Card accent="emerald" className="h-full">
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{tr('Deposit Holders', 'Deposit Holders', 'Depozit ushlab turgan mijozlar')}</p>
-            <h3 className="mt-2 text-2xl font-bold text-light-text dark:text-white">{loading ? '...' : depositHoldersCount.toLocaleString()}</h3>
-            <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">{tr('Distinct clients who currently hold bottles or deposit.', 'Distinct clients who currently hold bottles or deposit.', 'Hozir idish yoki depozit ushlab turgan alohida mijozlar soni.')}</p>
-          </Card>
-          <Card accent="blue" className="h-full">
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{tr('Deposit Charged In Period', 'Deposit Charged In Period', 'Davrda hisoblangan depozit')}</p>
-            <h3 className="mt-2 text-2xl font-bold text-light-text dark:text-white">{loading ? '...' : `${depositChargedValue.toLocaleString()} UZS`}</h3>
-            <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">{tr('Newly charged deposit in the selected period.', 'Newly charged deposit in the selected period.', 'Tanlangan davr ichida yangi hisoblangan depozit.')}</p>
-          </Card>
-          <Card accent="emerald" className="h-full">
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{tr('Deposit Refunded In Period', 'Deposit Refunded In Period', 'Davrda qaytarilgan depozit')}</p>
-            <h3 className="mt-2 text-2xl font-bold text-light-text dark:text-white">{loading ? '...' : `${depositRefundedValue.toLocaleString()} UZS`}</h3>
-            <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">{tr('Deposit returned back in the selected period.', 'Deposit returned back in the selected period.', 'Tanlangan davr ichida qaytarilgan depozit.')}</p>
-          </Card>
-        </div>
+              <p className="mt-5 text-xs text-gray-500 dark:text-gray-400">{tr('Current deposit balance being held from clients.', 'Current deposit balance being held from clients.', 'Mijozlardan hozir ushlab turilgan depozit qoldig‘i.')}</p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:col-span-2">
+              <div className="rounded-2xl border border-light-border bg-gray-50/80 p-5 dark:border-navy-700 dark:bg-navy-900/40">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{tr('Bottles With Clients', 'Bottles With Clients', 'Mijozlarda qolgan idishlar')}</p>
+                <h3 className="mt-2 text-2xl font-bold text-light-text dark:text-white">{loading ? '...' : depositHeldBottlesCount.toLocaleString()}</h3>
+                <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">{tr('Bottles clients are still holding right now.', 'Bottles clients are still holding right now.', 'Mijozlarda hozir qolib turgan idishlar soni.')}</p>
+              </div>
+
+              <div className="rounded-2xl border border-light-border bg-gray-50/80 p-5 dark:border-navy-700 dark:bg-navy-900/40">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{tr('Deposit Holders', 'Deposit Holders', 'Depozit ushlab turgan mijozlar')}</p>
+                <h3 className="mt-2 text-2xl font-bold text-light-text dark:text-white">{loading ? '...' : depositHoldersCount.toLocaleString()}</h3>
+                <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">{tr('Distinct clients who currently hold bottles or deposit.', 'Distinct clients who currently hold bottles or deposit.', 'Hozir idish yoki depozit ushlab turgan alohida mijozlar soni.')}</p>
+              </div>
+
+              <div className="rounded-2xl border border-light-border bg-gray-50/80 p-5 dark:border-navy-700 dark:bg-navy-900/40">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{tr('Deposit Charged In Period', 'Deposit Charged In Period', 'Davrda hisoblangan depozit')}</p>
+                <h3 className="mt-2 text-2xl font-bold text-light-text dark:text-white">{loading ? '...' : `${depositChargedValue.toLocaleString()} UZS`}</h3>
+                <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">{tr('Newly charged deposit in the selected period.', 'Newly charged deposit in the selected period.', 'Tanlangan davr ichida yangi hisoblangan depozit.')}</p>
+              </div>
+
+              <div className="rounded-2xl border border-light-border bg-gray-50/80 p-5 dark:border-navy-700 dark:bg-navy-900/40">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{tr('Deposit Refunded In Period', 'Deposit Refunded In Period', 'Davrda qaytarilgan depozit')}</p>
+                <h3 className="mt-2 text-2xl font-bold text-light-text dark:text-white">{loading ? '...' : `${depositRefundedValue.toLocaleString()} UZS`}</h3>
+                <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">{tr('Deposit returned back in the selected period.', 'Deposit returned back in the selected period.', 'Tanlangan davr ichida qaytarilgan depozit.')}</p>
+              </div>
+            </div>
+          </div>
+        </Card>
       ) : null}
 
       {showCharts && (
