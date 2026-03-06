@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { ArrowRightLeft, ClipboardList, Droplets, Loader2, RefreshCw, Search, ShieldAlert, Undo2, Wallet } from 'lucide-react';
 import { Badge } from '../components/ui/Badge';
@@ -175,10 +175,10 @@ const BottleController: React.FC = () => {
   };
 
   const movementLabel = (movementType: BottleMovement['movement_type']) => {
-    if (movementType === 'RETURNED') return tr('Returned', 'Возврат бутылей', 'Qaytarildi');
-    if (movementType === 'REFUND') return tr('Refunded', 'Возврат депозита', 'Depozit qaytarildi');
-    if (movementType === 'ORDER_DELIVERED') return tr('Delivered order', 'Доставка', 'Yetkazilgan buyurtma');
-    if (movementType === 'MANUAL_ADJUST') return tr('Manual adjust', 'Ручная корректировка', "Qo'lda tuzatish");
+    if (movementType === 'RETURNED') return tr('Returned', 'Ð’Ð¾Ð·Ð²Ñ€Ð°Ñ‚ Ð±ÑƒÑ‚Ñ‹Ð»ÐµÐ¹', 'Qaytarildi');
+    if (movementType === 'REFUND') return tr('Refunded', 'Ð’Ð¾Ð·Ð²Ñ€Ð°Ñ‚ Ð´ÐµÐ¿Ð¾Ð·Ð¸Ñ‚Ð°', 'Depozit qaytarildi');
+    if (movementType === 'ORDER_DELIVERED') return tr('Delivered order', 'Ð”Ð¾ÑÑ‚Ð°Ð²ÐºÐ°', 'Yetkazilgan buyurtma');
+    if (movementType === 'MANUAL_ADJUST') return tr('Manual adjust', 'Ð ÑƒÑ‡Ð½Ð°Ñ ÐºÐ¾Ñ€Ñ€ÐµÐºÑ‚Ð¸Ñ€Ð¾Ð²ÐºÐ°', "Qo'lda tuzatish");
     return movementType;
   };
 
@@ -309,7 +309,7 @@ const BottleController: React.FC = () => {
           actor: 'admin-ui',
         }),
       });
-      toast.success(tr('Bottle return recorded', 'Возврат бутылей сохранен', 'Idish qaytishi saqlandi'));
+      toast.success(tr('Bottle return recorded', 'Ð’Ð¾Ð·Ð²Ñ€Ð°Ñ‚ Ð±ÑƒÑ‚Ñ‹Ð»ÐµÐ¹ ÑÐ¾Ñ…Ñ€Ð°Ð½ÐµÐ½', 'Idish qaytishi saqlandi'));
       await loadWorkspace(selectedClient.id);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : tr('Failed to save bottle return', 'Failed to save bottle return', 'Idish qaytishini saqlab bo\'lmadi'));
@@ -337,7 +337,7 @@ const BottleController: React.FC = () => {
           note: refundForm.note.trim(),
         }),
       });
-      toast.success(tr('Bottle refund recorded', 'Возврат депозита сохранен', 'Depozit qaytarilishi saqlandi'));
+      toast.success(tr('Bottle refund recorded', 'Ð’Ð¾Ð·Ð²Ñ€Ð°Ñ‚ Ð´ÐµÐ¿Ð¾Ð·Ð¸Ñ‚Ð° ÑÐ¾Ñ…Ñ€Ð°Ð½ÐµÐ½', 'Depozit qaytarilishi saqlandi'));
       await loadWorkspace(selectedClient.id);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : tr('Failed to save bottle refund', 'Failed to save bottle refund', 'Depozit qaytarilishini saqlab bo\'lmadi'));
@@ -358,12 +358,12 @@ const BottleController: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-light-text dark:text-white">{tr('Bottle Controller', 'Контроль бутылей', 'Idish nazorati')}</h1>
-          <p className="mt-2 max-w-3xl text-sm text-gray-500 dark:text-gray-400">
+          <h1 className="text-2xl font-bold text-light-text dark:text-white">{tr('Bottle Controller', 'ÐšÐ¾Ð½Ñ‚Ñ€Ð¾Ð»ÑŒ Ð±ÑƒÑ‚Ñ‹Ð»ÐµÐ¹', 'Idish nazorati')}</h1>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-500 dark:text-gray-400">
             {tr(
               'A dedicated operator workspace for bottle returns, explicit refunds, and balance audit by client.',
-              'Отдельное рабочее место оператора для возврата бутылей, явного возврата депозита и аудита баланса по клиенту.',
-              'Mijoz bo\'yicha idish qaytarish, aniq depozit refund va balans auditini boshqarish uchun alohida operator oynasi.'
+              'ÐžÑ‚Ð´ÐµÐ»ÑŒÐ½Ð¾Ðµ Ñ€Ð°Ð±Ð¾Ñ‡ÐµÐµ Ð¼ÐµÑÑ‚Ð¾ Ð¾Ð¿ÐµÑ€Ð°Ñ‚Ð¾Ñ€Ð° Ð´Ð»Ñ Ð²Ð¾Ð·Ð²Ñ€Ð°Ñ‚Ð° Ð±ÑƒÑ‚Ñ‹Ð»ÐµÐ¹, ÑÐ²Ð½Ð¾Ð³Ð¾ Ð²Ð¾Ð·Ð²Ñ€Ð°Ñ‚Ð° Ð´ÐµÐ¿Ð¾Ð·Ð¸Ñ‚Ð° Ð¸ Ð°ÑƒÐ´Ð¸Ñ‚Ð° Ð±Ð°Ð»Ð°Ð½ÑÐ° Ð¿Ð¾ ÐºÐ»Ð¸ÐµÐ½Ñ‚Ñƒ.',
+              'Idish qaytarish, refund va mijoz balansi nazorati uchun alohida ish maydoni.'
             )}
           </p>
         </div>
@@ -378,7 +378,7 @@ const BottleController: React.FC = () => {
           className="inline-flex items-center gap-2 rounded-xl border border-light-border bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-navy-700 dark:bg-navy-800 dark:text-gray-200 dark:hover:bg-navy-700"
         >
           <RefreshCw size={16} />
-          {tr('Refresh workspace', 'Обновить', 'Oynani yangilash')}
+          {tr('Refresh workspace', 'ÐžÐ±Ð½Ð¾Ð²Ð¸Ñ‚ÑŒ', 'Oynani yangilash')}
         </button>
       </div>
 
@@ -389,9 +389,9 @@ const BottleController: React.FC = () => {
               <ArrowRightLeft size={18} />
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-900">{tr('Operational return flow', 'Операционный возврат', 'Operatsion qaytarish')}</p>
-              <p className="mt-1 text-sm text-gray-600">
-                {tr('Use this when empty bottles physically come back from the client.', 'Используйте, когда пустые бутыли физически возвращаются от клиента.', 'Bo\'sh idish mijozdan qaytganda shu oqimdan foydalaning.')}
+              <p className="text-sm font-semibold text-gray-900">{tr('Operational return flow', 'ÐžÐ¿ÐµÑ€Ð°Ñ†Ð¸Ð¾Ð½Ð½Ñ‹Ð¹ Ð²Ð¾Ð·Ð²Ñ€Ð°Ñ‚', 'Operatsion qaytarish')}</p>
+              <p className="mt-1 text-sm leading-6 text-gray-600">
+                {tr('Use this when empty bottles physically come back from the client.', 'Ð˜ÑÐ¿Ð¾Ð»ÑŒÐ·ÑƒÐ¹Ñ‚Ðµ, ÐºÐ¾Ð³Ð´Ð° Ð¿ÑƒÑÑ‚Ñ‹Ðµ Ð±ÑƒÑ‚Ñ‹Ð»Ð¸ Ñ„Ð¸Ð·Ð¸Ñ‡ÐµÑÐºÐ¸ Ð²Ð¾Ð·Ð²Ñ€Ð°Ñ‰Ð°ÑŽÑ‚ÑÑ Ð¾Ñ‚ ÐºÐ»Ð¸ÐµÐ½Ñ‚Ð°.', 'Bo\'sh idish mijozdan qaytganda shu oqimdan foydalaning.')}
               </p>
             </div>
           </div>
@@ -403,9 +403,9 @@ const BottleController: React.FC = () => {
               <Wallet size={18} />
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-900">{tr('Explicit refund flow', 'Явный возврат депозита', 'Aniq refund oqimi')}</p>
-              <p className="mt-1 text-sm text-gray-600">
-                {tr('Keep this for admin refund-style corrections or special financial actions.', 'Используйте только для явного возврата депозита или особых финансовых корректировок.', 'Buni faqat maxsus refund yoki moliyaviy tuzatishlar uchun qoldiring.')}
+              <p className="text-sm font-semibold text-gray-900">{tr('Explicit refund flow', 'Ð¯Ð²Ð½Ñ‹Ð¹ Ð²Ð¾Ð·Ð²Ñ€Ð°Ñ‚ Ð´ÐµÐ¿Ð¾Ð·Ð¸Ñ‚Ð°', 'Aniq refund oqimi')}</p>
+              <p className="mt-1 text-sm leading-6 text-gray-600">
+                {tr('Keep this for admin refund-style corrections or special financial actions.', 'Ð˜ÑÐ¿Ð¾Ð»ÑŒÐ·ÑƒÐ¹Ñ‚Ðµ Ñ‚Ð¾Ð»ÑŒÐºÐ¾ Ð´Ð»Ñ ÑÐ²Ð½Ð¾Ð³Ð¾ Ð²Ð¾Ð·Ð²Ñ€Ð°Ñ‚Ð° Ð´ÐµÐ¿Ð¾Ð·Ð¸Ñ‚Ð° Ð¸Ð»Ð¸ Ð¾ÑÐ¾Ð±Ñ‹Ñ… Ñ„Ð¸Ð½Ð°Ð½ÑÐ¾Ð²Ñ‹Ñ… ÐºÐ¾Ñ€Ñ€ÐµÐºÑ‚Ð¸Ñ€Ð¾Ð²Ð¾Ðº.', 'Buni faqat refund tuzatishlari va maxsus moliyaviy holatlar uchun ishlating.')}
               </p>
             </div>
           </div>
@@ -417,36 +417,36 @@ const BottleController: React.FC = () => {
               <ShieldAlert size={18} />
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-900">{tr('Manual bottle add', 'Ручное добавление бутылей', 'Qo\'lda idish qo\'shish')}</p>
-              <p className="mt-1 text-sm text-gray-600">
-                {tr('A dedicated backend API for manual bottle increase is not connected yet, so this page only exposes the safe supported flows.', 'Отдельный API для ручного увеличения количества бутылей пока не подключен, поэтому страница показывает только безопасные поддерживаемые операции.', 'Qo\'lda idish sonini oshirish uchun alohida backend API hali ulanmagan, shu sabab bu sahifada faqat xavfsiz qo\'llab-quvvatlangan amallar ochiladi.')}
+              <p className="text-sm font-semibold text-gray-900">{tr('Manual bottle add', 'Ð ÑƒÑ‡Ð½Ð¾Ðµ Ð´Ð¾Ð±Ð°Ð²Ð»ÐµÐ½Ð¸Ðµ Ð±ÑƒÑ‚Ñ‹Ð»ÐµÐ¹', 'Qo\'lda idish qo\'shish')}</p>
+              <p className="mt-1 text-sm leading-6 text-gray-600">
+                {tr('A dedicated backend API for manual bottle increase is not connected yet, so this page only exposes the safe supported flows.', 'ÐžÑ‚Ð´ÐµÐ»ÑŒÐ½Ñ‹Ð¹ API Ð´Ð»Ñ Ñ€ÑƒÑ‡Ð½Ð¾Ð³Ð¾ ÑƒÐ²ÐµÐ»Ð¸Ñ‡ÐµÐ½Ð¸Ñ ÐºÐ¾Ð»Ð¸Ñ‡ÐµÑÑ‚Ð²Ð° Ð±ÑƒÑ‚Ñ‹Ð»ÐµÐ¹ Ð¿Ð¾ÐºÐ° Ð½Ðµ Ð¿Ð¾Ð´ÐºÐ»ÑŽÑ‡ÐµÐ½, Ð¿Ð¾ÑÑ‚Ð¾Ð¼Ñƒ ÑÑ‚Ñ€Ð°Ð½Ð¸Ñ†Ð° Ð¿Ð¾ÐºÐ°Ð·Ñ‹Ð²Ð°ÐµÑ‚ Ñ‚Ð¾Ð»ÑŒÐºÐ¾ Ð±ÐµÐ·Ð¾Ð¿Ð°ÑÐ½Ñ‹Ðµ Ð¿Ð¾Ð´Ð´ÐµÑ€Ð¶Ð¸Ð²Ð°ÐµÐ¼Ñ‹Ðµ Ð¾Ð¿ÐµÑ€Ð°Ñ†Ð¸Ð¸.', 'Qo\'lda qo\'shish hali ulanmagan. Bu sahifada faqat xavfsiz amallar ochiq.')}
               </p>
             </div>
           </div>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[300px_minmax(0,1fr)]">
         <Card className="overflow-hidden !p-0">
           <div className="border-b border-light-border bg-white p-4 dark:border-navy-700 dark:bg-navy-800">
-            <p className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Clients', 'Клиенты', 'Mijozlar')}</p>
-            <p className="mt-1 text-xs text-gray-500">{tr('Select a client to open bottle controls.', 'Выберите клиента, чтобы открыть управление бутылками.', 'Idish boshqaruvini ochish uchun mijozni tanlang.')}</p>
+            <p className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Clients', 'ÐšÐ»Ð¸ÐµÐ½Ñ‚Ñ‹', 'Mijozlar')}</p>
+            <p className="mt-1 text-xs leading-5 text-gray-500">{tr('Select a client to open bottle controls.', 'Ð’Ñ‹Ð±ÐµÑ€Ð¸Ñ‚Ðµ ÐºÐ»Ð¸ÐµÐ½Ñ‚Ð°, Ñ‡Ñ‚Ð¾Ð±Ñ‹ Ð¾Ñ‚ÐºÑ€Ñ‹Ñ‚ÑŒ ÑƒÐ¿Ñ€Ð°Ð²Ð»ÐµÐ½Ð¸Ðµ Ð±ÑƒÑ‚Ñ‹Ð»ÐºÐ°Ð¼Ð¸.', 'Idish boshqaruvini ochish uchun mijozni tanlang.')}</p>
             <label className="relative mt-4 block">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder={tr('Search by name, phone, username, or ID', 'Поиск по имени, телефону, username или ID', 'Ism, telefon, username yoki ID bo\'yicha qidiring')}
+                placeholder={tr('Search by name, phone, username, or ID', 'ÐŸÐ¾Ð¸ÑÐº Ð¿Ð¾ Ð¸Ð¼ÐµÐ½Ð¸, Ñ‚ÐµÐ»ÐµÑ„Ð¾Ð½Ñƒ, username Ð¸Ð»Ð¸ ID', 'Ism, telefon, username yoki ID bo\'yicha qidiring')}
                 className="w-full rounded-xl border border-light-border bg-gray-50 py-2.5 pl-9 pr-3 text-sm text-gray-800 outline-none focus:border-primary-blue dark:border-navy-700 dark:bg-navy-900 dark:text-white"
               />
             </label>
           </div>
 
-          <div className="max-h-[720px] overflow-y-auto">
+          <div className="max-h-[760px] overflow-y-auto">
             {clientsLoading ? (
               <div className="flex items-center gap-2 px-4 py-5 text-sm text-gray-500">
                 <Loader2 size={16} className="animate-spin" />
-                {tr('Loading clients...', 'Загрузка клиентов...', 'Mijozlar yuklanmoqda...')}
+                {tr('Loading clients...', 'Ð—Ð°Ð³Ñ€ÑƒÐ·ÐºÐ° ÐºÐ»Ð¸ÐµÐ½Ñ‚Ð¾Ð²...', 'Mijozlar yuklanmoqda...')}
               </div>
             ) : filteredClients.length ? (
               filteredClients.map((client) => {
@@ -477,7 +477,7 @@ const BottleController: React.FC = () => {
                 );
               })
             ) : (
-              <div className="px-4 py-8 text-sm text-gray-500">{tr('No clients found.', 'Клиенты не найдены.', 'Mijoz topilmadi.')}</div>
+              <div className="px-4 py-8 text-sm text-gray-500">{tr('No clients found.', 'ÐšÐ»Ð¸ÐµÐ½Ñ‚Ñ‹ Ð½Ðµ Ð½Ð°Ð¹Ð´ÐµÐ½Ñ‹.', 'Mijoz topilmadi.')}</div>
             )}
           </div>
         </Card>
@@ -489,14 +489,14 @@ const BottleController: React.FC = () => {
                 <div className="rounded-3xl bg-blue-50 p-4 text-primary-blue">
                   <Droplets size={28} />
                 </div>
-                <p className="mt-4 text-lg font-semibold text-gray-900 dark:text-white">{tr('Choose a client first', 'Сначала выберите клиента', 'Avval mijozni tanlang')}</p>
-                <p className="mt-2 max-w-md text-sm text-gray-500">{tr('The bottle controller opens balance, return actions, refund actions, and movement history for the selected client.', 'Контроллер бутылей откроет баланс, возвраты, refund-действия и историю движений для выбранного клиента.', 'Tanlangan mijoz uchun idish balansi, qaytarish, refund va harakatlar tarixi shu yerda ochiladi.')}</p>
+                <p className="mt-4 text-lg font-semibold text-gray-900 dark:text-white">{tr('Choose a client first', 'Ð¡Ð½Ð°Ñ‡Ð°Ð»Ð° Ð²Ñ‹Ð±ÐµÑ€Ð¸Ñ‚Ðµ ÐºÐ»Ð¸ÐµÐ½Ñ‚Ð°', 'Avval mijozni tanlang')}</p>
+                <p className="mt-2 max-w-md text-sm leading-6 text-gray-500">{tr('The bottle controller opens balance, return actions, refund actions, and movement history for the selected client.', 'ÐšÐ¾Ð½Ñ‚Ñ€Ð¾Ð»Ð»ÐµÑ€ Ð±ÑƒÑ‚Ñ‹Ð»ÐµÐ¹ Ð¾Ñ‚ÐºÑ€Ð¾ÐµÑ‚ Ð±Ð°Ð»Ð°Ð½Ñ, Ð²Ð¾Ð·Ð²Ñ€Ð°Ñ‚Ñ‹, refund-Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð¸ Ð¸ÑÑ‚Ð¾Ñ€Ð¸ÑŽ Ð´Ð²Ð¸Ð¶ÐµÐ½Ð¸Ð¹ Ð´Ð»Ñ Ð²Ñ‹Ð±Ñ€Ð°Ð½Ð½Ð¾Ð³Ð¾ ÐºÐ»Ð¸ÐµÐ½Ñ‚Ð°.', 'Tanlangan mijoz uchun idish balansi, qaytarish, refund va harakatlar tarixi shu yerda ochiladi.')}</p>
               </div>
             </Card>
           ) : (
             <>
               <Card className="overflow-hidden bg-[linear-gradient(145deg,rgba(17,36,58,0.98)_0%,rgba(28,64,94,0.96)_55%,rgba(56,119,143,0.92)_100%)] text-white shadow-[0_18px_50px_rgba(11,18,32,0.18)]">
-                <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge variant="info" className="border-white/10 bg-white/10 text-white">{platformLabel(selectedClient.platform)}</Badge>
@@ -506,53 +506,53 @@ const BottleController: React.FC = () => {
                         </Badge>
                       ) : null}
                     </div>
-                    <h2 className="mt-4 truncate text-2xl font-semibold">{selectedClient.full_name || selectedClient.username || selectedClient.id.slice(0, 8)}</h2>
-                    <p className="mt-2 text-sm text-white/75">{selectedClient.phone || tr('No phone', 'Телефон не указан', 'Telefon yo\'q')}</p>
-                    <p className="mt-1 max-w-2xl text-sm text-white/65">{selectedClient.address || tr('No saved address', 'Адрес не указан', 'Saqlangan manzil yo\'q')}</p>
+                    <h2 className="mt-4 break-words text-2xl font-semibold">{selectedClient.full_name || selectedClient.username || selectedClient.id.slice(0, 8)}</h2>
+                    <p className="mt-2 text-sm text-white/75">{selectedClient.phone || tr('No phone', 'Ð¢ÐµÐ»ÐµÑ„Ð¾Ð½ Ð½Ðµ ÑƒÐºÐ°Ð·Ð°Ð½', 'Telefon yo\'q')}</p>
+                    <p className="mt-1 max-w-2xl break-words text-sm leading-6 text-white/65">{selectedClient.address || tr('No saved address', 'ÐÐ´Ñ€ÐµÑ Ð½Ðµ ÑƒÐºÐ°Ð·Ð°Ð½', 'Saqlangan manzil yo\'q')}</p>
                   </div>
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:w-[480px]">
+                  <div className="grid grid-cols-2 gap-3">
                     <div className="rounded-2xl border border-white/10 bg-white/10 p-4">
-                      <p className="text-xs uppercase tracking-[0.18em] text-white/55">{tr('Outstanding', 'Остаток', 'Qoldiq')}</p>
+                      <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-white/60">{tr('Outstanding', 'ÐžÑÑ‚Ð°Ñ‚Ð¾Ðº', 'Qoldiq')}</p>
                       <p className="mt-2 text-xl font-semibold">{summary?.total_outstanding_bottles_count ?? 0}</p>
                     </div>
                     <div className="rounded-2xl border border-white/10 bg-white/10 p-4">
-                      <p className="text-xs uppercase tracking-[0.18em] text-white/55">{tr('Held deposit', 'Удержано', 'Ushlab turilgan')}</p>
+                      <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-white/60">{tr('Held deposit', 'Ð£Ð´ÐµÑ€Ð¶Ð°Ð½Ð¾', 'Ushlab turilgan')}</p>
                       <p className="mt-2 text-xl font-semibold">{formatCurrency(summary?.deposit_held_total_uzs ?? 0)}</p>
                     </div>
                     <div className="rounded-2xl border border-white/10 bg-white/10 p-4">
-                      <p className="text-xs uppercase tracking-[0.18em] text-white/55">{tr('Charged', 'Начислено', 'Olingan')}</p>
+                      <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-white/60">{tr('Charged', 'ÐÐ°Ñ‡Ð¸ÑÐ»ÐµÐ½Ð¾', 'Olingan')}</p>
                       <p className="mt-2 text-xl font-semibold">{formatCurrency(summary?.total_deposit_charged_uzs ?? 0)}</p>
                     </div>
                     <div className="rounded-2xl border border-white/10 bg-white/10 p-4">
-                      <p className="text-xs uppercase tracking-[0.18em] text-white/55">{tr('Refunded', 'Возвращено', 'Qaytarilgan')}</p>
+                      <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-white/60">{tr('Refunded', 'Ð’Ð¾Ð·Ð²Ñ€Ð°Ñ‰ÐµÐ½Ð¾', 'Qaytarilgan')}</p>
                       <p className="mt-2 text-xl font-semibold">{formatCurrency(summary?.total_deposit_refunded_uzs ?? 0)}</p>
                     </div>
                   </div>
                 </div>
               </Card>
 
-              <div className="grid grid-cols-1 gap-6 2xl:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+              <div className="grid grid-cols-1 gap-6 2xl:grid-cols-2">
                 <Card accent="emerald" className="bg-[linear-gradient(135deg,rgba(245,252,248,0.98)_0%,rgba(255,255,255,1)_100%)]">
                   <div className="flex items-start gap-3">
                     <div className="rounded-2xl bg-emerald-100 p-3 text-emerald-700">
                       <Undo2 size={18} />
                     </div>
                     <div>
-                      <p className="text-base font-semibold text-gray-900 dark:text-white">{tr('Return bottles', 'Возврат бутылей', 'Idish qaytarish')}</p>
-                      <p className="mt-1 text-sm text-gray-500">{tr('Use when the client physically gives empty bottles back.', 'Используйте, когда клиент физически отдает пустые бутыли.', 'Mijoz bo\'sh idishni qaytarib berganda ishlating.')}</p>
+                      <p className="text-base font-semibold text-gray-900 dark:text-white">{tr('Return bottles', 'Ð’Ð¾Ð·Ð²Ñ€Ð°Ñ‚ Ð±ÑƒÑ‚Ñ‹Ð»ÐµÐ¹', 'Idish qaytarish')}</p>
+                      <p className="mt-1 text-sm leading-6 text-gray-500">{tr('Use when the client physically gives empty bottles back.', 'Ð˜ÑÐ¿Ð¾Ð»ÑŒÐ·ÑƒÐ¹Ñ‚Ðµ, ÐºÐ¾Ð³Ð´Ð° ÐºÐ»Ð¸ÐµÐ½Ñ‚ Ñ„Ð¸Ð·Ð¸Ñ‡ÐµÑÐºÐ¸ Ð¾Ñ‚Ð´Ð°ÐµÑ‚ Ð¿ÑƒÑÑ‚Ñ‹Ðµ Ð±ÑƒÑ‚Ñ‹Ð»Ð¸.', 'Mijoz bo\'sh idishni qaytarib berganda ishlating.')}</p>
                     </div>
                   </div>
 
                   <form onSubmit={handleReturnSubmit} className="mt-6 space-y-4">
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <div>
-                        <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{tr('Product balance', 'Баланс продукта', 'Mahsulot balansi')}</label>
+                        <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{tr('Product balance', 'Ð‘Ð°Ð»Ð°Ð½Ñ Ð¿Ñ€Ð¾Ð´ÑƒÐºÑ‚Ð°', 'Mahsulot balansi')}</label>
                         <select
                           value={returnForm.product_id}
                           onChange={(event) => setReturnForm((current) => ({ ...current, product_id: event.target.value }))}
                           className="w-full rounded-xl border border-light-border bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-primary-blue dark:border-navy-700 dark:bg-navy-900 dark:text-white"
                         >
-                          <option value="">{tr('Select product', 'Выберите продукт', 'Mahsulotni tanlang')}</option>
+                          <option value="">{tr('Select product', 'Ð’Ñ‹Ð±ÐµÑ€Ð¸Ñ‚Ðµ Ð¿Ñ€Ð¾Ð´ÑƒÐºÑ‚', 'Mahsulotni tanlang')}</option>
                           {balances.map((balance) => (
                             <option key={balance.id} value={balance.product_id}>
                               {balance.product_name}{balance.product_size_liters ? ` - ${balance.product_size_liters}L` : ''} ({balance.outstanding_bottles_count})
@@ -562,7 +562,7 @@ const BottleController: React.FC = () => {
                       </div>
 
                       <div>
-                        <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{tr('Quantity', 'Количество', 'Soni')}</label>
+                        <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{tr('Quantity', 'ÐšÐ¾Ð»Ð¸Ñ‡ÐµÑÑ‚Ð²Ð¾', 'Soni')}</label>
                         <input
                           type="number"
                           min="1"
@@ -574,29 +574,29 @@ const BottleController: React.FC = () => {
                       </div>
                     </div>
 
-                    <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <label className="inline-flex flex-wrap items-center gap-2 text-sm leading-6 text-gray-700 dark:text-gray-300">
                       <input
                         type="checkbox"
                         checked={returnForm.return_all}
                         onChange={(event) => setReturnForm((current) => ({ ...current, return_all: event.target.checked }))}
                       />
-                      {tr('Return all bottles for this balance', 'Вернуть все бутыли по этому балансу', 'Bu balansdagi barcha idishni qaytarish')}
+                      {tr('Return all bottles for this balance', 'Ð’ÐµÑ€Ð½ÑƒÑ‚ÑŒ Ð²ÑÐµ Ð±ÑƒÑ‚Ñ‹Ð»Ð¸ Ð¿Ð¾ ÑÑ‚Ð¾Ð¼Ñƒ Ð±Ð°Ð»Ð°Ð½ÑÑƒ', 'Bu balansdagi barcha idishni qaytarish')}
                     </label>
 
                     <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-3 text-sm text-emerald-900">
                       <div className="flex flex-wrap items-center justify-between gap-3">
-                        <span>{tr('This action will reduce outstanding bottles immediately.', 'Это действие сразу уменьшит количество бутылей у клиента.', 'Bu amal mijozdagi idish qoldig\'ini darhol kamaytiradi.')}</span>
-                        <span className="font-semibold">{returnPreview.quantity} {tr('bottles', 'бутылей', 'ta idish')} / {formatCurrency(returnPreview.deposit)} UZS</span>
+                        <span className="min-w-0 flex-1">{tr('This action will reduce outstanding bottles immediately.', 'Ð­Ñ‚Ð¾ Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ðµ ÑÑ€Ð°Ð·Ñƒ ÑƒÐ¼ÐµÐ½ÑŒÑˆÐ¸Ñ‚ ÐºÐ¾Ð»Ð¸Ñ‡ÐµÑÑ‚Ð²Ð¾ Ð±ÑƒÑ‚Ñ‹Ð»ÐµÐ¹ Ñƒ ÐºÐ»Ð¸ÐµÐ½Ñ‚Ð°.', 'Bu amal mijozdagi idish qoldig\'ini darhol kamaytiradi.')}</span>
+                        <span className="font-semibold">{returnPreview.quantity} {tr('bottles', 'Ð±ÑƒÑ‚Ñ‹Ð»ÐµÐ¹', 'ta idish')} / {formatCurrency(returnPreview.deposit)} UZS</span>
                       </div>
                     </div>
 
                     <div>
-                      <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{tr('Operator note', 'Комментарий оператора', 'Operator izohi')}</label>
+                      <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{tr('Operator note', 'ÐšÐ¾Ð¼Ð¼ÐµÐ½Ñ‚Ð°Ñ€Ð¸Ð¹ Ð¾Ð¿ÐµÑ€Ð°Ñ‚Ð¾Ñ€Ð°', 'Operator izohi')}</label>
                       <textarea
                         value={returnForm.note}
                         onChange={(event) => setReturnForm((current) => ({ ...current, note: event.target.value }))}
-                        placeholder={tr('Example: client returned 2 empty bottles at the gate.', 'Например: клиент вернул 2 пустые бутыли у входа.', 'Masalan: mijoz eshik oldida 2 ta bo\'sh idish qaytardi.')}
-                        className="h-24 w-full rounded-xl border border-light-border bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-primary-blue dark:border-navy-700 dark:bg-navy-900 dark:text-white"
+                        placeholder={tr('Example: client returned 2 empty bottles at the gate.', 'ÐÐ°Ð¿Ñ€Ð¸Ð¼ÐµÑ€: ÐºÐ»Ð¸ÐµÐ½Ñ‚ Ð²ÐµÑ€Ð½ÑƒÐ» 2 Ð¿ÑƒÑÑ‚Ñ‹Ðµ Ð±ÑƒÑ‚Ñ‹Ð»Ð¸ Ñƒ Ð²Ñ…Ð¾Ð´Ð°.', 'Masalan: mijoz eshik oldida 2 ta bo\'sh idish qaytardi.')}
+                        className="h-28 w-full rounded-xl border border-light-border bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-primary-blue dark:border-navy-700 dark:bg-navy-900 dark:text-white"
                       />
                     </div>
 
@@ -607,7 +607,7 @@ const BottleController: React.FC = () => {
                         className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:opacity-50"
                       >
                         {returnSaving ? <Loader2 size={16} className="animate-spin" /> : <Undo2 size={16} />}
-                        {returnSaving ? tr('Saving...', 'Сохранение...', 'Saqlanmoqda...') : tr('Save return', 'Сохранить возврат', 'Qaytarishni saqlash')}
+                        {returnSaving ? tr('Saving...', 'Ð¡Ð¾Ñ…Ñ€Ð°Ð½ÐµÐ½Ð¸Ðµ...', 'Saqlanmoqda...') : tr('Save return', 'Ð¡Ð¾Ñ…Ñ€Ð°Ð½Ð¸Ñ‚ÑŒ Ð²Ð¾Ð·Ð²Ñ€Ð°Ñ‚', 'Qaytarishni saqlash')}
                       </button>
                     </div>
                   </form>
@@ -619,21 +619,21 @@ const BottleController: React.FC = () => {
                       <Wallet size={18} />
                     </div>
                     <div>
-                      <p className="text-base font-semibold text-gray-900 dark:text-white">{tr('Refund deposit', 'Возврат депозита', 'Depozit refund')}</p>
-                      <p className="mt-1 text-sm text-gray-500">{tr('Use only for explicit admin refund operations that should stay separate from normal bottle return flow.', 'Используйте только для явных admin-refund операций, которые должны быть отделены от обычного возврата бутылей.', 'Buni oddiy idish qaytarishdan alohida turishi kerak bo\'lgan maxsus refund amallari uchun ishlating.')}</p>
+                      <p className="text-base font-semibold text-gray-900 dark:text-white">{tr('Refund deposit', 'Ð’Ð¾Ð·Ð²Ñ€Ð°Ñ‚ Ð´ÐµÐ¿Ð¾Ð·Ð¸Ñ‚Ð°', 'Depozit refund')}</p>
+                      <p className="mt-1 text-sm leading-6 text-gray-500">{tr('Use only for explicit admin refund operations that should stay separate from normal bottle return flow.', 'Ð˜ÑÐ¿Ð¾Ð»ÑŒÐ·ÑƒÐ¹Ñ‚Ðµ Ñ‚Ð¾Ð»ÑŒÐºÐ¾ Ð´Ð»Ñ ÑÐ²Ð½Ñ‹Ñ… admin-refund Ð¾Ð¿ÐµÑ€Ð°Ñ†Ð¸Ð¹, ÐºÐ¾Ñ‚Ð¾Ñ€Ñ‹Ðµ Ð´Ð¾Ð»Ð¶Ð½Ñ‹ Ð±Ñ‹Ñ‚ÑŒ Ð¾Ñ‚Ð´ÐµÐ»ÐµÐ½Ñ‹ Ð¾Ñ‚ Ð¾Ð±Ñ‹Ñ‡Ð½Ð¾Ð³Ð¾ Ð²Ð¾Ð·Ð²Ñ€Ð°Ñ‚Ð° Ð±ÑƒÑ‚Ñ‹Ð»ÐµÐ¹.', 'Buni oddiy idish qaytarishdan alohida turishi kerak bo\'lgan maxsus refund amallari uchun ishlating.')}</p>
                     </div>
                   </div>
 
                   <form onSubmit={handleRefundSubmit} className="mt-6 space-y-4">
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <div>
-                        <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{tr('Product balance', 'Баланс продукта', 'Mahsulot balansi')}</label>
+                        <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{tr('Product balance', 'Ð‘Ð°Ð»Ð°Ð½Ñ Ð¿Ñ€Ð¾Ð´ÑƒÐºÑ‚Ð°', 'Mahsulot balansi')}</label>
                         <select
                           value={refundForm.product_id}
                           onChange={(event) => setRefundForm((current) => ({ ...current, product_id: event.target.value }))}
                           className="w-full rounded-xl border border-light-border bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-primary-blue dark:border-navy-700 dark:bg-navy-900 dark:text-white"
                         >
-                          <option value="">{tr('Select product', 'Выберите продукт', 'Mahsulotni tanlang')}</option>
+                          <option value="">{tr('Select product', 'Ð’Ñ‹Ð±ÐµÑ€Ð¸Ñ‚Ðµ Ð¿Ñ€Ð¾Ð´ÑƒÐºÑ‚', 'Mahsulotni tanlang')}</option>
                           {balances.map((balance) => (
                             <option key={balance.id} value={balance.product_id}>
                               {balance.product_name}{balance.product_size_liters ? ` - ${balance.product_size_liters}L` : ''} ({balance.outstanding_bottles_count})
@@ -643,7 +643,7 @@ const BottleController: React.FC = () => {
                       </div>
 
                       <div>
-                        <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{tr('Quantity', 'Количество', 'Soni')}</label>
+                        <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{tr('Quantity', 'ÐšÐ¾Ð»Ð¸Ñ‡ÐµÑÑ‚Ð²Ð¾', 'Soni')}</label>
                         <input
                           type="number"
                           min="1"
@@ -655,29 +655,29 @@ const BottleController: React.FC = () => {
                       </div>
                     </div>
 
-                    <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <label className="inline-flex flex-wrap items-center gap-2 text-sm leading-6 text-gray-700 dark:text-gray-300">
                       <input
                         type="checkbox"
                         checked={refundForm.refund_all}
                         onChange={(event) => setRefundForm((current) => ({ ...current, refund_all: event.target.checked }))}
                       />
-                      {tr('Refund all bottles for this balance', 'Вернуть депозит по всем бутылям этого баланса', 'Bu balansdagi barcha idish bo\'yicha refund qilish')}
+                      {tr('Refund all bottles for this balance', 'Ð’ÐµÑ€Ð½ÑƒÑ‚ÑŒ Ð´ÐµÐ¿Ð¾Ð·Ð¸Ñ‚ Ð¿Ð¾ Ð²ÑÐµÐ¼ Ð±ÑƒÑ‚Ñ‹Ð»ÑÐ¼ ÑÑ‚Ð¾Ð³Ð¾ Ð±Ð°Ð»Ð°Ð½ÑÐ°', 'Bu balansdagi barcha idish bo\'yicha refund qilish')}
                     </label>
 
                     <div className="rounded-2xl border border-amber-200 bg-amber-50/80 px-4 py-3 text-sm text-amber-900">
                       <div className="flex flex-wrap items-center justify-between gap-3">
-                        <span>{tr('This is a financial correction flow. Keep notes specific.', 'Это финансовая корректировка. Оставляйте точный комментарий.', 'Bu moliyaviy tuzatish oqimi. Izohni aniq yozing.')}</span>
-                        <span className="font-semibold">{refundPreview.quantity} {tr('bottles', 'бутылей', 'ta idish')} / {formatCurrency(refundPreview.deposit)} UZS</span>
+                        <span className="min-w-0 flex-1">{tr('This is a financial correction flow. Keep notes specific.', 'Ð­Ñ‚Ð¾ Ñ„Ð¸Ð½Ð°Ð½ÑÐ¾Ð²Ð°Ñ ÐºÐ¾Ñ€Ñ€ÐµÐºÑ‚Ð¸Ñ€Ð¾Ð²ÐºÐ°. ÐžÑÑ‚Ð°Ð²Ð»ÑÐ¹Ñ‚Ðµ Ñ‚Ð¾Ñ‡Ð½Ñ‹Ð¹ ÐºÐ¾Ð¼Ð¼ÐµÐ½Ñ‚Ð°Ñ€Ð¸Ð¹.', 'Bu moliyaviy tuzatish oqimi. Izohni aniq yozing.')}</span>
+                        <span className="font-semibold">{refundPreview.quantity} {tr('bottles', 'Ð±ÑƒÑ‚Ñ‹Ð»ÐµÐ¹', 'ta idish')} / {formatCurrency(refundPreview.deposit)} UZS</span>
                       </div>
                     </div>
 
                     <div>
-                      <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{tr('Admin note', 'Комментарий администратора', 'Admin izohi')}</label>
+                      <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{tr('Admin note', 'ÐšÐ¾Ð¼Ð¼ÐµÐ½Ñ‚Ð°Ñ€Ð¸Ð¹ Ð°Ð´Ð¼Ð¸Ð½Ð¸ÑÑ‚Ñ€Ð°Ñ‚Ð¾Ñ€Ð°', 'Admin izohi')}</label>
                       <textarea
                         value={refundForm.note}
                         onChange={(event) => setRefundForm((current) => ({ ...current, note: event.target.value }))}
-                        placeholder={tr('Example: refund approved after manual reconciliation.', 'Например: возврат подтвержден после ручной сверки.', 'Masalan: qo\'lda solishtirilgandan keyin refund tasdiqlandi.')}
-                        className="h-24 w-full rounded-xl border border-light-border bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-primary-blue dark:border-navy-700 dark:bg-navy-900 dark:text-white"
+                        placeholder={tr('Example: refund approved after manual reconciliation.', 'ÐÐ°Ð¿Ñ€Ð¸Ð¼ÐµÑ€: Ð²Ð¾Ð·Ð²Ñ€Ð°Ñ‚ Ð¿Ð¾Ð´Ñ‚Ð²ÐµÑ€Ð¶Ð´ÐµÐ½ Ð¿Ð¾ÑÐ»Ðµ Ñ€ÑƒÑ‡Ð½Ð¾Ð¹ ÑÐ²ÐµÑ€ÐºÐ¸.', 'Masalan: qo\'lda solishtirilgandan keyin refund tasdiqlandi.')}
+                        className="h-28 w-full rounded-xl border border-light-border bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-primary-blue dark:border-navy-700 dark:bg-navy-900 dark:text-white"
                       />
                     </div>
 
@@ -688,24 +688,24 @@ const BottleController: React.FC = () => {
                         className="inline-flex items-center gap-2 rounded-xl bg-amber-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-amber-700 disabled:opacity-50"
                       >
                         {refundSaving ? <Loader2 size={16} className="animate-spin" /> : <Wallet size={16} />}
-                        {refundSaving ? tr('Saving...', 'Сохранение...', 'Saqlanmoqda...') : tr('Save refund', 'Сохранить refund', 'Refundni saqlash')}
+                        {refundSaving ? tr('Saving...', 'Ð¡Ð¾Ñ…Ñ€Ð°Ð½ÐµÐ½Ð¸Ðµ...', 'Saqlanmoqda...') : tr('Save refund', 'Ð¡Ð¾Ñ…Ñ€Ð°Ð½Ð¸Ñ‚ÑŒ refund', 'Refundni saqlash')}
                       </button>
                     </div>
                   </form>
                 </Card>
               </div>
 
-              <Card title={tr('Balances by product', 'Балансы по продуктам', 'Mahsulotlar bo\'yicha balans')} action={workspaceLoading ? <span className="text-xs text-gray-500">{tr('Loading...', 'Загрузка...', 'Yuklanmoqda...')}</span> : null}>
+              <Card title={tr('Balances by product', 'Ð‘Ð°Ð»Ð°Ð½ÑÑ‹ Ð¿Ð¾ Ð¿Ñ€Ð¾Ð´ÑƒÐºÑ‚Ð°Ð¼', 'Mahsulotlar bo\'yicha balans')} action={workspaceLoading ? <span className="text-xs text-gray-500">{tr('Loading...', 'Ð—Ð°Ð³Ñ€ÑƒÐ·ÐºÐ°...', 'Yuklanmoqda...')}</span> : null}>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm">
                     <thead className="border-b border-light-border text-gray-500 dark:border-navy-700 dark:text-gray-400">
                       <tr>
-                        <th className="pb-3 font-medium">{tr('Product', 'Продукт', 'Mahsulot')}</th>
-                        <th className="pb-3 font-medium text-right">{tr('Bottles', 'Бутыли', 'Idishlar')}</th>
-                        <th className="pb-3 font-medium text-right">{tr('Held deposit', 'Удержано', 'Ushlab turilgan')}</th>
-                        <th className="pb-3 font-medium text-right">{tr('Charged', 'Начислено', 'Olingan')}</th>
-                        <th className="pb-3 font-medium text-right">{tr('Refunded', 'Возвращено', 'Qaytarilgan')}</th>
-                        <th className="pb-3 font-medium text-right">{tr('Actions', 'Действия', 'Amallar')}</th>
+                        <th className="pb-3 font-medium">{tr('Product', 'ÐŸÑ€Ð¾Ð´ÑƒÐºÑ‚', 'Mahsulot')}</th>
+                        <th className="pb-3 font-medium text-right">{tr('Bottles', 'Ð‘ÑƒÑ‚Ñ‹Ð»Ð¸', 'Idishlar')}</th>
+                        <th className="pb-3 font-medium text-right">{tr('Held deposit', 'Ð£Ð´ÐµÑ€Ð¶Ð°Ð½Ð¾', 'Ushlab turilgan')}</th>
+                        <th className="pb-3 font-medium text-right">{tr('Charged', 'ÐÐ°Ñ‡Ð¸ÑÐ»ÐµÐ½Ð¾', 'Olingan')}</th>
+                        <th className="pb-3 font-medium text-right">{tr('Refunded', 'Ð’Ð¾Ð·Ð²Ñ€Ð°Ñ‰ÐµÐ½Ð¾', 'Qaytarilgan')}</th>
+                        <th className="pb-3 font-medium text-right">{tr('Actions', 'Ð”ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ', 'Amallar')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-light-border dark:divide-navy-700">
@@ -714,7 +714,7 @@ const BottleController: React.FC = () => {
                           <tr key={balance.id}>
                             <td className="py-4">
                               <p className="font-medium text-gray-900 dark:text-white">{balance.product_name}</p>
-                              <p className="mt-1 text-xs text-gray-500">{balance.product_size_liters ? `${balance.product_size_liters}L` : '-'} {balance.product_sku ? `| ${balance.product_sku}` : ''}</p>
+                              <p className="mt-1 text-xs leading-5 text-gray-500">{balance.product_size_liters ? `${balance.product_size_liters}L` : '-'} {balance.product_sku ? `| ${balance.product_sku}` : ''}</p>
                             </td>
                             <td className="py-4 text-right text-gray-700 dark:text-gray-300">{balance.outstanding_bottles_count}</td>
                             <td className="py-4 text-right text-gray-900 dark:text-white">{formatCurrency(balance.deposit_held_uzs)} UZS</td>
@@ -727,7 +727,7 @@ const BottleController: React.FC = () => {
                                   onClick={() => selectBalanceForAction(balance.product_id, 'return')}
                                   className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 transition hover:bg-emerald-100"
                                 >
-                                  {tr('Return', 'Возврат', 'Qaytarish')}
+                                  {tr('Return', 'Ð’Ð¾Ð·Ð²Ñ€Ð°Ñ‚', 'Qaytarish')}
                                 </button>
                                 <button
                                   type="button"
@@ -744,8 +744,8 @@ const BottleController: React.FC = () => {
                         <tr>
                           <td colSpan={6} className="py-8 text-center text-gray-500">
                             {workspaceLoading
-                              ? tr('Loading bottle balances...', 'Загрузка балансов...', 'Idish balanslari yuklanmoqda...')
-                              : tr('No bottle balances found for this client.', 'Для этого клиента не найден баланс бутылей.', 'Bu mijoz uchun idish balansi topilmadi.')}
+                              ? tr('Loading bottle balances...', 'Ð—Ð°Ð³Ñ€ÑƒÐ·ÐºÐ° Ð±Ð°Ð»Ð°Ð½ÑÐ¾Ð²...', 'Idish balanslari yuklanmoqda...')
+                              : tr('No bottle balances found for this client.', 'Ð”Ð»Ñ ÑÑ‚Ð¾Ð³Ð¾ ÐºÐ»Ð¸ÐµÐ½Ñ‚Ð° Ð½Ðµ Ð½Ð°Ð¹Ð´ÐµÐ½ Ð±Ð°Ð»Ð°Ð½Ñ Ð±ÑƒÑ‚Ñ‹Ð»ÐµÐ¹.', 'Bu mijoz uchun idish balansi topilmadi.')}
                           </td>
                         </tr>
                       )}
@@ -754,7 +754,7 @@ const BottleController: React.FC = () => {
                 </div>
               </Card>
 
-              <Card title={tr('Recent movement audit', 'Последние движения', 'So\'nggi harakatlar')} action={<Badge variant="default">{movements.length}</Badge>}>
+              <Card title={tr('Recent movement audit', 'ÐŸÐ¾ÑÐ»ÐµÐ´Ð½Ð¸Ðµ Ð´Ð²Ð¸Ð¶ÐµÐ½Ð¸Ñ', 'So\'nggi harakatlar')} action={<Badge variant="default">{movements.length}</Badge>}>
                 <div className="space-y-3">
                   {movements.length ? (
                     movements.map((movement) => (
@@ -770,19 +770,19 @@ const BottleController: React.FC = () => {
                           </div>
                           <div className="grid grid-cols-2 gap-3 text-sm lg:min-w-[340px]">
                             <div className="rounded-xl bg-white px-3 py-2 dark:bg-navy-800">
-                              <p className="text-xs text-gray-500">{tr('Bottle delta', 'Изменение бутылей', 'Idish o\'zgarishi')}</p>
+                              <p className="text-xs text-gray-500">{tr('Bottle delta', 'Ð˜Ð·Ð¼ÐµÐ½ÐµÐ½Ð¸Ðµ Ð±ÑƒÑ‚Ñ‹Ð»ÐµÐ¹', 'Idish o\'zgarishi')}</p>
                               <p className={`mt-1 font-semibold ${movement.bottles_delta < 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400'}`}>{movement.bottles_delta}</p>
                             </div>
                             <div className="rounded-xl bg-white px-3 py-2 dark:bg-navy-800">
-                              <p className="text-xs text-gray-500">{tr('Deposit delta', 'Изменение депозита', 'Depozit o\'zgarishi')}</p>
+                              <p className="text-xs text-gray-500">{tr('Deposit delta', 'Ð˜Ð·Ð¼ÐµÐ½ÐµÐ½Ð¸Ðµ Ð´ÐµÐ¿Ð¾Ð·Ð¸Ñ‚Ð°', 'Depozit o\'zgarishi')}</p>
                               <p className={`mt-1 font-semibold ${movement.deposit_delta_uzs < 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400'}`}>{formatCurrency(movement.deposit_delta_uzs)} UZS</p>
                             </div>
                             <div className="rounded-xl bg-white px-3 py-2 dark:bg-navy-800">
-                              <p className="text-xs text-gray-500">{tr('Balance', 'Баланс', 'Balans')}</p>
+                              <p className="text-xs text-gray-500">{tr('Balance', 'Ð‘Ð°Ð»Ð°Ð½Ñ', 'Balans')}</p>
                               <p className="mt-1 font-semibold text-gray-900 dark:text-white">{movement.balance_before_count ?? '-'} {'->'} {movement.balance_after_count ?? '-'}</p>
                             </div>
                             <div className="rounded-xl bg-white px-3 py-2 dark:bg-navy-800">
-                              <p className="text-xs text-gray-500">{tr('Actor', 'Исполнитель', 'Bajargan')}</p>
+                              <p className="text-xs text-gray-500">{tr('Actor', 'Ð˜ÑÐ¿Ð¾Ð»Ð½Ð¸Ñ‚ÐµÐ»ÑŒ', 'Bajargan')}</p>
                               <p className="mt-1 font-semibold text-gray-900 dark:text-white">{movement.actor || '-'}</p>
                             </div>
                           </div>
@@ -794,8 +794,8 @@ const BottleController: React.FC = () => {
                     <div className="rounded-2xl border border-dashed border-light-border px-4 py-10 text-center text-sm text-gray-500 dark:border-navy-700">
                       <ClipboardList size={18} className="mx-auto mb-3 text-gray-400" />
                       {workspaceLoading
-                        ? tr('Loading movement history...', 'Загрузка истории...', 'Harakat tarixi yuklanmoqda...')
-                        : tr('No bottle movements yet for this client.', 'Для этого клиента пока нет движений бутылей.', 'Bu mijoz uchun hali idish harakati yo\'q.')}
+                        ? tr('Loading movement history...', 'Ð—Ð°Ð³Ñ€ÑƒÐ·ÐºÐ° Ð¸ÑÑ‚Ð¾Ñ€Ð¸Ð¸...', 'Harakat tarixi yuklanmoqda...')
+                        : tr('No bottle movements yet for this client.', 'Ð”Ð»Ñ ÑÑ‚Ð¾Ð³Ð¾ ÐºÐ»Ð¸ÐµÐ½Ñ‚Ð° Ð¿Ð¾ÐºÐ° Ð½ÐµÑ‚ Ð´Ð²Ð¸Ð¶ÐµÐ½Ð¸Ð¹ Ð±ÑƒÑ‚Ñ‹Ð»ÐµÐ¹.', 'Bu mijoz uchun hali idish harakati yo\'q.')}
                     </div>
                   )}
                 </div>
@@ -809,3 +809,7 @@ const BottleController: React.FC = () => {
 };
 
 export default BottleController;
+
+
+
+
