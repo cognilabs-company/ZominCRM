@@ -33,6 +33,15 @@ interface ApiProduct {
   updated_at: string | null;
 }
 
+interface ProductListResponse {
+  results?: ApiProduct[];
+  stock_summary?: {
+    total_products?: number;
+    active_products?: number;
+    out_of_stock?: number;
+  };
+}
+
 type ProductFormState = {
   name: string;
   sku: string;
@@ -164,6 +173,7 @@ const Products: React.FC = () => {
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
   const [detailProduct, setDetailProduct] = useState<ApiProduct | null>(null);
   const [detailIndex, setDetailIndex] = useState(0);
+  const [stockSummary, setStockSummary] = useState<ProductListResponse['stock_summary'] | null>(null);
 
   const loadProducts = async () => {
     try {
@@ -173,8 +183,9 @@ const Products: React.FC = () => {
       if (search.trim()) params.set('q', search.trim());
       if (onlyLowStock) params.set('low_stock', 'true');
       const query = params.toString() ? `?${params.toString()}` : '';
-      const response = await apiRequest<{ results?: ApiProduct[] }>(`${ENDPOINTS.PRODUCTS.LIST_CREATE}${query}`);
+      const response = await apiRequest<ProductListResponse>(`${ENDPOINTS.PRODUCTS.LIST_CREATE}${query}`);
       setProducts(response.results || []);
+      setStockSummary(response.stock_summary || null);
     } catch (loadError) {
       const message = loadError instanceof Error ? loadError.message : tr('Failed to load products', 'Не удалось загрузить товары', "Mahsulotlarni yuklab bo'lmadi");
       setError(message);
@@ -245,11 +256,11 @@ const Products: React.FC = () => {
 
   const productStats = useMemo(
     () => ({
-      active: products.filter((product) => product.is_active !== false).length,
-      lowStock: products.filter((product) => product.availability_status === 'low_stock').length,
-      withPhotos: products.filter((product) => getPrimaryImage(product)).length,
+      totalProducts: stockSummary?.total_products ?? products.length,
+      activeProducts: stockSummary?.active_products ?? products.filter((product) => product.is_active !== false).length,
+      outOfStock: stockSummary?.out_of_stock ?? products.filter((product) => product.availability_status === 'out_of_stock').length,
     }),
-    [products]
+    [products, stockSummary]
   );
   const editorPrice = Number(formState.price_uzs || 0);
   const editorStock = Number(formState.count || 0);
@@ -444,31 +455,31 @@ const Products: React.FC = () => {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <Card className="bg-[linear-gradient(135deg,rgba(255,247,237,0.94)_0%,rgba(255,255,255,1)_100%)]">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#9a6b3a]">
-            {tr('Catalog size', 'Размер каталога', 'Katalog hajmi')}
+            {tr('Total products', 'Всего товаров', 'Jami mahsulotlar')}
           </p>
-          <p className="mt-3 text-3xl font-semibold text-[#1f2933]">{products.length}</p>
+          <p className="mt-3 text-3xl font-semibold text-[#1f2933]">{productStats.totalProducts}</p>
           <p className="mt-2 text-sm text-[#5b6770]">
-            {tr('Total products in the catalog.', 'Всего товаров в каталоге.', 'Katalogdagi jami mahsulotlar.')}
+            {tr('All products returned by the current catalog query.', 'Все товары из текущего запроса каталога.', 'Joriy katalog so‘rovida qaytgan barcha mahsulotlar.')}
           </p>
         </Card>
         <Card className="bg-[linear-gradient(135deg,rgba(232,241,238,0.94)_0%,rgba(255,255,255,1)_100%)]">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#40635b]">
-            {tr('Active / low stock', 'Активные / мало остатка', 'Faol / kam')}
+            {tr('Active products', 'Активные товары', 'Faol mahsulotlar')}
           </p>
           <p className="mt-3 text-3xl font-semibold text-[#1f2933]">
-            {productStats.active} / {productStats.lowStock}
+            {productStats.activeProducts}
           </p>
           <p className="mt-2 text-sm text-[#5b6770]">
-            {tr('Quick view of availability and stock risk.', 'Быстрый обзор доступности и риска по остаткам.', "Mavjudlik va qoldiq xavfi bo'yicha tezkor ko'rinish.")}
+            {tr('Products currently marked active in the catalog.', 'Товары, которые сейчас активны в каталоге.', 'Hozir katalogda faol belgilangan mahsulotlar.')}
           </p>
         </Card>
         <Card className="bg-[linear-gradient(135deg,rgba(236,242,255,0.94)_0%,rgba(255,255,255,1)_100%)]">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#355cbb]">
-            {tr('Photo coverage', 'Покрытие фото', 'Rasm qamrovi')}
+            {tr('Out of stock', 'Нет в наличии', 'Tugagan')}
           </p>
-          <p className="mt-3 text-3xl font-semibold text-[#1f2933]">{productStats.withPhotos}</p>
+          <p className="mt-3 text-3xl font-semibold text-[#1f2933]">{productStats.outOfStock}</p>
           <p className="mt-2 text-sm text-[#5b6770]">
-            {tr('Products that already have a visible photo.', 'Товары, у которых уже есть видимое фото.', 'Rasmi allaqachon mavjud mahsulotlar.')}
+            {tr('Products that are currently unavailable in stock.', 'Товары, которых сейчас нет в наличии.', 'Hozir omborda qolmagan mahsulotlar.')}
           </p>
         </Card>
       </div>
