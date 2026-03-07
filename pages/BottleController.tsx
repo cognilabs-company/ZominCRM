@@ -1,11 +1,32 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { ArrowRightLeft, ClipboardList, Droplets, Loader2, RefreshCw, Search, ShieldAlert, Undo2, Wallet } from 'lucide-react';
-import { Badge } from '../components/ui/Badge';
-import { Card } from '../components/ui/Card';
+import {
+  ArrowRightLeft,
+  ClipboardList,
+  Droplets,
+  Loader2,
+  RefreshCw,
+  Search,
+  ShieldAlert,
+  Undo2,
+  ChevronDown,
+  X,
+  User,
+  Phone,
+  MapPin,
+  TrendingDown,
+  Package,
+  Activity,
+  CheckCircle2,
+  AlertCircle,
+  Clock,
+  Zap,
+} from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useToast } from '../context/ToastContext';
 import { ENDPOINTS, apiRequest } from '../services/api';
+
+/* ─────────────────────── types ─────────────────────── */
 
 type Platform = 'telegram' | 'instagram' | 'manual';
 
@@ -73,12 +94,7 @@ interface ReturnFormState {
   note: string;
 }
 
-interface RefundFormState {
-  product_id: string;
-  quantity: string;
-  refund_all: boolean;
-  note: string;
-}
+/* ─────────────────────── constants ─────────────────────── */
 
 const emptyReturnForm: ReturnFormState = {
   product_id: '',
@@ -87,136 +103,196 @@ const emptyReturnForm: ReturnFormState = {
   note: '',
 };
 
-const emptyRefundForm: RefundFormState = {
-  product_id: '',
-  quantity: '1',
-  refund_all: false,
-  note: '',
+const platformGradient: Record<Platform, string> = {
+  telegram: 'from-sky-500 to-blue-600',
+  instagram: 'from-pink-500 to-purple-600',
+  manual: 'from-slate-400 to-slate-500',
 };
+
+const platformInitials: Record<Platform, string> = {
+  telegram: 'TG',
+  instagram: 'IG',
+  manual: 'MN',
+};
+
+/* ─────────────────────── component ─────────────────────── */
 
 const BottleController: React.FC = () => {
   const location = useLocation();
   const { language } = useLanguage();
   const toast = useToast();
-  const tr = (en: string, ru: string, uz: string) => (language === 'ru' ? ru : language === 'uz' ? uz : en);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
+  const tr = (en: string, ru: string, uz: string) =>
+    language === 'ru' ? ru : language === 'uz' ? uz : en;
+
+  /* state */
   const [clients, setClients] = useState<ClientRow[]>([]);
   const [clientsLoading, setClientsLoading] = useState(true);
   const [workspaceLoading, setWorkspaceLoading] = useState(false);
   const [returnSaving, setReturnSaving] = useState(false);
-  const [refundSaving, setRefundSaving] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [summary, setSummary] = useState<BottleSummary | null>(null);
   const [balances, setBalances] = useState<BottleBalance[]>([]);
   const [movements, setMovements] = useState<BottleMovement[]>([]);
   const [returnForm, setReturnForm] = useState<ReturnFormState>(emptyReturnForm);
-  const [refundForm, setRefundForm] = useState<RefundFormState>(emptyRefundForm);
+  const [successPulse, setSuccessPulse] = useState(false);
 
+  /* derived */
   const requestedClientId = useMemo(
     () => new URLSearchParams(location.search).get('client_id'),
     [location.search]
   );
 
   const selectedClient = useMemo(
-    () => clients.find((client) => client.id === selectedClientId) || null,
+    () => clients.find((c) => c.id === selectedClientId) ?? null,
     [clients, selectedClientId]
   );
 
   const filteredClients = useMemo(() => {
-    const keyword = search.trim().toLowerCase();
-    if (!keyword) return clients;
-
-    return clients.filter((client) =>
-      [
-        client.full_name,
-        client.phone,
-        client.username,
-        client.address,
-        client.id,
-      ]
+    const kw = search.trim().toLowerCase();
+    if (!kw) return clients;
+    return clients.filter((c) =>
+      [c.full_name, c.phone, c.username, c.address, c.id]
         .filter(Boolean)
         .join(' ')
         .toLowerCase()
-        .includes(keyword)
+        .includes(kw)
     );
   }, [clients, search]);
 
   const selectedReturnBalance = useMemo(
-    () => balances.find((balance) => balance.product_id === returnForm.product_id) || null,
+    () => balances.find((b) => b.product_id === returnForm.product_id) ?? null,
     [balances, returnForm.product_id]
   );
 
-  const selectedRefundBalance = useMemo(
-    () => balances.find((balance) => balance.product_id === refundForm.product_id) || null,
-    [balances, refundForm.product_id]
-  );
+  const returnPreview = useMemo(() => {
+    if (!selectedReturnBalance) return { quantity: 0, deposit: 0 };
+    const qty = returnForm.return_all
+      ? selectedReturnBalance.outstanding_bottles_count
+      : Math.max(
+          0,
+          Math.min(
+            Number(returnForm.quantity ?? 0),
+            selectedReturnBalance.outstanding_bottles_count
+          )
+        );
+    return {
+      quantity: qty,
+      deposit: qty * Number(selectedReturnBalance.bottle_deposit_uzs ?? 0),
+    };
+  }, [returnForm.quantity, returnForm.return_all, selectedReturnBalance]);
 
-  const formatCurrency = (value: number) =>
-    new Intl.NumberFormat(language === 'ru' ? 'ru-RU' : language === 'uz' ? 'uz-UZ' : 'en-US').format(value);
+  /* formatters */
+  const fmt = (v: number) =>
+    new Intl.NumberFormat(
+      language === 'ru' ? 'ru-RU' : language === 'uz' ? 'uz-UZ' : 'en-US'
+    ).format(v);
 
-  const formatDate = (value?: string | null) => {
-    if (!value) return '-';
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return value;
-    return new Intl.DateTimeFormat(language === 'ru' ? 'ru-RU' : language === 'uz' ? 'uz-UZ' : 'en-US', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(date);
+  const fmtDate = (v?: string | null) => {
+    if (!v) return '—';
+    const d = new Date(v);
+    if (Number.isNaN(d.getTime())) return v;
+    return new Intl.DateTimeFormat(
+      language === 'ru' ? 'ru-RU' : language === 'uz' ? 'uz-UZ' : 'en-US',
+      { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }
+    ).format(d);
   };
 
-  const platformLabel = (platform: Platform) => {
-    if (platform === 'instagram') return 'Instagram';
-    if (platform === 'manual') return tr('Manual', 'Manual', "Qo'lda");
-    return 'Telegram';
+  const platformLabel = (p: Platform) =>
+    p === 'instagram'
+      ? 'Instagram'
+      : p === 'manual'
+      ? tr('Manual', 'Ручной', "Qo'lda")
+      : 'Telegram';
+
+  const mvLabel = (t: string) => {
+    if (t === 'RETURNED') return tr('Returned', 'Возврат бутылей', 'Qaytarildi');
+    if (t === 'REFUND') return tr('Refunded', 'Возврат депозита', 'Depozit qaytarildi');
+    if (t === 'ORDER_DELIVERED') return tr('Delivered', 'Доставка', 'Yetkazildi');
+    if (t === 'MANUAL_ADJUST') return tr('Manual adj.', 'Корректировка', "Qo'lda tuzatish");
+    return t;
   };
 
-  const movementLabel = (movementType: BottleMovement['movement_type']) => {
-    if (movementType === 'RETURNED') return tr('Returned', 'Ð’Ð¾Ð·Ð²Ñ€Ð°Ñ‚ Ð±ÑƒÑ‚Ñ‹Ð»ÐµÐ¹', 'Qaytarildi');
-    if (movementType === 'REFUND') return tr('Refunded', 'Ð’Ð¾Ð·Ð²Ñ€Ð°Ñ‚ Ð´ÐµÐ¿Ð¾Ð·Ð¸Ñ‚Ð°', 'Depozit qaytarildi');
-    if (movementType === 'ORDER_DELIVERED') return tr('Delivered order', 'Ð”Ð¾ÑÑ‚Ð°Ð²ÐºÐ°', 'Yetkazilgan buyurtma');
-    if (movementType === 'MANUAL_ADJUST') return tr('Manual adjust', 'Ð ÑƒÑ‡Ð½Ð°Ñ ÐºÐ¾Ñ€Ñ€ÐµÐºÑ‚Ð¸Ñ€Ð¾Ð²ÐºÐ°', "Qo'lda tuzatish");
-    return movementType;
+  const mvIcon = (t: string) => {
+    if (t === 'RETURNED') return <CheckCircle2 size={12} />;
+    if (t === 'REFUND') return <AlertCircle size={12} />;
+    if (t === 'ORDER_DELIVERED') return <Package size={12} />;
+    return <Zap size={12} />;
   };
 
-  const movementVariant = (movementType: BottleMovement['movement_type']) => {
-    if (movementType === 'RETURNED') return 'success' as const;
-    if (movementType === 'REFUND') return 'warning' as const;
-    if (movementType === 'ORDER_DELIVERED') return 'info' as const;
-    if (movementType === 'MANUAL_ADJUST') return 'purple' as const;
-    return 'default' as const;
+  /* movement type → light/dark-safe colour classes */
+  const mvColors = (t: string) => {
+    if (t === 'RETURNED')
+      return {
+        badge: 'text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:bg-emerald-400/10 dark:border-emerald-400/20',
+        icon: 'text-emerald-600 dark:text-emerald-400',
+      };
+    if (t === 'REFUND')
+      return {
+        badge: 'text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-400 dark:bg-amber-400/10 dark:border-amber-400/20',
+        icon: 'text-amber-600 dark:text-amber-400',
+      };
+    if (t === 'ORDER_DELIVERED')
+      return {
+        badge: 'text-sky-700 bg-sky-50 border-sky-200 dark:text-sky-400 dark:bg-sky-400/10 dark:border-sky-400/20',
+        icon: 'text-sky-600 dark:text-sky-400',
+      };
+    return {
+      badge: 'text-violet-700 bg-violet-50 border-violet-200 dark:text-violet-400 dark:bg-violet-400/10 dark:border-violet-400/20',
+      icon: 'text-violet-600 dark:text-violet-400',
+    };
   };
 
-  const resetActionForms = (rows: BottleBalance[]) => {
-    const defaultProductId = rows[0]?.product_id || '';
+  const clientName = (c: ClientRow) =>
+    c.full_name ?? c.username ?? c.phone ?? c.id.slice(0, 8);
+
+  const clientAvatar = (c: ClientRow) =>
+    (c.full_name ?? c.username ?? '')
+      .split(' ')
+      .slice(0, 2)
+      .map((w) => w[0] ?? '')
+      .join('')
+      .toUpperCase() || platformInitials[c.platform];
+
+  /* helpers */
+  const resetReturnForm = (rows: BottleBalance[]) =>
     setReturnForm({
-      product_id: defaultProductId,
+      product_id: rows[0]?.product_id ?? '',
       quantity: '1',
       return_all: false,
       note: '',
     });
-    setRefundForm({
-      product_id: defaultProductId,
-      quantity: '1',
-      refund_all: false,
-      note: '',
-    });
-  };
 
+  /* outside-click closes dropdown */
+  useEffect(() => {
+    const h = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node))
+        setDropdownOpen(false);
+    };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, []);
+
+  /* data fetching */
   const loadClients = async () => {
     try {
       setClientsLoading(true);
-      const data = await apiRequest<{ results?: ClientRow[] } | ClientRow[]>(ENDPOINTS.CLIENTS.LIST);
-      const rows = Array.isArray(data) ? data : (data.results || []);
+      const data = await apiRequest<{ results?: ClientRow[] } | ClientRow[]>(
+        ENDPOINTS.CLIENTS.LIST
+      );
+      const rows = Array.isArray(data) ? data : (data.results ?? []);
       setClients(rows);
-      if (!selectedClientId && rows[0]) {
-        setSelectedClientId(requestedClientId || rows[0].id);
-      }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : tr('Failed to load clients', 'Failed to load clients', 'Mijozlarni yuklab bo\'lmadi'));
+      if (!selectedClientId && rows[0])
+        setSelectedClientId(requestedClientId ?? rows[0].id);
+    } catch (err) {
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : tr('Failed to load clients', 'Ошибка загрузки клиентов', "Mijozlarni yuklab bo'lmadi")
+      );
     } finally {
       setClientsLoading(false);
     }
@@ -226,590 +302,900 @@ const BottleController: React.FC = () => {
     try {
       setWorkspaceLoading(true);
       const [balanceData, movementData] = await Promise.all([
-        apiRequest<{ summary?: BottleSummary; results?: BottleBalance[] }>(ENDPOINTS.CLIENTS.BOTTLE_BALANCES(clientId)),
-        apiRequest<{ results?: BottleMovement[] }>(`${ENDPOINTS.BOTTLES.MOVEMENTS}?client_id=${encodeURIComponent(clientId)}&limit=30`),
+        apiRequest<{ summary?: BottleSummary; results?: BottleBalance[] }>(
+          ENDPOINTS.CLIENTS.BOTTLE_BALANCES(clientId)
+        ),
+        apiRequest<{ results?: BottleMovement[] }>(
+          `${ENDPOINTS.BOTTLES.MOVEMENTS}?client_id=${encodeURIComponent(clientId)}&limit=30`
+        ),
       ]);
-      const nextBalances = balanceData.results || [];
-      setSummary(balanceData.summary || null);
-      setBalances(nextBalances);
-      setMovements(movementData.results || []);
-      resetActionForms(nextBalances);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : tr('Failed to load bottle workspace', 'Failed to load bottle workspace', 'Idish oynasini yuklab bo\'lmadi'));
+      const nb = balanceData.results ?? [];
+      setSummary(balanceData.summary ?? null);
+      setBalances(nb);
+      setMovements(movementData.results ?? []);
+      resetReturnForm(nb);
+    } catch (err) {
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : tr('Failed to load workspace', 'Ошибка загрузки', "Yuklab bo'lmadi")
+      );
       setSummary(null);
       setBalances([]);
       setMovements([]);
-      resetActionForms([]);
+      resetReturnForm([]);
     } finally {
       setWorkspaceLoading(false);
     }
   };
 
-  useEffect(() => {
-    void loadClients();
-  }, []);
+  useEffect(() => { void loadClients(); }, []);
 
   useEffect(() => {
     if (!clients.length || !requestedClientId) return;
-    if (clients.some((client) => client.id === requestedClientId)) {
-      setSelectedClientId(requestedClientId);
-    }
+    if (clients.some((c) => c.id === requestedClientId)) setSelectedClientId(requestedClientId);
   }, [clients, requestedClientId]);
 
   useEffect(() => {
     if (!selectedClientId) {
-      setSummary(null);
-      setBalances([]);
-      setMovements([]);
-      resetActionForms([]);
+      setSummary(null); setBalances([]); setMovements([]); resetReturnForm([]);
       return;
     }
     void loadWorkspace(selectedClientId);
   }, [selectedClientId]);
 
-  const returnPreview = useMemo(() => {
-    if (!selectedReturnBalance) return { quantity: 0, deposit: 0 };
-    const quantity = returnForm.return_all
-      ? selectedReturnBalance.outstanding_bottles_count
-      : Math.max(0, Math.min(Number(returnForm.quantity || 0), selectedReturnBalance.outstanding_bottles_count));
-    return {
-      quantity,
-      deposit: quantity * Number(selectedReturnBalance.bottle_deposit_uzs || 0),
-    };
-  }, [returnForm.quantity, returnForm.return_all, selectedReturnBalance]);
-
-  const refundPreview = useMemo(() => {
-    if (!selectedRefundBalance) return { quantity: 0, deposit: 0 };
-    const quantity = refundForm.refund_all
-      ? selectedRefundBalance.outstanding_bottles_count
-      : Math.max(0, Math.min(Number(refundForm.quantity || 0), selectedRefundBalance.outstanding_bottles_count));
-    return {
-      quantity,
-      deposit: quantity * Number(selectedRefundBalance.bottle_deposit_uzs || 0),
-    };
-  }, [refundForm.quantity, refundForm.refund_all, selectedRefundBalance]);
-
-  const handleReturnSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  /* submit */
+  const handleReturnSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     if (!selectedClient) return;
     if (!returnForm.product_id) {
-      toast.error(tr('Select a product balance first', 'Select a product balance first', 'Avval mahsulotni tanlang'));
+      toast.error(tr('Select a product first', 'Выберите продукт', 'Mahsulotni tanlang'));
       return;
     }
-
     try {
       setReturnSaving(true);
       await apiRequest(ENDPOINTS.CLIENTS.BOTTLE_RETURNS(selectedClient.id), {
         method: 'POST',
         body: JSON.stringify({
           product_id: returnForm.product_id,
-          quantity: Number(returnForm.quantity || 0),
+          quantity: Number(returnForm.quantity ?? 0),
           return_all: returnForm.return_all,
           note: returnForm.note.trim(),
           actor: 'admin-ui',
         }),
       });
-      toast.success(tr('Bottle return recorded', 'Ð’Ð¾Ð·Ð²Ñ€Ð°Ñ‚ Ð±ÑƒÑ‚Ñ‹Ð»ÐµÐ¹ ÑÐ¾Ñ…Ñ€Ð°Ð½ÐµÐ½', 'Idish qaytishi saqlandi'));
+      toast.success(tr('Return recorded', 'Возврат сохранён', 'Qaytarish saqlandi'));
+      setSuccessPulse(true);
+      setTimeout(() => setSuccessPulse(false), 1400);
       await loadWorkspace(selectedClient.id);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : tr('Failed to save bottle return', 'Failed to save bottle return', 'Idish qaytishini saqlab bo\'lmadi'));
+    } catch (err) {
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : tr('Failed to save', 'Ошибка сохранения', "Saqlab bo'lmadi")
+      );
     } finally {
       setReturnSaving(false);
     }
   };
 
-  const handleRefundSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!selectedClient) return;
-    if (!refundForm.product_id) {
-      toast.error(tr('Select a product balance first', 'Select a product balance first', 'Avval mahsulotni tanlang'));
-      return;
-    }
-
-    try {
-      setRefundSaving(true);
-      await apiRequest(ENDPOINTS.CLIENTS.BOTTLE_REFUNDS(selectedClient.id), {
-        method: 'POST',
-        body: JSON.stringify({
-          product_id: refundForm.product_id,
-          quantity: Number(refundForm.quantity || 0),
-          refund_all: refundForm.refund_all,
-          note: refundForm.note.trim(),
-        }),
-      });
-      toast.success(tr('Bottle refund recorded', 'Ð’Ð¾Ð·Ð²Ñ€Ð°Ñ‚ Ð´ÐµÐ¿Ð¾Ð·Ð¸Ñ‚Ð° ÑÐ¾Ñ…Ñ€Ð°Ð½ÐµÐ½', 'Depozit qaytarilishi saqlandi'));
-      await loadWorkspace(selectedClient.id);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : tr('Failed to save bottle refund', 'Failed to save bottle refund', 'Depozit qaytarilishini saqlab bo\'lmadi'));
-    } finally {
-      setRefundSaving(false);
-    }
-  };
-
-  const selectBalanceForAction = (productId: string, mode: 'return' | 'refund') => {
-    if (mode === 'return') {
-      setReturnForm((current) => ({ ...current, product_id: productId, return_all: false, quantity: '1' }));
-      return;
-    }
-    setRefundForm((current) => ({ ...current, product_id: productId, refund_all: false, quantity: '1' }));
-  };
-
+  /* ═══════════════════════════ RENDER ═══════════════════════════ */
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-light-text dark:text-white">{tr('Bottle Controller', 'ÐšÐ¾Ð½Ñ‚Ñ€Ð¾Ð»ÑŒ Ð±ÑƒÑ‚Ñ‹Ð»ÐµÐ¹', 'Idish nazorati')}</h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-500 dark:text-gray-400">
-            {tr(
-              'A dedicated operator workspace for bottle returns, explicit refunds, and balance audit by client.',
-              'ÐžÑ‚Ð´ÐµÐ»ÑŒÐ½Ð¾Ðµ Ñ€Ð°Ð±Ð¾Ñ‡ÐµÐµ Ð¼ÐµÑÑ‚Ð¾ Ð¾Ð¿ÐµÑ€Ð°Ñ‚Ð¾Ñ€Ð° Ð´Ð»Ñ Ð²Ð¾Ð·Ð²Ñ€Ð°Ñ‚Ð° Ð±ÑƒÑ‚Ñ‹Ð»ÐµÐ¹, ÑÐ²Ð½Ð¾Ð³Ð¾ Ð²Ð¾Ð·Ð²Ñ€Ð°Ñ‚Ð° Ð´ÐµÐ¿Ð¾Ð·Ð¸Ñ‚Ð° Ð¸ Ð°ÑƒÐ´Ð¸Ñ‚Ð° Ð±Ð°Ð»Ð°Ð½ÑÐ° Ð¿Ð¾ ÐºÐ»Ð¸ÐµÐ½Ñ‚Ñƒ.',
-              'Idish qaytarish, refund va mijoz balansi nazorati uchun alohida ish maydoni.'
+    <div className="min-h-screen bg-gray-50 dark:bg-[#080d17] transition-colors duration-300">
+
+      {/* ── sticky header ── */}
+      <div className="sticky top-0 z-30 border-b border-gray-200 bg-white/90 backdrop-blur-xl dark:border-white/[0.05] dark:bg-[#080d17]/95">
+        <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-4 px-6 py-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-200 dark:shadow-emerald-900/40">
+              <Droplets size={17} className="text-white" />
+            </div>
+            <div>
+              <h1 className="text-[15px] font-bold tracking-tight text-gray-900 dark:text-white">
+                {tr('Bottle Controller', 'Контроль бутылей', 'Idish nazorati')}
+              </h1>
+              <p className="text-[11px] text-gray-400 dark:text-white/35">
+                {tr('Operator workspace', 'Рабочее место оператора', 'Operator ish maydoni')}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {workspaceLoading && (
+              <span className="hidden items-center gap-1.5 text-[11px] text-gray-400 dark:text-white/30 sm:flex">
+                <Loader2 size={11} className="animate-spin" />
+                {tr('Syncing…', 'Синхронизация…', 'Sinxronlash…')}
+              </span>
             )}
-          </p>
+            <button
+              type="button"
+              onClick={() => { void loadClients(); if (selectedClientId) void loadWorkspace(selectedClientId); }}
+              className="group flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-[12px] font-semibold text-gray-600 shadow-sm transition-all hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-white/50 dark:hover:border-white/20 dark:hover:bg-white/[0.08] dark:hover:text-white"
+            >
+              <RefreshCw size={12} className="transition-transform duration-500 group-hover:rotate-180" />
+              {tr('Refresh', 'Обновить', 'Yangilash')}
+            </button>
+          </div>
         </div>
-        <button
-          type="button"
-          onClick={() => {
-            void loadClients();
-            if (selectedClientId) {
-              void loadWorkspace(selectedClientId);
-            }
-          }}
-          className="inline-flex items-center gap-2 rounded-xl border border-light-border bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-navy-700 dark:bg-navy-800 dark:text-gray-200 dark:hover:bg-navy-700"
-        >
-          <RefreshCw size={16} />
-          {tr('Refresh workspace', 'ÐžÐ±Ð½Ð¾Ð²Ð¸Ñ‚ÑŒ', 'Oynani yangilash')}
-        </button>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        <Card className="bg-[linear-gradient(135deg,rgba(237,248,244,0.96)_0%,rgba(255,255,255,1)_100%)]" accent="emerald">
-          <div className="flex items-start gap-3">
-            <div className="rounded-2xl bg-emerald-100 p-3 text-emerald-700">
-              <ArrowRightLeft size={18} />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-gray-900">{tr('Operational return flow', 'ÐžÐ¿ÐµÑ€Ð°Ñ†Ð¸Ð¾Ð½Ð½Ñ‹Ð¹ Ð²Ð¾Ð·Ð²Ñ€Ð°Ñ‚', 'Operatsion qaytarish')}</p>
-              <p className="mt-1 text-sm leading-6 text-gray-600">
-                {tr('Use this when empty bottles physically come back from the client.', 'Ð˜ÑÐ¿Ð¾Ð»ÑŒÐ·ÑƒÐ¹Ñ‚Ðµ, ÐºÐ¾Ð³Ð´Ð° Ð¿ÑƒÑÑ‚Ñ‹Ðµ Ð±ÑƒÑ‚Ñ‹Ð»Ð¸ Ñ„Ð¸Ð·Ð¸Ñ‡ÐµÑÐºÐ¸ Ð²Ð¾Ð·Ð²Ñ€Ð°Ñ‰Ð°ÑŽÑ‚ÑÑ Ð¾Ñ‚ ÐºÐ»Ð¸ÐµÐ½Ñ‚Ð°.', 'Bo\'sh idish mijozdan qaytganda shu oqimdan foydalaning.')}
-              </p>
-            </div>
-          </div>
-        </Card>
+      <div className="mx-auto max-w-[1600px] space-y-5 px-6 py-6">
 
-        <Card className="bg-[linear-gradient(135deg,rgba(255,248,233,0.96)_0%,rgba(255,255,255,1)_100%)]" accent="amber">
-          <div className="flex items-start gap-3">
-            <div className="rounded-2xl bg-amber-100 p-3 text-amber-700">
-              <Wallet size={18} />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-gray-900">{tr('Explicit refund flow', 'Ð¯Ð²Ð½Ñ‹Ð¹ Ð²Ð¾Ð·Ð²Ñ€Ð°Ñ‚ Ð´ÐµÐ¿Ð¾Ð·Ð¸Ñ‚Ð°', 'Aniq refund oqimi')}</p>
-              <p className="mt-1 text-sm leading-6 text-gray-600">
-                {tr('Keep this for admin refund-style corrections or special financial actions.', 'Ð˜ÑÐ¿Ð¾Ð»ÑŒÐ·ÑƒÐ¹Ñ‚Ðµ Ñ‚Ð¾Ð»ÑŒÐºÐ¾ Ð´Ð»Ñ ÑÐ²Ð½Ð¾Ð³Ð¾ Ð²Ð¾Ð·Ð²Ñ€Ð°Ñ‚Ð° Ð´ÐµÐ¿Ð¾Ð·Ð¸Ñ‚Ð° Ð¸Ð»Ð¸ Ð¾ÑÐ¾Ð±Ñ‹Ñ… Ñ„Ð¸Ð½Ð°Ð½ÑÐ¾Ð²Ñ‹Ñ… ÐºÐ¾Ñ€Ñ€ÐµÐºÑ‚Ð¸Ñ€Ð¾Ð²Ð¾Ðº.', 'Buni faqat refund tuzatishlari va maxsus moliyaviy holatlar uchun ishlating.')}
-              </p>
-            </div>
-          </div>
-        </Card>
+        {/* ── top row: selector + chips ── */}
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end">
 
-        <Card className="bg-[linear-gradient(135deg,rgba(239,243,255,0.96)_0%,rgba(255,255,255,1)_100%)]" accent="blue">
-          <div className="flex items-start gap-3">
-            <div className="rounded-2xl bg-blue-100 p-3 text-blue-700">
-              <ShieldAlert size={18} />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-gray-900">{tr('Manual bottle add', 'Ð ÑƒÑ‡Ð½Ð¾Ðµ Ð´Ð¾Ð±Ð°Ð²Ð»ÐµÐ½Ð¸Ðµ Ð±ÑƒÑ‚Ñ‹Ð»ÐµÐ¹', 'Qo\'lda idish qo\'shish')}</p>
-              <p className="mt-1 text-sm leading-6 text-gray-600">
-                {tr('A dedicated backend API for manual bottle increase is not connected yet, so this page only exposes the safe supported flows.', 'ÐžÑ‚Ð´ÐµÐ»ÑŒÐ½Ñ‹Ð¹ API Ð´Ð»Ñ Ñ€ÑƒÑ‡Ð½Ð¾Ð³Ð¾ ÑƒÐ²ÐµÐ»Ð¸Ñ‡ÐµÐ½Ð¸Ñ ÐºÐ¾Ð»Ð¸Ñ‡ÐµÑÑ‚Ð²Ð° Ð±ÑƒÑ‚Ñ‹Ð»ÐµÐ¹ Ð¿Ð¾ÐºÐ° Ð½Ðµ Ð¿Ð¾Ð´ÐºÐ»ÑŽÑ‡ÐµÐ½, Ð¿Ð¾ÑÑ‚Ð¾Ð¼Ñƒ ÑÑ‚Ñ€Ð°Ð½Ð¸Ñ†Ð° Ð¿Ð¾ÐºÐ°Ð·Ñ‹Ð²Ð°ÐµÑ‚ Ñ‚Ð¾Ð»ÑŒÐºÐ¾ Ð±ÐµÐ·Ð¾Ð¿Ð°ÑÐ½Ñ‹Ðµ Ð¿Ð¾Ð´Ð´ÐµÑ€Ð¶Ð¸Ð²Ð°ÐµÐ¼Ñ‹Ðµ Ð¾Ð¿ÐµÑ€Ð°Ñ†Ð¸Ð¸.', 'Qo\'lda qo\'shish hali ulanmagan. Bu sahifada faqat xavfsiz amallar ochiq.')}
-              </p>
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[300px_minmax(0,1fr)]">
-        <Card className="overflow-hidden !p-0">
-          <div className="border-b border-light-border bg-white p-4 dark:border-navy-700 dark:bg-navy-800">
-            <p className="text-sm font-semibold text-gray-900 dark:text-white">{tr('Clients', 'ÐšÐ»Ð¸ÐµÐ½Ñ‚Ñ‹', 'Mijozlar')}</p>
-            <p className="mt-1 text-xs leading-5 text-gray-500">{tr('Select a client to open bottle controls.', 'Ð’Ñ‹Ð±ÐµÑ€Ð¸Ñ‚Ðµ ÐºÐ»Ð¸ÐµÐ½Ñ‚Ð°, Ñ‡Ñ‚Ð¾Ð±Ñ‹ Ð¾Ñ‚ÐºÑ€Ñ‹Ñ‚ÑŒ ÑƒÐ¿Ñ€Ð°Ð²Ð»ÐµÐ½Ð¸Ðµ Ð±ÑƒÑ‚Ñ‹Ð»ÐºÐ°Ð¼Ð¸.', 'Idish boshqaruvini ochish uchun mijozni tanlang.')}</p>
-            <label className="relative mt-4 block">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder={tr('Search by name, phone, username, or ID', 'ÐŸÐ¾Ð¸ÑÐº Ð¿Ð¾ Ð¸Ð¼ÐµÐ½Ð¸, Ñ‚ÐµÐ»ÐµÑ„Ð¾Ð½Ñƒ, username Ð¸Ð»Ð¸ ID', 'Ism, telefon, username yoki ID bo\'yicha qidiring')}
-                className="w-full rounded-xl border border-light-border bg-gray-50 py-2.5 pl-9 pr-3 text-sm text-gray-800 outline-none focus:border-primary-blue dark:border-navy-700 dark:bg-navy-900 dark:text-white"
-              />
+          {/* Client selector dropdown */}
+          <div ref={dropdownRef} className="relative flex-1">
+            <label className="mb-2 block text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-white/25">
+              {tr('Active client', 'Активный клиент', 'Faol mijoz')}
             </label>
-          </div>
 
-          <div className="max-h-[760px] overflow-y-auto">
-            {clientsLoading ? (
-              <div className="flex items-center gap-2 px-4 py-5 text-sm text-gray-500">
-                <Loader2 size={16} className="animate-spin" />
-                {tr('Loading clients...', 'Ð—Ð°Ð³Ñ€ÑƒÐ·ÐºÐ° ÐºÐ»Ð¸ÐµÐ½Ñ‚Ð¾Ð²...', 'Mijozlar yuklanmoqda...')}
-              </div>
-            ) : filteredClients.length ? (
-              filteredClients.map((client) => {
-                const isActive = client.id === selectedClientId;
-                return (
-                  <button
-                    key={client.id}
-                    type="button"
-                    onClick={() => setSelectedClientId(client.id)}
-                    className={`w-full border-b border-light-border px-4 py-4 text-left transition last:border-b-0 dark:border-navy-700 ${
-                      isActive
-                        ? 'bg-[linear-gradient(90deg,rgba(47,107,255,0.12)_0%,rgba(47,107,255,0.03)_100%)]'
-                        : 'bg-white hover:bg-gray-50 dark:bg-navy-800 dark:hover:bg-navy-700/60'
-                    }`}
+            <button
+              type="button"
+              onClick={() => setDropdownOpen((v) => !v)}
+              className={`flex w-full items-center gap-4 rounded-2xl border px-5 py-4 text-left transition-all duration-200 ${
+                dropdownOpen
+                  ? 'border-emerald-400 bg-white shadow-lg shadow-emerald-100 dark:border-emerald-500/40 dark:bg-emerald-950/20 dark:shadow-emerald-950/30'
+                  : 'border-gray-200 bg-white shadow-sm hover:border-gray-300 hover:shadow-md dark:border-white/[0.07] dark:bg-white/[0.03] dark:hover:border-white/[0.14] dark:hover:bg-white/[0.05]'
+              }`}
+            >
+              {clientsLoading ? (
+                <span className="flex items-center gap-2 text-[13px] text-gray-400 dark:text-white/30">
+                  <Loader2 size={14} className="animate-spin" />
+                  {tr('Loading clients…', 'Загрузка…', 'Yuklanmoqda…')}
+                </span>
+              ) : selectedClient ? (
+                <>
+                  <div
+                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${platformGradient[selectedClient.platform]} text-[12px] font-bold text-white shadow-lg`}
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className={`truncate text-sm font-semibold ${isActive ? 'text-primary-blue' : 'text-gray-900 dark:text-white'}`}>
-                          {client.full_name || client.username || client.phone || client.id.slice(0, 8)}
-                        </p>
-                        <p className="mt-1 truncate text-xs text-gray-500">{client.phone || client.username || client.address || client.id}</p>
-                      </div>
-                      <Badge variant={client.platform === 'telegram' ? 'info' : client.platform === 'instagram' ? 'purple' : 'default'}>
-                        {platformLabel(client.platform)}
-                      </Badge>
-                    </div>
-                  </button>
-                );
-              })
-            ) : (
-              <div className="px-4 py-8 text-sm text-gray-500">{tr('No clients found.', 'ÐšÐ»Ð¸ÐµÐ½Ñ‚Ñ‹ Ð½Ðµ Ð½Ð°Ð¹Ð´ÐµÐ½Ñ‹.', 'Mijoz topilmadi.')}</div>
-            )}
-          </div>
-        </Card>
-
-        <div className="space-y-6">
-          {!selectedClient ? (
-            <Card className="bg-[linear-gradient(135deg,rgba(255,255,255,0.96)_0%,rgba(245,247,252,1)_100%)]">
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="rounded-3xl bg-blue-50 p-4 text-primary-blue">
-                  <Droplets size={28} />
-                </div>
-                <p className="mt-4 text-lg font-semibold text-gray-900 dark:text-white">{tr('Choose a client first', 'Ð¡Ð½Ð°Ñ‡Ð°Ð»Ð° Ð²Ñ‹Ð±ÐµÑ€Ð¸Ñ‚Ðµ ÐºÐ»Ð¸ÐµÐ½Ñ‚Ð°', 'Avval mijozni tanlang')}</p>
-                <p className="mt-2 max-w-md text-sm leading-6 text-gray-500">{tr('The bottle controller opens balance, return actions, refund actions, and movement history for the selected client.', 'ÐšÐ¾Ð½Ñ‚Ñ€Ð¾Ð»Ð»ÐµÑ€ Ð±ÑƒÑ‚Ñ‹Ð»ÐµÐ¹ Ð¾Ñ‚ÐºÑ€Ð¾ÐµÑ‚ Ð±Ð°Ð»Ð°Ð½Ñ, Ð²Ð¾Ð·Ð²Ñ€Ð°Ñ‚Ñ‹, refund-Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð¸ Ð¸ÑÑ‚Ð¾Ñ€Ð¸ÑŽ Ð´Ð²Ð¸Ð¶ÐµÐ½Ð¸Ð¹ Ð´Ð»Ñ Ð²Ñ‹Ð±Ñ€Ð°Ð½Ð½Ð¾Ð³Ð¾ ÐºÐ»Ð¸ÐµÐ½Ñ‚Ð°.', 'Tanlangan mijoz uchun idish balansi, qaytarish, refund va harakatlar tarixi shu yerda ochiladi.')}</p>
-              </div>
-            </Card>
-          ) : (
-            <>
-              <Card className="overflow-hidden bg-[linear-gradient(145deg,rgba(17,36,58,0.98)_0%,rgba(28,64,94,0.96)_55%,rgba(56,119,143,0.92)_100%)] text-white shadow-[0_18px_50px_rgba(11,18,32,0.18)]">
-                <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge variant="info" className="border-white/10 bg-white/10 text-white">{platformLabel(selectedClient.platform)}</Badge>
-                      {selectedClient.preferred_language ? (
-                        <Badge variant="default" className="border-white/10 bg-white/10 text-white">
-                          {selectedClient.preferred_language.toUpperCase()}
-                        </Badge>
-                      ) : null}
-                    </div>
-                    <h2 className="mt-4 break-words text-2xl font-semibold">{selectedClient.full_name || selectedClient.username || selectedClient.id.slice(0, 8)}</h2>
-                    <p className="mt-2 text-sm text-white/75">{selectedClient.phone || tr('No phone', 'Ð¢ÐµÐ»ÐµÑ„Ð¾Ð½ Ð½Ðµ ÑƒÐºÐ°Ð·Ð°Ð½', 'Telefon yo\'q')}</p>
-                    <p className="mt-1 max-w-2xl break-words text-sm leading-6 text-white/65">{selectedClient.address || tr('No saved address', 'ÐÐ´Ñ€ÐµÑ Ð½Ðµ ÑƒÐºÐ°Ð·Ð°Ð½', 'Saqlangan manzil yo\'q')}</p>
+                    {clientAvatar(selectedClient)}
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="rounded-2xl border border-white/10 bg-white/10 p-4">
-                      <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-white/60">{tr('Outstanding', 'ÐžÑÑ‚Ð°Ñ‚Ð¾Ðº', 'Qoldiq')}</p>
-                      <p className="mt-2 text-xl font-semibold">{summary?.total_outstanding_bottles_count ?? 0}</p>
-                    </div>
-                    <div className="rounded-2xl border border-white/10 bg-white/10 p-4">
-                      <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-white/60">{tr('Held deposit', 'Ð£Ð´ÐµÑ€Ð¶Ð°Ð½Ð¾', 'Ushlab turilgan')}</p>
-                      <p className="mt-2 text-xl font-semibold">{formatCurrency(summary?.deposit_held_total_uzs ?? 0)}</p>
-                    </div>
-                    <div className="rounded-2xl border border-white/10 bg-white/10 p-4">
-                      <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-white/60">{tr('Charged', 'ÐÐ°Ñ‡Ð¸ÑÐ»ÐµÐ½Ð¾', 'Olingan')}</p>
-                      <p className="mt-2 text-xl font-semibold">{formatCurrency(summary?.total_deposit_charged_uzs ?? 0)}</p>
-                    </div>
-                    <div className="rounded-2xl border border-white/10 bg-white/10 p-4">
-                      <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-white/60">{tr('Refunded', 'Ð’Ð¾Ð·Ð²Ñ€Ð°Ñ‰ÐµÐ½Ð¾', 'Qaytarilgan')}</p>
-                      <p className="mt-2 text-xl font-semibold">{formatCurrency(summary?.total_deposit_refunded_uzs ?? 0)}</p>
-                    </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[14px] font-bold text-gray-900 dark:text-white">
+                      {clientName(selectedClient)}
+                    </p>
+                    <p className="mt-0.5 truncate text-[12px] text-gray-400 dark:text-white/35">
+                      {selectedClient.phone ?? selectedClient.username ?? selectedClient.id}
+                      {selectedClient.preferred_language
+                        ? ` · ${selectedClient.preferred_language.toUpperCase()}`
+                        : ''}
+                    </p>
                   </div>
-                </div>
-              </Card>
-
-              <div className="grid grid-cols-1 gap-6 2xl:grid-cols-2">
-                <Card accent="emerald" className="bg-[linear-gradient(135deg,rgba(245,252,248,0.98)_0%,rgba(255,255,255,1)_100%)]">
-                  <div className="flex items-start gap-3">
-                    <div className="rounded-2xl bg-emerald-100 p-3 text-emerald-700">
-                      <Undo2 size={18} />
-                    </div>
-                    <div>
-                      <p className="text-base font-semibold text-gray-900 dark:text-white">{tr('Return bottles', 'Ð’Ð¾Ð·Ð²Ñ€Ð°Ñ‚ Ð±ÑƒÑ‚Ñ‹Ð»ÐµÐ¹', 'Idish qaytarish')}</p>
-                      <p className="mt-1 text-sm leading-6 text-gray-500">{tr('Use when the client physically gives empty bottles back.', 'Ð˜ÑÐ¿Ð¾Ð»ÑŒÐ·ÑƒÐ¹Ñ‚Ðµ, ÐºÐ¾Ð³Ð´Ð° ÐºÐ»Ð¸ÐµÐ½Ñ‚ Ñ„Ð¸Ð·Ð¸Ñ‡ÐµÑÐºÐ¸ Ð¾Ñ‚Ð´Ð°ÐµÑ‚ Ð¿ÑƒÑÑ‚Ñ‹Ðµ Ð±ÑƒÑ‚Ñ‹Ð»Ð¸.', 'Mijoz bo\'sh idishni qaytarib berganda ishlating.')}</p>
-                    </div>
-                  </div>
-
-                  <form onSubmit={handleReturnSubmit} className="mt-6 space-y-4">
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                      <div>
-                        <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{tr('Product balance', 'Ð‘Ð°Ð»Ð°Ð½Ñ Ð¿Ñ€Ð¾Ð´ÑƒÐºÑ‚Ð°', 'Mahsulot balansi')}</label>
-                        <select
-                          value={returnForm.product_id}
-                          onChange={(event) => setReturnForm((current) => ({ ...current, product_id: event.target.value }))}
-                          className="w-full rounded-xl border border-light-border bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-primary-blue dark:border-navy-700 dark:bg-navy-900 dark:text-white"
-                        >
-                          <option value="">{tr('Select product', 'Ð’Ñ‹Ð±ÐµÑ€Ð¸Ñ‚Ðµ Ð¿Ñ€Ð¾Ð´ÑƒÐºÑ‚', 'Mahsulotni tanlang')}</option>
-                          {balances.map((balance) => (
-                            <option key={balance.id} value={balance.product_id}>
-                              {balance.product_name}{balance.product_size_liters ? ` - ${balance.product_size_liters}L` : ''} ({balance.outstanding_bottles_count})
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{tr('Quantity', 'ÐšÐ¾Ð»Ð¸Ñ‡ÐµÑÑ‚Ð²Ð¾', 'Soni')}</label>
-                        <input
-                          type="number"
-                          min="1"
-                          value={returnForm.quantity}
-                          onChange={(event) => setReturnForm((current) => ({ ...current, quantity: event.target.value }))}
-                          disabled={returnForm.return_all}
-                          className="w-full rounded-xl border border-light-border bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-primary-blue disabled:opacity-60 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
-                        />
-                      </div>
-                    </div>
-
-                    <label className="inline-flex flex-wrap items-center gap-2 text-sm leading-6 text-gray-700 dark:text-gray-300">
-                      <input
-                        type="checkbox"
-                        checked={returnForm.return_all}
-                        onChange={(event) => setReturnForm((current) => ({ ...current, return_all: event.target.checked }))}
-                      />
-                      {tr('Return all bottles for this balance', 'Ð’ÐµÑ€Ð½ÑƒÑ‚ÑŒ Ð²ÑÐµ Ð±ÑƒÑ‚Ñ‹Ð»Ð¸ Ð¿Ð¾ ÑÑ‚Ð¾Ð¼Ñƒ Ð±Ð°Ð»Ð°Ð½ÑÑƒ', 'Bu balansdagi barcha idishni qaytarish')}
-                    </label>
-
-                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-3 text-sm text-emerald-900">
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <span className="min-w-0 flex-1">{tr('This action will reduce outstanding bottles immediately.', 'Ð­Ñ‚Ð¾ Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ðµ ÑÑ€Ð°Ð·Ñƒ ÑƒÐ¼ÐµÐ½ÑŒÑˆÐ¸Ñ‚ ÐºÐ¾Ð»Ð¸Ñ‡ÐµÑÑ‚Ð²Ð¾ Ð±ÑƒÑ‚Ñ‹Ð»ÐµÐ¹ Ñƒ ÐºÐ»Ð¸ÐµÐ½Ñ‚Ð°.', 'Bu amal mijozdagi idish qoldig\'ini darhol kamaytiradi.')}</span>
-                        <span className="font-semibold">{returnPreview.quantity} {tr('bottles', 'Ð±ÑƒÑ‚Ñ‹Ð»ÐµÐ¹', 'ta idish')} / {formatCurrency(returnPreview.deposit)} UZS</span>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{tr('Operator note', 'ÐšÐ¾Ð¼Ð¼ÐµÐ½Ñ‚Ð°Ñ€Ð¸Ð¹ Ð¾Ð¿ÐµÑ€Ð°Ñ‚Ð¾Ñ€Ð°', 'Operator izohi')}</label>
-                      <textarea
-                        value={returnForm.note}
-                        onChange={(event) => setReturnForm((current) => ({ ...current, note: event.target.value }))}
-                        placeholder={tr('Example: client returned 2 empty bottles at the gate.', 'ÐÐ°Ð¿Ñ€Ð¸Ð¼ÐµÑ€: ÐºÐ»Ð¸ÐµÐ½Ñ‚ Ð²ÐµÑ€Ð½ÑƒÐ» 2 Ð¿ÑƒÑÑ‚Ñ‹Ðµ Ð±ÑƒÑ‚Ñ‹Ð»Ð¸ Ñƒ Ð²Ñ…Ð¾Ð´Ð°.', 'Masalan: mijoz eshik oldida 2 ta bo\'sh idish qaytardi.')}
-                        className="h-28 w-full rounded-xl border border-light-border bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-primary-blue dark:border-navy-700 dark:bg-navy-900 dark:text-white"
-                      />
-                    </div>
-
-                    <div className="flex justify-end">
-                      <button
-                        type="submit"
-                        disabled={returnSaving || !balances.length}
-                        className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:opacity-50"
-                      >
-                        {returnSaving ? <Loader2 size={16} className="animate-spin" /> : <Undo2 size={16} />}
-                        {returnSaving ? tr('Saving...', 'Ð¡Ð¾Ñ…Ñ€Ð°Ð½ÐµÐ½Ð¸Ðµ...', 'Saqlanmoqda...') : tr('Save return', 'Ð¡Ð¾Ñ…Ñ€Ð°Ð½Ð¸Ñ‚ÑŒ Ð²Ð¾Ð·Ð²Ñ€Ð°Ñ‚', 'Qaytarishni saqlash')}
-                      </button>
-                    </div>
-                  </form>
-                </Card>
-
-                <Card accent="amber" className="bg-[linear-gradient(135deg,rgba(255,251,243,0.98)_0%,rgba(255,255,255,1)_100%)]">
-                  <div className="flex items-start gap-3">
-                    <div className="rounded-2xl bg-amber-100 p-3 text-amber-700">
-                      <Wallet size={18} />
-                    </div>
-                    <div>
-                      <p className="text-base font-semibold text-gray-900 dark:text-white">{tr('Refund deposit', 'Ð’Ð¾Ð·Ð²Ñ€Ð°Ñ‚ Ð´ÐµÐ¿Ð¾Ð·Ð¸Ñ‚Ð°', 'Depozit refund')}</p>
-                      <p className="mt-1 text-sm leading-6 text-gray-500">{tr('Use only for explicit admin refund operations that should stay separate from normal bottle return flow.', 'Ð˜ÑÐ¿Ð¾Ð»ÑŒÐ·ÑƒÐ¹Ñ‚Ðµ Ñ‚Ð¾Ð»ÑŒÐºÐ¾ Ð´Ð»Ñ ÑÐ²Ð½Ñ‹Ñ… admin-refund Ð¾Ð¿ÐµÑ€Ð°Ñ†Ð¸Ð¹, ÐºÐ¾Ñ‚Ð¾Ñ€Ñ‹Ðµ Ð´Ð¾Ð»Ð¶Ð½Ñ‹ Ð±Ñ‹Ñ‚ÑŒ Ð¾Ñ‚Ð´ÐµÐ»ÐµÐ½Ñ‹ Ð¾Ñ‚ Ð¾Ð±Ñ‹Ñ‡Ð½Ð¾Ð³Ð¾ Ð²Ð¾Ð·Ð²Ñ€Ð°Ñ‚Ð° Ð±ÑƒÑ‚Ñ‹Ð»ÐµÐ¹.', 'Buni oddiy idish qaytarishdan alohida turishi kerak bo\'lgan maxsus refund amallari uchun ishlating.')}</p>
-                    </div>
-                  </div>
-
-                  <form onSubmit={handleRefundSubmit} className="mt-6 space-y-4">
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                      <div>
-                        <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{tr('Product balance', 'Ð‘Ð°Ð»Ð°Ð½Ñ Ð¿Ñ€Ð¾Ð´ÑƒÐºÑ‚Ð°', 'Mahsulot balansi')}</label>
-                        <select
-                          value={refundForm.product_id}
-                          onChange={(event) => setRefundForm((current) => ({ ...current, product_id: event.target.value }))}
-                          className="w-full rounded-xl border border-light-border bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-primary-blue dark:border-navy-700 dark:bg-navy-900 dark:text-white"
-                        >
-                          <option value="">{tr('Select product', 'Ð’Ñ‹Ð±ÐµÑ€Ð¸Ñ‚Ðµ Ð¿Ñ€Ð¾Ð´ÑƒÐºÑ‚', 'Mahsulotni tanlang')}</option>
-                          {balances.map((balance) => (
-                            <option key={balance.id} value={balance.product_id}>
-                              {balance.product_name}{balance.product_size_liters ? ` - ${balance.product_size_liters}L` : ''} ({balance.outstanding_bottles_count})
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{tr('Quantity', 'ÐšÐ¾Ð»Ð¸Ñ‡ÐµÑÑ‚Ð²Ð¾', 'Soni')}</label>
-                        <input
-                          type="number"
-                          min="1"
-                          value={refundForm.quantity}
-                          onChange={(event) => setRefundForm((current) => ({ ...current, quantity: event.target.value }))}
-                          disabled={refundForm.refund_all}
-                          className="w-full rounded-xl border border-light-border bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-primary-blue disabled:opacity-60 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
-                        />
-                      </div>
-                    </div>
-
-                    <label className="inline-flex flex-wrap items-center gap-2 text-sm leading-6 text-gray-700 dark:text-gray-300">
-                      <input
-                        type="checkbox"
-                        checked={refundForm.refund_all}
-                        onChange={(event) => setRefundForm((current) => ({ ...current, refund_all: event.target.checked }))}
-                      />
-                      {tr('Refund all bottles for this balance', 'Ð’ÐµÑ€Ð½ÑƒÑ‚ÑŒ Ð´ÐµÐ¿Ð¾Ð·Ð¸Ñ‚ Ð¿Ð¾ Ð²ÑÐµÐ¼ Ð±ÑƒÑ‚Ñ‹Ð»ÑÐ¼ ÑÑ‚Ð¾Ð³Ð¾ Ð±Ð°Ð»Ð°Ð½ÑÐ°', 'Bu balansdagi barcha idish bo\'yicha refund qilish')}
-                    </label>
-
-                    <div className="rounded-2xl border border-amber-200 bg-amber-50/80 px-4 py-3 text-sm text-amber-900">
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <span className="min-w-0 flex-1">{tr('This is a financial correction flow. Keep notes specific.', 'Ð­Ñ‚Ð¾ Ñ„Ð¸Ð½Ð°Ð½ÑÐ¾Ð²Ð°Ñ ÐºÐ¾Ñ€Ñ€ÐµÐºÑ‚Ð¸Ñ€Ð¾Ð²ÐºÐ°. ÐžÑÑ‚Ð°Ð²Ð»ÑÐ¹Ñ‚Ðµ Ñ‚Ð¾Ñ‡Ð½Ñ‹Ð¹ ÐºÐ¾Ð¼Ð¼ÐµÐ½Ñ‚Ð°Ñ€Ð¸Ð¹.', 'Bu moliyaviy tuzatish oqimi. Izohni aniq yozing.')}</span>
-                        <span className="font-semibold">{refundPreview.quantity} {tr('bottles', 'Ð±ÑƒÑ‚Ñ‹Ð»ÐµÐ¹', 'ta idish')} / {formatCurrency(refundPreview.deposit)} UZS</span>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{tr('Admin note', 'ÐšÐ¾Ð¼Ð¼ÐµÐ½Ñ‚Ð°Ñ€Ð¸Ð¹ Ð°Ð´Ð¼Ð¸Ð½Ð¸ÑÑ‚Ñ€Ð°Ñ‚Ð¾Ñ€Ð°', 'Admin izohi')}</label>
-                      <textarea
-                        value={refundForm.note}
-                        onChange={(event) => setRefundForm((current) => ({ ...current, note: event.target.value }))}
-                        placeholder={tr('Example: refund approved after manual reconciliation.', 'ÐÐ°Ð¿Ñ€Ð¸Ð¼ÐµÑ€: Ð²Ð¾Ð·Ð²Ñ€Ð°Ñ‚ Ð¿Ð¾Ð´Ñ‚Ð²ÐµÑ€Ð¶Ð´ÐµÐ½ Ð¿Ð¾ÑÐ»Ðµ Ñ€ÑƒÑ‡Ð½Ð¾Ð¹ ÑÐ²ÐµÑ€ÐºÐ¸.', 'Masalan: qo\'lda solishtirilgandan keyin refund tasdiqlandi.')}
-                        className="h-28 w-full rounded-xl border border-light-border bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-primary-blue dark:border-navy-700 dark:bg-navy-900 dark:text-white"
-                      />
-                    </div>
-
-                    <div className="flex justify-end">
-                      <button
-                        type="submit"
-                        disabled={refundSaving || !balances.length}
-                        className="inline-flex items-center gap-2 rounded-xl bg-amber-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-amber-700 disabled:opacity-50"
-                      >
-                        {refundSaving ? <Loader2 size={16} className="animate-spin" /> : <Wallet size={16} />}
-                        {refundSaving ? tr('Saving...', 'Ð¡Ð¾Ñ…Ñ€Ð°Ð½ÐµÐ½Ð¸Ðµ...', 'Saqlanmoqda...') : tr('Save refund', 'Ð¡Ð¾Ñ…Ñ€Ð°Ð½Ð¸Ñ‚ÑŒ refund', 'Refundni saqlash')}
-                      </button>
-                    </div>
-                  </form>
-                </Card>
-              </div>
-
-              <Card title={tr('Balances by product', 'Ð‘Ð°Ð»Ð°Ð½ÑÑ‹ Ð¿Ð¾ Ð¿Ñ€Ð¾Ð´ÑƒÐºÑ‚Ð°Ð¼', 'Mahsulotlar bo\'yicha balans')} action={workspaceLoading ? <span className="text-xs text-gray-500">{tr('Loading...', 'Ð—Ð°Ð³Ñ€ÑƒÐ·ÐºÐ°...', 'Yuklanmoqda...')}</span> : null}>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm">
-                    <thead className="border-b border-light-border text-gray-500 dark:border-navy-700 dark:text-gray-400">
-                      <tr>
-                        <th className="pb-3 font-medium">{tr('Product', 'ÐŸÑ€Ð¾Ð´ÑƒÐºÑ‚', 'Mahsulot')}</th>
-                        <th className="pb-3 font-medium text-right">{tr('Bottles', 'Ð‘ÑƒÑ‚Ñ‹Ð»Ð¸', 'Idishlar')}</th>
-                        <th className="pb-3 font-medium text-right">{tr('Held deposit', 'Ð£Ð´ÐµÑ€Ð¶Ð°Ð½Ð¾', 'Ushlab turilgan')}</th>
-                        <th className="pb-3 font-medium text-right">{tr('Charged', 'ÐÐ°Ñ‡Ð¸ÑÐ»ÐµÐ½Ð¾', 'Olingan')}</th>
-                        <th className="pb-3 font-medium text-right">{tr('Refunded', 'Ð’Ð¾Ð·Ð²Ñ€Ð°Ñ‰ÐµÐ½Ð¾', 'Qaytarilgan')}</th>
-                        <th className="pb-3 font-medium text-right">{tr('Actions', 'Ð”ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ', 'Amallar')}</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-light-border dark:divide-navy-700">
-                      {balances.length ? (
-                        balances.map((balance) => (
-                          <tr key={balance.id}>
-                            <td className="py-4">
-                              <p className="font-medium text-gray-900 dark:text-white">{balance.product_name}</p>
-                              <p className="mt-1 text-xs leading-5 text-gray-500">{balance.product_size_liters ? `${balance.product_size_liters}L` : '-'} {balance.product_sku ? `| ${balance.product_sku}` : ''}</p>
-                            </td>
-                            <td className="py-4 text-right text-gray-700 dark:text-gray-300">{balance.outstanding_bottles_count}</td>
-                            <td className="py-4 text-right text-gray-900 dark:text-white">{formatCurrency(balance.deposit_held_uzs)} UZS</td>
-                            <td className="py-4 text-right text-gray-700 dark:text-gray-300">{formatCurrency(balance.total_deposit_charged_uzs)} UZS</td>
-                            <td className="py-4 text-right text-gray-700 dark:text-gray-300">{formatCurrency(balance.total_deposit_refunded_uzs)} UZS</td>
-                            <td className="py-4 text-right">
-                              <div className="flex justify-end gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() => selectBalanceForAction(balance.product_id, 'return')}
-                                  className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 transition hover:bg-emerald-100"
-                                >
-                                  {tr('Return', 'Ð’Ð¾Ð·Ð²Ñ€Ð°Ñ‚', 'Qaytarish')}
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => selectBalanceForAction(balance.product_id, 'refund')}
-                                  className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 transition hover:bg-amber-100"
-                                >
-                                  {tr('Refund', 'Refund', 'Refund')}
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan={6} className="py-8 text-center text-gray-500">
-                            {workspaceLoading
-                              ? tr('Loading bottle balances...', 'Ð—Ð°Ð³Ñ€ÑƒÐ·ÐºÐ° Ð±Ð°Ð»Ð°Ð½ÑÐ¾Ð²...', 'Idish balanslari yuklanmoqda...')
-                              : tr('No bottle balances found for this client.', 'Ð”Ð»Ñ ÑÑ‚Ð¾Ð³Ð¾ ÐºÐ»Ð¸ÐµÐ½Ñ‚Ð° Ð½Ðµ Ð½Ð°Ð¹Ð´ÐµÐ½ Ð±Ð°Ð»Ð°Ð½Ñ Ð±ÑƒÑ‚Ñ‹Ð»ÐµÐ¹.', 'Bu mijoz uchun idish balansi topilmadi.')}
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </Card>
-
-              <Card title={tr('Recent movement audit', 'ÐŸÐ¾ÑÐ»ÐµÐ´Ð½Ð¸Ðµ Ð´Ð²Ð¸Ð¶ÐµÐ½Ð¸Ñ', 'So\'nggi harakatlar')} action={<Badge variant="default">{movements.length}</Badge>}>
-                <div className="space-y-3">
-                  {movements.length ? (
-                    movements.map((movement) => (
-                      <div key={movement.id} className="rounded-2xl border border-light-border bg-gray-50/70 p-4 dark:border-navy-700 dark:bg-navy-900/40">
-                        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                          <div>
-                            <div className="flex flex-wrap items-center gap-2">
-                              <Badge variant={movementVariant(movement.movement_type)}>{movementLabel(movement.movement_type)}</Badge>
-                              <span className="text-sm font-semibold text-gray-900 dark:text-white">{movement.product_name || '-'}</span>
-                              {movement.product_size_liters ? <span className="text-xs text-gray-500">{movement.product_size_liters}L</span> : null}
-                            </div>
-                            <p className="mt-2 text-xs text-gray-500">{formatDate(movement.created_at)}</p>
-                          </div>
-                          <div className="grid grid-cols-2 gap-3 text-sm lg:min-w-[340px]">
-                            <div className="rounded-xl bg-white px-3 py-2 dark:bg-navy-800">
-                              <p className="text-xs text-gray-500">{tr('Bottle delta', 'Ð˜Ð·Ð¼ÐµÐ½ÐµÐ½Ð¸Ðµ Ð±ÑƒÑ‚Ñ‹Ð»ÐµÐ¹', 'Idish o\'zgarishi')}</p>
-                              <p className={`mt-1 font-semibold ${movement.bottles_delta < 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400'}`}>{movement.bottles_delta}</p>
-                            </div>
-                            <div className="rounded-xl bg-white px-3 py-2 dark:bg-navy-800">
-                              <p className="text-xs text-gray-500">{tr('Deposit delta', 'Ð˜Ð·Ð¼ÐµÐ½ÐµÐ½Ð¸Ðµ Ð´ÐµÐ¿Ð¾Ð·Ð¸Ñ‚Ð°', 'Depozit o\'zgarishi')}</p>
-                              <p className={`mt-1 font-semibold ${movement.deposit_delta_uzs < 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400'}`}>{formatCurrency(movement.deposit_delta_uzs)} UZS</p>
-                            </div>
-                            <div className="rounded-xl bg-white px-3 py-2 dark:bg-navy-800">
-                              <p className="text-xs text-gray-500">{tr('Balance', 'Ð‘Ð°Ð»Ð°Ð½Ñ', 'Balans')}</p>
-                              <p className="mt-1 font-semibold text-gray-900 dark:text-white">{movement.balance_before_count ?? '-'} {'->'} {movement.balance_after_count ?? '-'}</p>
-                            </div>
-                            <div className="rounded-xl bg-white px-3 py-2 dark:bg-navy-800">
-                              <p className="text-xs text-gray-500">{tr('Actor', 'Ð˜ÑÐ¿Ð¾Ð»Ð½Ð¸Ñ‚ÐµÐ»ÑŒ', 'Bajargan')}</p>
-                              <p className="mt-1 font-semibold text-gray-900 dark:text-white">{movement.actor || '-'}</p>
-                            </div>
-                          </div>
-                        </div>
-                        {movement.note ? <p className="mt-3 text-sm text-gray-600 dark:text-gray-300">{movement.note}</p> : null}
-                      </div>
-                    ))
-                  ) : (
-                    <div className="rounded-2xl border border-dashed border-light-border px-4 py-10 text-center text-sm text-gray-500 dark:border-navy-700">
-                      <ClipboardList size={18} className="mx-auto mb-3 text-gray-400" />
-                      {workspaceLoading
-                        ? tr('Loading movement history...', 'Ð—Ð°Ð³Ñ€ÑƒÐ·ÐºÐ° Ð¸ÑÑ‚Ð¾Ñ€Ð¸Ð¸...', 'Harakat tarixi yuklanmoqda...')
-                        : tr('No bottle movements yet for this client.', 'Ð”Ð»Ñ ÑÑ‚Ð¾Ð³Ð¾ ÐºÐ»Ð¸ÐµÐ½Ñ‚Ð° Ð¿Ð¾ÐºÐ° Ð½ÐµÑ‚ Ð´Ð²Ð¸Ð¶ÐµÐ½Ð¸Ð¹ Ð±ÑƒÑ‚Ñ‹Ð»ÐµÐ¹.', 'Bu mijoz uchun hali idish harakati yo\'q.')}
+                  {summary && (
+                    <div className="shrink-0 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-center dark:border-emerald-500/20 dark:bg-emerald-500/10">
+                      <p className="text-[22px] font-black leading-none text-emerald-600 dark:text-emerald-400">
+                        {summary.total_outstanding_bottles_count}
+                      </p>
+                      <p className="mt-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-500/70 dark:text-emerald-400/50">
+                        {tr('outstanding', 'бутылей', 'qoldiq')}
+                      </p>
                     </div>
                   )}
+                </>
+              ) : (
+                <span className="text-[13px] text-gray-400 dark:text-white/25">
+                  {tr('Select a client to begin…', 'Выберите клиента…', 'Mijozni tanlang…')}
+                </span>
+              )}
+              <ChevronDown
+                size={15}
+                className={`ml-auto shrink-0 transition-transform duration-300 ${
+                  dropdownOpen
+                    ? 'rotate-180 text-emerald-500 dark:text-emerald-400'
+                    : 'text-gray-400 dark:text-white/25'
+                }`}
+              />
+            </button>
+
+            {/* Dropdown panel */}
+            {dropdownOpen && (
+              <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-white/[0.08] dark:bg-[#0e1623]">
+                {/* search */}
+                <div className="border-b border-gray-100 p-3 dark:border-white/[0.05]">
+                  <div className="relative">
+                    <Search
+                      size={13}
+                      className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-white/25"
+                    />
+                    <input
+                      autoFocus
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder={tr(
+                        'Search name, phone, username…',
+                        'Поиск по имени, телефону…',
+                        'Ism, telefon, username…'
+                      )}
+                      className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-9 pr-8 text-[12px] text-gray-800 placeholder-gray-400 outline-none focus:border-emerald-400 focus:bg-white dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-white dark:placeholder-white/20 dark:focus:border-emerald-500/40"
+                    />
+                    {search && (
+                      <button
+                        type="button"
+                        onClick={() => setSearch('')}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-white/25 dark:hover:text-white/50"
+                      >
+                        <X size={12} />
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </Card>
-            </>
-          )}
+
+                <ul className="max-h-64 overflow-y-auto">
+                  {filteredClients.length ? (
+                    filteredClients.map((client) => {
+                      const isActive = client.id === selectedClientId;
+                      return (
+                        <li key={client.id}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedClientId(client.id);
+                              setDropdownOpen(false);
+                              setSearch('');
+                            }}
+                            className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors ${
+                              isActive
+                                ? 'bg-emerald-50 dark:bg-emerald-500/10'
+                                : 'hover:bg-gray-50 dark:hover:bg-white/[0.03]'
+                            }`}
+                          >
+                            <div
+                              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${platformGradient[client.platform]} text-[11px] font-bold text-white`}
+                            >
+                              {clientAvatar(client)}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p
+                                className={`truncate text-[13px] font-semibold ${
+                                  isActive
+                                    ? 'text-emerald-700 dark:text-emerald-400'
+                                    : 'text-gray-800 dark:text-white/70'
+                                }`}
+                              >
+                                {clientName(client)}
+                              </p>
+                              <p className="truncate text-[11px] text-gray-400 dark:text-white/25">
+                                {client.phone ?? client.username ?? client.id}
+                              </p>
+                            </div>
+                            {isActive && (
+                              <CheckCircle2
+                                size={14}
+                                className="shrink-0 text-emerald-500 dark:text-emerald-400"
+                              />
+                            )}
+                          </button>
+                        </li>
+                      );
+                    })
+                  ) : (
+                    <li className="px-4 py-8 text-center text-[12px] text-gray-400 dark:text-white/20">
+                      {tr('No clients found', 'Клиенты не найдены', 'Mijoz topilmadi')}
+                    </li>
+                  )}
+                </ul>
+              </div>
+            )}
+          </div>
+
+          {/* info chips */}
+          <div className="flex shrink-0 gap-2">
+            <div className="flex items-center gap-2 rounded-xl border border-sky-100 bg-sky-50 px-4 py-3 dark:border-sky-500/15 dark:bg-sky-500/5">
+              <ArrowRightLeft size={13} className="text-sky-500 dark:text-sky-400" />
+              <span className="text-[12px] font-medium text-sky-600 dark:text-sky-400/60">
+                {tr('Return flow only', 'Только возврат', 'Faqat qaytarish')}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 dark:border-amber-500/15 dark:bg-amber-500/5">
+              <ShieldAlert size={13} className="text-amber-500 dark:text-amber-400/60" />
+              <span className="text-[12px] font-medium text-amber-600 dark:text-amber-400/50">
+                {tr('Manual add: N/A', 'Ручное: N/A', "Qo'lda: N/A")}
+              </span>
+            </div>
+          </div>
         </div>
+
+        {/* ═══ EMPTY STATE ═══ */}
+        {!selectedClient ? (
+          <div className="flex flex-col items-center justify-center rounded-3xl border border-gray-200 bg-white py-28 shadow-sm dark:border-white/[0.05] dark:bg-white/[0.015]">
+            <div className="relative">
+              <div className="absolute inset-0 rounded-full bg-emerald-200 blur-3xl dark:bg-emerald-500/15" />
+              <div className="relative flex h-20 w-20 items-center justify-center rounded-3xl border border-emerald-200 bg-gradient-to-br from-emerald-100 to-teal-50 shadow-xl shadow-emerald-100 dark:border-emerald-500/20 dark:from-emerald-500/15 dark:to-teal-500/10 dark:shadow-none">
+                <Droplets size={34} className="text-emerald-500 dark:text-emerald-400" />
+              </div>
+            </div>
+            <h2 className="mt-7 text-xl font-bold text-gray-700 dark:text-white/70">
+              {tr('Select a client to begin', 'Выберите клиента', 'Mijozni tanlang')}
+            </h2>
+            <p className="mt-2 max-w-sm text-center text-[13px] leading-6 text-gray-400 dark:text-white/25">
+              {tr(
+                'Bottle balances, return actions, and movement history will appear here.',
+                'Балансы, возвраты и история движений загрузятся для выбранного клиента.',
+                "Tanlangan mijoz uchun balans va harakatlar tarixi bu yerda ko'rinadi."
+              )}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-5">
+
+            {/* ═══ STAT CARDS ═══ */}
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+              {(
+                [
+                  {
+                    label: tr('Outstanding', 'Остаток', 'Qoldiq'),
+                    value: String(summary?.total_outstanding_bottles_count ?? 0),
+                    sub: tr('bottles', 'бутылей', 'ta idish'),
+                    icon: <Droplets size={15} />,
+                    light: 'text-emerald-600 bg-emerald-100',
+                    dark: 'dark:text-emerald-400 dark:bg-emerald-400/10',
+                    glow: 'from-emerald-400 to-teal-400',
+                  },
+                  {
+                    label: tr('Held deposit', 'Удержан депозит', 'Ushlab turilgan'),
+                    value: fmt(summary?.deposit_held_total_uzs ?? 0),
+                    sub: 'UZS',
+                    icon: <TrendingDown size={15} />,
+                    light: 'text-sky-600 bg-sky-100',
+                    dark: 'dark:text-sky-400 dark:bg-sky-400/10',
+                    glow: 'from-sky-400 to-blue-400',
+                  },
+                  {
+                    label: tr('Total charged', 'Начислено', 'Jami olingan'),
+                    value: fmt(summary?.total_deposit_charged_uzs ?? 0),
+                    sub: 'UZS',
+                    icon: <Activity size={15} />,
+                    light: 'text-violet-600 bg-violet-100',
+                    dark: 'dark:text-violet-400 dark:bg-violet-400/10',
+                    glow: 'from-violet-400 to-purple-400',
+                  },
+                  {
+                    label: tr('Total refunded', 'Возвращено', 'Qaytarilgan'),
+                    value: fmt(summary?.total_deposit_refunded_uzs ?? 0),
+                    sub: 'UZS',
+                    icon: <CheckCircle2 size={15} />,
+                    light: 'text-amber-600 bg-amber-100',
+                    dark: 'dark:text-amber-400 dark:bg-amber-400/10',
+                    glow: 'from-amber-400 to-orange-400',
+                  },
+                ] as const
+              ).map(({ label, value, sub, icon, light, dark, glow }) => (
+                <div
+                  key={label}
+                  className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-all hover:shadow-md dark:border-white/[0.06] dark:bg-white/[0.03] dark:hover:border-white/[0.12] dark:hover:bg-white/[0.05]"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400 dark:text-white/25">
+                      {label}
+                    </p>
+                    <span className={`rounded-lg p-1.5 ${light} ${dark}`}>{icon}</span>
+                  </div>
+                  <p className="mt-3 text-[26px] font-black tracking-tight text-gray-900 leading-none dark:text-white">
+                    {value}
+                  </p>
+                  <p className="mt-1.5 text-[11px] text-gray-400 dark:text-white/20">{sub}</p>
+                  <div
+                    className={`absolute -bottom-6 -right-6 h-24 w-24 rounded-full bg-gradient-to-br ${glow} opacity-[0.08] blur-xl transition-opacity group-hover:opacity-[0.16] dark:opacity-[0.06] dark:group-hover:opacity-[0.13]`}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* ═══ CLIENT PROFILE + RETURN FORM ═══ */}
+            <div className="grid grid-cols-1 gap-5 xl:grid-cols-[300px_1fr]">
+
+              {/* Client profile */}
+              <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-white/[0.06] dark:bg-white/[0.03]">
+                <p className="mb-5 text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-white/20">
+                  {tr('Client profile', 'Профиль клиента', 'Mijoz profili')}
+                </p>
+
+                <div className="flex items-center gap-4">
+                  <div
+                    className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${platformGradient[selectedClient.platform]} text-[13px] font-black text-white shadow-xl`}
+                  >
+                    {clientAvatar(selectedClient)}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-[15px] font-bold text-gray-900 dark:text-white">
+                      {clientName(selectedClient)}
+                    </p>
+                    <span
+                      className={`mt-1.5 inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                        selectedClient.platform === 'telegram'
+                          ? 'bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-400'
+                          : selectedClient.platform === 'instagram'
+                          ? 'bg-pink-100 text-pink-700 dark:bg-pink-500/15 dark:text-pink-400'
+                          : 'bg-gray-100 text-gray-600 dark:bg-slate-500/15 dark:text-slate-400'
+                      }`}
+                    >
+                      {platformLabel(selectedClient.platform)}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mt-6 space-y-3.5 border-t border-gray-100 pt-5 dark:border-white/[0.04]">
+                  {[
+                    {
+                      icon: <Phone size={12} />,
+                      label: tr('Phone', 'Телефон', 'Telefon'),
+                      value: selectedClient.phone ?? '—',
+                    },
+                    {
+                      icon: <MapPin size={12} />,
+                      label: tr('Address', 'Адрес', 'Manzil'),
+                      value: selectedClient.address ?? '—',
+                    },
+                    {
+                      icon: <User size={12} />,
+                      label: tr('Username', 'Username', 'Username'),
+                      value: selectedClient.username ?? '—',
+                    },
+                  ].map(({ icon, label, value }) => (
+                    <div key={label} className="flex items-start gap-3">
+                      <span className="mt-0.5 shrink-0 text-gray-300 dark:text-white/20">{icon}</span>
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-medium text-gray-400 dark:text-white/20">{label}</p>
+                        <p className="mt-0.5 truncate text-[12px] font-medium text-gray-600 dark:text-white/50">{value}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* deposit progress bar */}
+                {summary && summary.total_deposit_charged_uzs > 0 && (
+                  <div className="mt-5 border-t border-gray-100 pt-5 dark:border-white/[0.04]">
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="text-[10px] font-medium text-gray-400 dark:text-white/20">
+                        {tr('Deposit refund rate', 'Доля возврата депозита', 'Qaytarish darajasi')}
+                      </span>
+                      <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                        {Math.round(
+                          (summary.total_deposit_refunded_uzs /
+                            summary.total_deposit_charged_uzs) *
+                            100
+                        )}%
+                      </span>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-white/[0.05]">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-700"
+                        style={{
+                          width: `${Math.min(
+                            100,
+                            Math.round(
+                              (summary.total_deposit_refunded_uzs /
+                                summary.total_deposit_charged_uzs) *
+                                100
+                            )
+                          )}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Return form */}
+              <div
+                className={`rounded-2xl border p-6 shadow-sm transition-all duration-300 ${
+                  successPulse
+                    ? 'border-emerald-300 bg-emerald-50/50 shadow-emerald-100 dark:border-emerald-500/50 dark:bg-emerald-950/20 dark:shadow-emerald-950/30'
+                    : 'border-gray-200 bg-white dark:border-white/[0.06] dark:bg-white/[0.03]'
+                }`}
+              >
+                {/* form header */}
+                <div className="mb-6 flex items-center gap-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-50 dark:border-emerald-500/20 dark:bg-emerald-500/10">
+                    <Undo2 size={16} className="text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <div>
+                    <p className="text-[14px] font-bold text-gray-900 dark:text-white">
+                      {tr(
+                        'Record bottle return',
+                        'Записать возврат бутылей',
+                        'Idish qaytarishni qayd etish'
+                      )}
+                    </p>
+                    <p className="text-[11px] text-gray-400 dark:text-white/30">
+                      {tr(
+                        'Physical handback — reduces outstanding balance immediately',
+                        'Физический возврат — сразу уменьшает остаток',
+                        "Fizikaviy qaytarish — qoldiqni darhol kamaytiradi"
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                <form onSubmit={handleReturnSubmit} className="space-y-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    {/* product */}
+                    <div>
+                      <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400 dark:text-white/25">
+                        {tr('Product balance', 'Баланс продукта', 'Mahsulot balansi')}
+                      </label>
+                      <div className="relative">
+                        <select
+                          value={returnForm.product_id}
+                          onChange={(e) =>
+                            setReturnForm((p) => ({ ...p, product_id: e.target.value }))
+                          }
+                          className="w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-[13px] font-medium text-gray-800 shadow-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 dark:border-white/[0.07] dark:bg-white/[0.04] dark:text-white dark:focus:border-emerald-500/40 dark:focus:ring-0"
+                        >
+                          <option value="">
+                            {tr('Choose product…', 'Выберите продукт…', 'Mahsulotni tanlang…')}
+                          </option>
+                          {balances.map((b) => (
+                            <option key={b.id} value={b.product_id}>
+                              {b.product_name}
+                              {b.product_size_liters ? ` ${b.product_size_liters}L` : ''} —{' '}
+                              {b.outstanding_bottles_count} {tr('pcs', 'шт.', 'ta')}
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronDown
+                          size={12}
+                          className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-white/25"
+                        />
+                      </div>
+                    </div>
+
+                    {/* quantity */}
+                    <div>
+                      <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400 dark:text-white/25">
+                        {tr('Quantity', 'Количество', 'Soni')}
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max={selectedReturnBalance?.outstanding_bottles_count}
+                        value={returnForm.quantity}
+                        onChange={(e) =>
+                          setReturnForm((p) => ({ ...p, quantity: e.target.value }))
+                        }
+                        disabled={returnForm.return_all}
+                        className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-[13px] font-medium text-gray-800 shadow-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 disabled:opacity-40 dark:border-white/[0.07] dark:bg-white/[0.04] dark:text-white dark:focus:border-emerald-500/40 dark:focus:ring-0 dark:disabled:opacity-30"
+                      />
+                    </div>
+                  </div>
+
+                  {/* return all toggle */}
+                  <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 transition hover:bg-gray-100 dark:border-white/[0.05] dark:bg-white/[0.025] dark:hover:bg-white/[0.04]">
+                    <div
+                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition-all duration-200 ${
+                        returnForm.return_all
+                          ? 'border-emerald-500 bg-emerald-500 shadow-sm shadow-emerald-200 dark:shadow-emerald-900/50'
+                          : 'border-gray-300 bg-white dark:border-white/15 dark:bg-transparent'
+                      }`}
+                    >
+                      {returnForm.return_all && <CheckCircle2 size={12} className="text-white" />}
+                    </div>
+                    <input
+                      type="checkbox"
+                      className="sr-only"
+                      checked={returnForm.return_all}
+                      onChange={(e) =>
+                        setReturnForm((p) => ({ ...p, return_all: e.target.checked }))
+                      }
+                    />
+                    <span className="flex-1 text-[13px] font-medium text-gray-600 dark:text-white/50">
+                      {tr(
+                        'Return all outstanding for this product',
+                        'Вернуть все бутыли по этому продукту',
+                        "Bu mahsulot bo'yicha barcha idishni qaytarish"
+                      )}
+                    </span>
+                    {selectedReturnBalance && (
+                      <span className="rounded-lg border border-gray-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-gray-500 dark:border-white/[0.07] dark:bg-white/[0.04] dark:text-white/30">
+                        {selectedReturnBalance.outstanding_bottles_count}
+                      </span>
+                    )}
+                  </label>
+                  {/* note */}
+                  <div>
+                    <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400 dark:text-white/25">
+                      {tr('Operator note', 'Комментарий оператора', 'Operator izohi')}
+                    </label>
+                    <textarea
+                      value={returnForm.note}
+                      onChange={(e) =>
+                        setReturnForm((p) => ({ ...p, note: e.target.value }))
+                      }
+                      rows={3}
+                      placeholder={tr(
+                        'E.g. client returned 2 empty bottles at the gate.',
+                        'Напр.: клиент вернул 2 пустые бутыли у входа.',
+                        "Masalan: eshik oldida 2 ta bo'sh idish qaytardi."
+                      )}
+                      className="w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-[13px] text-gray-800 placeholder-gray-300 shadow-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 dark:border-white/[0.07] dark:bg-white/[0.04] dark:text-white dark:placeholder-white/15 dark:focus:border-emerald-500/40 dark:focus:ring-0"
+                    />
+                  </div>
+
+                  <div className="flex justify-end pt-1">
+                    <button
+                      type="submit"
+                      disabled={returnSaving || !balances.length}
+                      className="group relative inline-flex items-center gap-2.5 overflow-hidden rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 px-7 py-3 text-[13px] font-bold text-white shadow-lg shadow-emerald-200 transition-all hover:shadow-emerald-300 hover:brightness-105 disabled:opacity-40 dark:shadow-emerald-950/50 dark:hover:shadow-emerald-950/70"
+                    >
+                      <div className="absolute inset-0 -translate-x-full bg-white/10 transition-transform duration-500 group-hover:translate-x-full" />
+                      {returnSaving ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <Undo2 size={14} />
+                      )}
+                      {returnSaving
+                        ? tr('Saving…', 'Сохранение…', 'Saqlanmoqda…')
+                        : tr('Save return', 'Сохранить возврат', 'Qaytarishni saqlash')}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            {/* ═══ BALANCES TABLE ═══ */}
+            <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-white/[0.06] dark:bg-white/[0.03]">
+              <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-white/[0.05]">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gray-100 dark:bg-white/[0.05]">
+                    <Package size={13} className="text-gray-500 dark:text-white/40" />
+                  </div>
+                  <p className="text-[13px] font-bold text-gray-700 dark:text-white/60">
+                    {tr('Balances by product', 'Балансы по продуктам', "Mahsulotlar bo'yicha balans")}
+                  </p>
+                </div>
+                {workspaceLoading && (
+                  <Loader2 size={12} className="animate-spin text-gray-400 dark:text-white/20" />
+                )}
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="border-b border-gray-100 dark:border-white/[0.03]">
+                      {[
+                        tr('Product', 'Продукт', 'Mahsulot'),
+                        tr('Outstanding', 'Остаток', 'Qoldiq'),
+                        tr('Held', 'Удержано', 'Ushlab turilgan'),
+                        tr('Charged', 'Начислено', 'Olingan'),
+                        tr('Refunded', 'Возвращено', 'Qaytarilgan'),
+                        '',
+                      ].map((h, i) => (
+                        <th
+                          key={i}
+                          className={`bg-gray-50/70 px-6 py-3 text-[10px] font-bold uppercase tracking-[0.13em] text-gray-400 dark:bg-white/[0.015] dark:text-white/20 ${
+                            i > 0 && i < 5 ? 'text-right' : ''
+                          }`}
+                        >
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 dark:divide-white/[0.025]">
+                    {balances.length ? (
+                      balances.map((b) => (
+                        <tr
+                          key={b.id}
+                          className="transition-colors hover:bg-gray-50 dark:hover:bg-white/[0.025]"
+                        >
+                          <td className="px-6 py-4">
+                            <p className="text-[13px] font-bold text-gray-800 dark:text-white/75">
+                              {b.product_name}
+                            </p>
+                            <p className="mt-0.5 text-[11px] text-gray-400 dark:text-white/25">
+                              {b.product_size_liters ? `${b.product_size_liters}L` : '—'}
+                              {b.product_sku ? ` · ${b.product_sku}` : ''}
+                            </p>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <span className="inline-flex items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1 text-[13px] font-black text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400">
+                              {b.outstanding_bottles_count}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-right text-[13px] font-semibold text-gray-700 dark:text-white/55">
+                            {fmt(b.deposit_held_uzs)}
+                          </td>
+                          <td className="px-6 py-4 text-right text-[13px] text-gray-500 dark:text-white/35">
+                            {fmt(b.total_deposit_charged_uzs)}
+                          </td>
+                          <td className="px-6 py-4 text-right text-[13px] text-gray-500 dark:text-white/35">
+                            {fmt(b.total_deposit_refunded_uzs)}
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setReturnForm((p) => ({
+                                  ...p,
+                                  product_id: b.product_id,
+                                  return_all: false,
+                                  quantity: '1',
+                                }))
+                              }
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[11px] font-bold text-emerald-700 transition-all hover:border-emerald-300 hover:bg-emerald-100 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:border-emerald-500/40 dark:hover:bg-emerald-500/20"
+                            >
+                              <Undo2 size={11} />
+                              {tr('Select', 'Выбрать', 'Tanlash')}
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td
+                          colSpan={6}
+                          className="px-6 py-14 text-center text-[13px] text-gray-400 dark:text-white/15"
+                        >
+                          {workspaceLoading
+                            ? tr('Loading…', 'Загрузка…', 'Yuklanmoqda…')
+                            : tr(
+                                'No bottle balances found.',
+                                'Балансы не найдены.',
+                                'Balans topilmadi.'
+                              )}
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* ═══ MOVEMENT LOG ═══ */}
+            <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-white/[0.06] dark:bg-white/[0.03]">
+              <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-white/[0.05]">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gray-100 dark:bg-white/[0.05]">
+                    <Activity size={13} className="text-gray-500 dark:text-white/40" />
+                  </div>
+                  <p className="text-[13px] font-bold text-gray-700 dark:text-white/60">
+                    {tr('Movement audit log', 'Журнал движений', 'Harakatlar jurnali')}
+                  </p>
+                </div>
+                <span className="rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1 text-[11px] font-semibold text-gray-400 dark:border-white/[0.06] dark:bg-white/[0.03] dark:text-white/25">
+                  {movements.length}
+                </span>
+              </div>
+
+              <div className="divide-y divide-gray-100 dark:divide-white/[0.025]">
+                {movements.length ? (
+                  movements.map((mv) => {
+                    const colors = mvColors(mv.movement_type);
+                    return (
+                      <div
+                        key={mv.id}
+                        className="flex flex-col gap-4 px-6 py-5 transition-colors hover:bg-gray-50/70 dark:hover:bg-white/[0.02] lg:flex-row lg:items-center lg:justify-between"
+                      >
+                        {/* left: type + meta */}
+                        <div className="flex items-start gap-4">
+                          <div
+                            className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border ${colors.badge}`}
+                          >
+                            {mvIcon(mv.movement_type)}
+                          </div>
+                          <div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span
+                                className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] font-bold ${colors.badge}`}
+                              >
+                                {mvIcon(mv.movement_type)}
+                                {mvLabel(mv.movement_type)}
+                              </span>
+                              <span className="text-[13px] font-semibold text-gray-800 dark:text-white/65">
+                                {mv.product_name ?? '—'}
+                                {mv.product_size_liters ? ` · ${mv.product_size_liters}L` : ''}
+                              </span>
+                              {mv.product_sku && (
+                                <span className="rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-400 dark:bg-white/[0.05] dark:text-white/25">
+                                  {mv.product_sku}
+                                </span>
+                              )}
+                            </div>
+                            <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-gray-400 dark:text-white/20">
+                              <span className="flex items-center gap-1">
+                                <Clock size={10} />
+                                {fmtDate(mv.created_at)}
+                              </span>
+                              {mv.actor && (
+                                <>
+                                  <span className="h-3 w-px bg-gray-200 dark:bg-white/10" />
+                                  <span className="font-medium">{mv.actor}</span>
+                                </>
+                              )}
+                              {mv.order_id && (
+                                <>
+                                  <span className="h-3 w-px bg-gray-200 dark:bg-white/10" />
+                                  <span className="font-mono text-[10px]">
+                                    {tr('Order', 'Заказ', 'Buyurtma')} #{mv.order_id.slice(0, 8)}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                            {mv.note && (
+                              <p className="mt-2 max-w-md rounded-lg border border-gray-100 bg-gray-50 px-3 py-1.5 text-[12px] italic text-gray-500 dark:border-white/[0.04] dark:bg-white/[0.025] dark:text-white/30">
+                                {mv.note}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* right: delta chips */}
+                        <div className="flex shrink-0 flex-wrap items-center gap-2 lg:gap-3">
+                          {/* bottles delta */}
+                          <div className="min-w-[80px] rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5 text-center dark:border-white/[0.05] dark:bg-white/[0.03]">
+                            <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400 dark:text-white/20">
+                              {tr('Bottles', 'Бутыли', 'Idish')} Δ
+                            </p>
+                            <p
+                              className={`mt-1 text-[15px] font-black ${
+                                mv.bottles_delta < 0
+                                  ? 'text-emerald-600 dark:text-emerald-400'
+                                  : 'text-amber-600 dark:text-amber-400'
+                              }`}
+                            >
+                              {mv.bottles_delta > 0 ? '+' : ''}
+                              {mv.bottles_delta}
+                            </p>
+                          </div>
+
+                          {/* deposit delta */}
+                          <div className="min-w-[110px] rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5 text-center dark:border-white/[0.05] dark:bg-white/[0.03]">
+                            <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400 dark:text-white/20">
+                              {tr('Deposit', 'Депозит', 'Depozit')} Δ
+                            </p>
+                            <p
+                              className={`mt-1 text-[13px] font-black ${
+                                mv.deposit_delta_uzs < 0
+                                  ? 'text-emerald-600 dark:text-emerald-400'
+                                  : 'text-amber-600 dark:text-amber-400'
+                              }`}
+                            >
+                              {mv.deposit_delta_uzs > 0 ? '+' : ''}
+                              {fmt(mv.deposit_delta_uzs)}
+                            </p>
+                          </div>
+
+                          {/* balance flow */}
+                          <div className="min-w-[100px] rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5 text-center dark:border-white/[0.05] dark:bg-white/[0.03]">
+                            <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400 dark:text-white/20">
+                              {tr('Balance', 'Баланс', 'Balans')}
+                            </p>
+                            <p className="mt-1 text-[13px] font-bold text-gray-600 dark:text-white/50">
+                              {mv.balance_before_count ?? '—'}
+                              <span className="mx-1 text-gray-300 dark:text-white/20">→</span>
+                              {mv.balance_after_count ?? '—'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <ClipboardList
+                      size={22}
+                      className="text-gray-300 dark:text-white/10"
+                    />
+                    <p className="mt-3 text-[13px] text-gray-400 dark:text-white/15">
+                      {workspaceLoading
+                        ? tr('Loading history…', 'Загрузка истории…', 'Yuklanmoqda…')
+                        : tr(
+                            'No movements yet for this client.',
+                            'История движений пуста.',
+                            "Bu mijoz uchun hali harakat yo'q."
+                          )}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
 export default BottleController;
-
-
-
-
