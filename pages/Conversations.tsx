@@ -1026,22 +1026,6 @@ const Conversations: React.FC = () => {
               className="w-full h-9 pl-9 pr-3 rounded-xl border border-light-border dark:border-navy-700 bg-gray-50 dark:bg-navy-900/40 text-sm text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-primary-blue"
             />
           </label>
-          <div className="mt-2 flex gap-1">
-            {(['all', 'telegram', 'instagram'] as const).map((value) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setChannelFilter(value)}
-                className={`flex-1 rounded-lg px-2 py-1.5 text-xs border transition-colors ${
-                  channelFilter === value
-                    ? 'bg-primary-blue text-white border-primary-blue'
-                    : 'bg-white dark:bg-navy-800 text-gray-600 dark:text-gray-300 border-light-border dark:border-navy-700 hover:bg-gray-50 dark:hover:bg-navy-700'
-                }`}
-              >
-                {value === 'all' ? tr('All', 'All', 'Barchasi') : value === 'telegram' ? 'Telegram' : 'Instagram'}
-              </button>
-            ))}
-          </div>
         </div>
         <div className="flex-1 overflow-hidden flex flex-col bg-white dark:bg-navy-800 border border-light-border dark:border-navy-700 rounded-2xl shadow-sm shadow-slate-200/50 dark:shadow-none transition-colors duration-300">
           <div className="px-4 py-3 border-b border-light-border dark:border-navy-700 bg-gradient-to-r from-gray-50/90 to-white dark:from-navy-900/50 dark:to-navy-800 text-xs text-gray-500 dark:text-gray-400">
@@ -1390,7 +1374,7 @@ const Conversations: React.FC = () => {
                       {!isClient && m.role === 'admin' && (
                         <span className={`inline-flex items-center gap-1 text-[10px] block ${m.delivery?.sent ? 'text-green-200' : m.delivery?.reason === 'sending' ? 'text-blue-100' : 'text-red-200'}`}>
                           {m.delivery?.sent ? <CheckCheck size={11} /> : m.delivery?.reason === 'sending' ? <Check size={11} /> : <AlertCircle size={11} />}
-                          {m.delivery?.sent ? tr('Sent', 'Sent', 'Yuborildi') : m.delivery?.reason === 'sending' ? tr('Sending...', 'Sending...', 'Yuborilmoqda...') : tr('Failed', 'Failed', 'Xato')}
+                          {m.delivery?.sent ? tr('Sent', 'Sent', 'Yuborildi') : m.delivery?.reason === 'sending' ? tr('Sending...', 'Sending...', 'Yuborilmoqda...') : tr('Failed', 'Failed', 'Done')}
                         </span>
                       )}
                     </div>
