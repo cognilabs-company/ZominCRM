@@ -1,45 +1,42 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
   ArrowRightLeft,
   ClipboardList,
   Droplets,
   Loader2,
+  Plus,
   RefreshCw,
   Search,
   ShieldAlert,
   Undo2,
-  ChevronDown,
+  Wallet,
   X,
-  User,
-  Phone,
-  MapPin,
-  TrendingDown,
-  Package,
-  Activity,
   CheckCircle2,
-  AlertCircle,
-  Clock,
-  Zap,
 } from 'lucide-react';
+import { Badge } from '../components/ui/Badge';
+import { Card } from '../components/ui/Card';
 import { useLanguage } from '../context/LanguageContext';
 import { useToast } from '../context/ToastContext';
 import { ENDPOINTS, apiRequest } from '../services/api';
 
-/* ─────────────────────── types ─────────────────────── */
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 type Platform = 'telegram' | 'instagram' | 'manual';
+type ActionType = 'return' | 'refund' | 'increment';
 
 interface ClientRow {
   id: string;
   platform: Platform;
-  username: string | null;
-  full_name: string | null;
-  phone: string | null;
-  address: string | null;
-  preferred_language?: 'en' | 'ru' | 'uz' | null;
-  created_at: string;
-  updated_at: string;
+  username?: string | null;
+  full_name?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  preferred_language?: 'uz' | 'ru' | 'en' | null;
+  has_phone?: boolean;
+  is_platform_identity_verified?: boolean;
+  can_receive_telegram?: boolean;
+  created_at?: string;
 }
 
 interface BottleSummary {
@@ -74,77 +71,111 @@ interface BottleMovement {
   product_sku?: string | null;
   product_size_liters?: string | null;
   order_id?: string | null;
-  movement_type: 'ORDER_DELIVERED' | 'REFUND' | 'RETURNED' | 'MANUAL_ADJUST' | string;
-  order_quantity?: number | null;
-  bottles_delta: number;
+  movement_type: string;
+  bottles_delta?: number;
+  quantity?: number;
   deposit_delta_uzs: number;
-  balance_before_count?: number | null;
-  balance_after_count?: number | null;
-  deposit_before_uzs?: number | null;
-  deposit_after_uzs?: number | null;
   actor?: string | null;
   note?: string | null;
   created_at: string;
 }
 
+interface ReturnableProduct {
+  id: string;
+  name: string;
+  sku?: string | null;
+  size_liters?: string | null;
+  requires_returnable_bottle?: boolean;
+  bottle_deposit_uzs?: number;
+  is_active?: boolean;
+}
+
 interface ReturnFormState {
   product_id: string;
   quantity: string;
-  return_all: boolean;
   note: string;
 }
 
-/* ─────────────────────── constants ─────────────────────── */
+interface RefundFormState {
+  product_id: string;
+  quantity: string;
+  refund_all: boolean;
+  note: string;
+}
 
-const emptyReturnForm: ReturnFormState = {
-  product_id: '',
-  quantity: '1',
-  return_all: false,
-  note: '',
+interface IncrementFormState {
+  product_id: string;
+  quantity: string;
+  note: string;
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+const parseQuantity = (value: string): number => {
+  const parsed = parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
 };
 
-const platformGradient: Record<Platform, string> = {
-  telegram: 'from-sky-500 to-blue-600',
-  instagram: 'from-pink-500 to-purple-600',
-  manual: 'from-slate-400 to-slate-500',
-};
+// ─── Sub-components ───────────────────────────────────────────────────────────
 
-const platformInitials: Record<Platform, string> = {
-  telegram: 'TG',
-  instagram: 'IG',
-  manual: 'MN',
-};
+interface StatCardProps {
+  label: string;
+  value: string | number;
+  highlight?: boolean;
+}
 
-/* ─────────────────────── component ─────────────────────── */
+const StatCard: React.FC<StatCardProps> = ({ label, value, highlight }) => (
+  <div className={`rounded-2xl border px-4 py-4 ${highlight ? 'border-blue-200 bg-blue-50 dark:border-blue-500/20 dark:bg-blue-500/10' : 'border-light-border bg-slate-50 dark:border-white/10 dark:bg-navy-900'}`}>
+    <p className="text-xs font-medium uppercase tracking-widest text-slate-500 dark:text-white/40">{label}</p>
+    <p className={`mt-2 text-xl font-bold ${highlight ? 'text-blue-700 dark:text-blue-300' : 'text-slate-900 dark:text-white'}`}>{value}</p>
+  </div>
+);
+
+interface FormFieldProps {
+  label: string;
+  children: React.ReactNode;
+}
+
+const FormField: React.FC<FormFieldProps> = ({ label, children }) => (
+  <div className="space-y-1.5">
+    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-white/40">{label}</label>
+    {children}
+  </div>
+);
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 const BottleController: React.FC = () => {
-  const location = useLocation();
   const { language } = useLanguage();
   const toast = useToast();
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const location = useLocation();
 
   const tr = (en: string, ru: string, uz: string) =>
     language === 'ru' ? ru : language === 'uz' ? uz : en;
 
-  /* state */
+  // ── State ──────────────────────────────────────────────────────────────────
+
   const [clients, setClients] = useState<ClientRow[]>([]);
+  const [returnableProducts, setReturnableProducts] = useState<ReturnableProduct[]>([]);
   const [clientsLoading, setClientsLoading] = useState(true);
   const [workspaceLoading, setWorkspaceLoading] = useState(false);
   const [returnSaving, setReturnSaving] = useState(false);
-  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [refundSaving, setRefundSaving] = useState(false);
+  const [incrementSaving, setIncrementSaving] = useState(false);
+  const [selectedClientId, setSelectedClientId] = useState('');
   const [search, setSearch] = useState('');
   const [summary, setSummary] = useState<BottleSummary | null>(null);
   const [balances, setBalances] = useState<BottleBalance[]>([]);
   const [movements, setMovements] = useState<BottleMovement[]>([]);
-  const [returnForm, setReturnForm] = useState<ReturnFormState>(emptyReturnForm);
-  const [successPulse, setSuccessPulse] = useState(false);
+  const [returnForm, setReturnForm] = useState<ReturnFormState>({ product_id: '', quantity: '1', note: '' });
+  const [refundForm, setRefundForm] = useState<RefundFormState>({ product_id: '', quantity: '1', refund_all: false, note: '' });
+  const [incrementForm, setIncrementForm] = useState<IncrementFormState>({ product_id: '', quantity: '1', note: '' });
 
-  /* derived */
-  const requestedClientId = useMemo(
-    () => new URLSearchParams(location.search).get('client_id'),
-    [location.search]
-  );
+  // ── Derived ────────────────────────────────────────────────────────────────
+
+  const requestedClientId = useMemo(() => {
+    return new URLSearchParams(location.search).get('client_id') || '';
+  }, [location.search]);
 
   const selectedClient = useMemo(
     () => clients.find((c) => c.id === selectedClientId) ?? null,
@@ -152,1048 +183,865 @@ const BottleController: React.FC = () => {
   );
 
   const filteredClients = useMemo(() => {
-    const kw = search.trim().toLowerCase();
-    if (!kw) return clients;
+    const keyword = search.trim().toLowerCase();
+    if (!keyword) return clients;
     return clients.filter((c) =>
       [c.full_name, c.phone, c.username, c.address, c.id]
         .filter(Boolean)
         .join(' ')
         .toLowerCase()
-        .includes(kw)
+        .includes(keyword)
     );
   }, [clients, search]);
 
+  const balanceByProductId = useMemo(() => {
+    const map = new Map<string, BottleBalance>();
+    balances.forEach((b) => map.set(b.product_id, b));
+    return map;
+  }, [balances]);
+
   const selectedReturnBalance = useMemo(
-    () => balances.find((b) => b.product_id === returnForm.product_id) ?? null,
-    [balances, returnForm.product_id]
+    () => (returnForm.product_id ? balanceByProductId.get(returnForm.product_id) ?? null : null),
+    [balanceByProductId, returnForm.product_id]
   );
 
-  const returnPreview = useMemo(() => {
-    if (!selectedReturnBalance) return { quantity: 0, deposit: 0 };
-    const qty = returnForm.return_all
-      ? selectedReturnBalance.outstanding_bottles_count
-      : Math.max(
-          0,
-          Math.min(
-            Number(returnForm.quantity ?? 0),
-            selectedReturnBalance.outstanding_bottles_count
-          )
-        );
-    return {
-      quantity: qty,
-      deposit: qty * Number(selectedReturnBalance.bottle_deposit_uzs ?? 0),
-    };
-  }, [returnForm.quantity, returnForm.return_all, selectedReturnBalance]);
+  const selectedRefundBalance = useMemo(
+    () => (refundForm.product_id ? balanceByProductId.get(refundForm.product_id) ?? null : null),
+    [balanceByProductId, refundForm.product_id]
+  );
 
-  /* formatters */
-  const fmt = (v: number) =>
-    new Intl.NumberFormat(
-      language === 'ru' ? 'ru-RU' : language === 'uz' ? 'uz-UZ' : 'en-US'
-    ).format(v);
+  const selectedIncrementProduct = useMemo(
+    () => returnableProducts.find((p) => p.id === incrementForm.product_id) ?? null,
+    [returnableProducts, incrementForm.product_id]
+  );
 
-  const fmtDate = (v?: string | null) => {
-    if (!v) return '—';
-    const d = new Date(v);
-    if (Number.isNaN(d.getTime())) return v;
-    return new Intl.DateTimeFormat(
-      language === 'ru' ? 'ru-RU' : language === 'uz' ? 'uz-UZ' : 'en-US',
-      { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }
-    ).format(d);
+  // ── Formatters ─────────────────────────────────────────────────────────────
+
+  const locale = language === 'ru' ? 'ru-RU' : language === 'en' ? 'en-US' : 'uz-UZ';
+
+  const formatCurrency = (value: number) =>
+    `${Math.round(value || 0).toLocaleString(locale)} UZS`;
+
+  const formatDate = (value?: string | null) => {
+    if (!value) return '—';
+    const d = new Date(value);
+    return isNaN(d.getTime()) ? value : d.toLocaleString(locale, {
+      year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit',
+    });
   };
 
   const platformLabel = (p: Platform) =>
-    p === 'instagram'
-      ? 'Instagram'
-      : p === 'manual'
-      ? tr('Manual', 'Ручной', "Qo'lda")
-      : 'Telegram';
+    p === 'instagram' ? 'Instagram' : p === 'manual' ? tr('Manual', 'Ручной', "Qo'lda") : 'Telegram';
 
-  const mvLabel = (t: string) => {
-    if (t === 'RETURNED') return tr('Returned', 'Возврат бутылей', 'Qaytarildi');
-    if (t === 'REFUND') return tr('Refunded', 'Возврат депозита', 'Depozit qaytarildi');
-    if (t === 'ORDER_DELIVERED') return tr('Delivered', 'Доставка', 'Yetkazildi');
-    if (t === 'MANUAL_ADJUST') return tr('Manual adj.', 'Корректировка', "Qo'lda tuzatish");
-    return t;
-  };
+  const languageLabel = (v?: ClientRow['preferred_language']) =>
+    v === 'ru' ? 'RU' : v === 'en' ? 'EN' : v === 'uz' ? 'UZ' : '—';
 
-  const mvIcon = (t: string) => {
-    if (t === 'RETURNED') return <CheckCircle2 size={12} />;
-    if (t === 'REFUND') return <AlertCircle size={12} />;
-    if (t === 'ORDER_DELIVERED') return <Package size={12} />;
-    return <Zap size={12} />;
-  };
+  const clientDisplayName = (c: ClientRow) =>
+    c.full_name || c.phone || c.username || c.id.slice(0, 8);
 
-  /* movement type → light/dark-safe colour classes */
-  const mvColors = (t: string) => {
-    if (t === 'RETURNED')
-      return {
-        badge: 'text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:bg-emerald-400/10 dark:border-emerald-400/20',
-        icon: 'text-emerald-600 dark:text-emerald-400',
-      };
-    if (t === 'REFUND')
-      return {
-        badge: 'text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-400 dark:bg-amber-400/10 dark:border-amber-400/20',
-        icon: 'text-amber-600 dark:text-amber-400',
-      };
-    if (t === 'ORDER_DELIVERED')
-      return {
-        badge: 'text-sky-700 bg-sky-50 border-sky-200 dark:text-sky-400 dark:bg-sky-400/10 dark:border-sky-400/20',
-        icon: 'text-sky-600 dark:text-sky-400',
-      };
-    return {
-      badge: 'text-violet-700 bg-violet-50 border-violet-200 dark:text-violet-400 dark:bg-violet-400/10 dark:border-violet-400/20',
-      icon: 'text-violet-600 dark:text-violet-400',
+  const movementLabel = (v: string) => {
+    const map: Record<string, string> = {
+      MANUAL_ADJUST: tr('Manual adjust', 'Ручная корректировка', "Qo'lda o'zgartirish"),
+      REFUND: tr('Refund', 'Возврат депозита', 'Depozit qaytarildi'),
+      RETURN: tr('Bottle return', 'Возврат бутылок', 'Idish qaytimi'),
+      DELIVERY: tr('Delivery', 'Доставка', 'Yetkazib berish'),
+      ORDER_DELIVERED: tr('Delivery', 'Доставка', 'Yetkazib berish'),
     };
+    return map[v] ?? v;
   };
 
-  const clientName = (c: ClientRow) =>
-    c.full_name ?? c.username ?? c.phone ?? c.id.slice(0, 8);
+  const movementVariant = (v: string): 'warning' | 'success' | 'info' | 'purple' | 'default' => {
+    if (v === 'MANUAL_ADJUST') return 'warning';
+    if (v === 'REFUND') return 'success';
+    if (v === 'RETURN') return 'info';
+    if (v === 'DELIVERY' || v === 'ORDER_DELIVERED') return 'purple';
+    return 'default';
+  };
 
-  const clientAvatar = (c: ClientRow) =>
-    (c.full_name ?? c.username ?? '')
-      .split(' ')
-      .slice(0, 2)
-      .map((w) => w[0] ?? '')
-      .join('')
-      .toUpperCase() || platformInitials[c.platform];
+  // ── Preview calculations ───────────────────────────────────────────────────
 
-  /* helpers */
-  const resetReturnForm = (rows: BottleBalance[]) =>
-    setReturnForm({
-      product_id: rows[0]?.product_id ?? '',
-      quantity: '1',
-      return_all: false,
-      note: '',
-    });
+  const returnPreviewQty = selectedReturnBalance
+    ? Math.min(parseQuantity(returnForm.quantity), selectedReturnBalance.outstanding_bottles_count)
+    : 0;
 
-  /* outside-click closes dropdown */
-  useEffect(() => {
-    const h = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node))
-        setDropdownOpen(false);
-    };
-    document.addEventListener('mousedown', h);
-    return () => document.removeEventListener('mousedown', h);
-  }, []);
+  const refundPreviewQty = selectedRefundBalance
+    ? refundForm.refund_all
+      ? selectedRefundBalance.outstanding_bottles_count
+      : Math.min(parseQuantity(refundForm.quantity), selectedRefundBalance.outstanding_bottles_count)
+    : 0;
 
-  /* data fetching */
-  const loadClients = async () => {
-    try {
-      setClientsLoading(true);
-      const data = await apiRequest<{ results?: ClientRow[] } | ClientRow[]>(
-        ENDPOINTS.CLIENTS.LIST
-      );
-      const rows = Array.isArray(data) ? data : (data.results ?? []);
-      setClients(rows);
-      if (!selectedClientId && rows[0])
-        setSelectedClientId(requestedClientId ?? rows[0].id);
-    } catch (err) {
-      toast.error(
-        err instanceof Error
-          ? err.message
-          : tr('Failed to load clients', 'Ошибка загрузки клиентов', "Mijozlarni yuklab bo'lmadi")
-      );
-    } finally {
-      setClientsLoading(false);
-    }
+  const refundPreviewAmount = refundPreviewQty * Number(selectedRefundBalance?.bottle_deposit_uzs ?? 0);
+
+  const incrementPreviewQty = parseQuantity(incrementForm.quantity);
+  const incrementPreviewAmount =
+    incrementPreviewQty *
+    Number(
+      selectedIncrementProduct?.bottle_deposit_uzs ??
+      balanceByProductId.get(incrementForm.product_id)?.bottle_deposit_uzs ??
+      0
+    );
+
+  // ── Data loaders ───────────────────────────────────────────────────────────
+
+  const loadClients = async (): Promise<ClientRow[]> => {
+    const data = await apiRequest<{ results?: ClientRow[] } | ClientRow[]>(ENDPOINTS.CLIENTS.LIST);
+    const rows = Array.isArray(data) ? data : data.results ?? [];
+    setClients(rows);
+    return rows;
+  };
+
+  const loadReturnableProducts = async (): Promise<ReturnableProduct[]> => {
+    const data = await apiRequest<{ results?: ReturnableProduct[] } | ReturnableProduct[]>(ENDPOINTS.PRODUCTS.LIST_CREATE);
+    const rows = Array.isArray(data) ? data : data.results ?? [];
+    const filtered = rows.filter((p) => p.requires_returnable_bottle && p.is_active !== false);
+    setReturnableProducts(filtered);
+    return filtered;
   };
 
   const loadWorkspace = async (clientId: string) => {
+    setWorkspaceLoading(true);
     try {
-      setWorkspaceLoading(true);
       const [balanceData, movementData] = await Promise.all([
         apiRequest<{ summary?: BottleSummary; results?: BottleBalance[] }>(
           ENDPOINTS.CLIENTS.BOTTLE_BALANCES(clientId)
         ),
         apiRequest<{ results?: BottleMovement[] }>(
-          `${ENDPOINTS.BOTTLES.MOVEMENTS}?client_id=${encodeURIComponent(clientId)}&limit=30`
+          `${ENDPOINTS.BOTTLES.MOVEMENTS}?client_id=${encodeURIComponent(clientId)}`
         ),
       ]);
-      const nb = balanceData.results ?? [];
+
+      const nextBalances = balanceData.results ?? [];
       setSummary(balanceData.summary ?? null);
-      setBalances(nb);
+      setBalances(nextBalances);
       setMovements(movementData.results ?? []);
-      resetReturnForm(nb);
+
+      const firstId = nextBalances[0]?.product_id ?? '';
+      const firstProductId = returnableProducts[0]?.id ?? '';
+      setReturnForm({ product_id: firstId, quantity: '1', note: '' });
+      setRefundForm({ product_id: firstId, quantity: '1', refund_all: false, note: '' });
+      setIncrementForm({ product_id: firstId || firstProductId, quantity: '1', note: '' });
     } catch (err) {
       toast.error(
         err instanceof Error
           ? err.message
-          : tr('Failed to load workspace', 'Ошибка загрузки', "Yuklab bo'lmadi")
+          : tr('Failed to load bottle workspace.', 'Не удалось загрузить страницу бутылок.', "Idish sahifasini yuklab bo'lmadi.")
       );
       setSummary(null);
       setBalances([]);
       setMovements([]);
-      resetReturnForm([]);
     } finally {
       setWorkspaceLoading(false);
     }
   };
 
-  useEffect(() => { void loadClients(); }, []);
+  // ── Effects ────────────────────────────────────────────────────────────────
 
   useEffect(() => {
-    if (!clients.length || !requestedClientId) return;
-    if (clients.some((c) => c.id === requestedClientId)) setSelectedClientId(requestedClientId);
+    let active = true;
+    (async () => {
+      try {
+        setClientsLoading(true);
+        const [loadedClients] = await Promise.all([loadClients(), loadReturnableProducts()]);
+        if (!active) return;
+
+        if (requestedClientId && loadedClients.some((c) => c.id === requestedClientId)) {
+          setSelectedClientId(requestedClientId);
+        } else if (loadedClients[0]) {
+          setSelectedClientId((cur) =>
+            cur && loadedClients.some((c) => c.id === cur) ? cur : loadedClients[0].id
+          );
+        }
+      } catch (err) {
+        if (!active) return;
+        toast.error(
+          err instanceof Error
+            ? err.message
+            : tr('Failed to load bottle tools.', 'Не удалось загрузить инструменты.', "Idish oynasini yuklab bo'lmadi.")
+        );
+      } finally {
+        if (active) setClientsLoading(false);
+      }
+    })();
+    return () => { active = false; };
+  }, [requestedClientId]);
+
+  useEffect(() => {
+    if (!clients.length) return;
+    if (requestedClientId && clients.some((c) => c.id === requestedClientId) && selectedClientId !== requestedClientId) {
+      setSelectedClientId(requestedClientId);
+      return;
+    }
+    if (!selectedClientId || !clients.some((c) => c.id === selectedClientId)) {
+      setSelectedClientId(clients[0].id);
+    }
   }, [clients, requestedClientId]);
 
   useEffect(() => {
     if (!selectedClientId) {
-      setSummary(null); setBalances([]); setMovements([]); resetReturnForm([]);
+      setSummary(null);
+      setBalances([]);
+      setMovements([]);
       return;
     }
     void loadWorkspace(selectedClientId);
   }, [selectedClientId]);
 
-  /* submit */
-  const handleReturnSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!selectedClient) return;
-    if (!returnForm.product_id) {
-      toast.error(tr('Select a product first', 'Выберите продукт', 'Mahsulotni tanlang'));
+  useEffect(() => {
+    if (!balances.length) return;
+    const firstId = balances[0].product_id;
+    if (!returnForm.product_id || !balanceByProductId.has(returnForm.product_id))
+      setReturnForm((s) => ({ ...s, product_id: firstId }));
+    if (!refundForm.product_id || !balanceByProductId.has(refundForm.product_id))
+      setRefundForm((s) => ({ ...s, product_id: firstId, refund_all: false }));
+  }, [balances]);
+
+  useEffect(() => {
+    if (incrementForm.product_id) {
+      const valid = new Set([
+        ...returnableProducts.map((p) => p.id),
+        ...balances.map((b) => b.product_id),
+      ]);
+      if (!valid.has(incrementForm.product_id)) {
+        setIncrementForm((s) => ({
+          ...s,
+          product_id: balances[0]?.product_id ?? returnableProducts[0]?.id ?? '',
+        }));
+      }
       return;
     }
+    const fallback = balances[0]?.product_id ?? returnableProducts[0]?.id ?? '';
+    if (fallback) setIncrementForm((s) => ({ ...s, product_id: fallback }));
+  }, [returnableProducts, balances]);
+
+  // ── Actions ────────────────────────────────────────────────────────────────
+
+  const refreshAll = async () => {
+    try {
+      setClientsLoading(true);
+      await Promise.all([loadClients(), loadReturnableProducts()]);
+      if (selectedClientId) await loadWorkspace(selectedClientId);
+      toast.success(tr('Refreshed.', 'Данные обновлены.', "Ma'lumotlar yangilandi."));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : tr('Refresh failed.', 'Ошибка обновления.', "Yangilab bo'lmadi."));
+    } finally {
+      setClientsLoading(false);
+    }
+  };
+
+  const handleReturnSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedClient) return;
+    const qty = parseQuantity(returnForm.quantity);
+    if (!returnForm.product_id) return toast.warning(tr('Select a product.', 'Выберите товар.', 'Mahsulotni tanlang.'));
+    if (qty <= 0) return toast.warning(tr('Quantity must be > 0.', 'Количество должно быть > 0.', "Soni 0 dan katta bo'lishi kerak."));
     try {
       setReturnSaving(true);
       await apiRequest(ENDPOINTS.CLIENTS.BOTTLE_RETURNS(selectedClient.id), {
         method: 'POST',
-        body: JSON.stringify({
-          product_id: returnForm.product_id,
-          quantity: Number(returnForm.quantity ?? 0),
-          return_all: returnForm.return_all,
-          note: returnForm.note.trim(),
-          actor: 'admin-ui',
-        }),
+        body: JSON.stringify({ product_id: returnForm.product_id, quantity: qty, note: returnForm.note.trim() }),
       });
-      toast.success(tr('Return recorded', 'Возврат сохранён', 'Qaytarish saqlandi'));
-      setSuccessPulse(true);
-      setTimeout(() => setSuccessPulse(false), 1400);
+      toast.success(tr('Bottle return saved.', 'Возврат бутылок сохранён.', 'Idish qaytimi saqlandi.'));
       await loadWorkspace(selectedClient.id);
     } catch (err) {
-      toast.error(
-        err instanceof Error
-          ? err.message
-          : tr('Failed to save', 'Ошибка сохранения', "Saqlab bo'lmadi")
-      );
+      toast.error(err instanceof Error ? err.message : tr('Failed to save return.', 'Ошибка сохранения.', "Saqlab bo'lmadi."));
     } finally {
       setReturnSaving(false);
     }
   };
 
-  /* ═══════════════════════════ RENDER ═══════════════════════════ */
+  const handleRefundSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedClient) return;
+    const qty = parseQuantity(refundForm.quantity);
+    if (!refundForm.product_id) return toast.warning(tr('Select a product.', 'Выберите товар.', 'Mahsulotni tanlang.'));
+    if (!refundForm.refund_all && qty <= 0) return toast.warning(tr('Quantity must be > 0.', 'Количество должно быть > 0.', "Soni 0 dan katta bo'lishi kerak."));
+    try {
+      setRefundSaving(true);
+      await apiRequest(ENDPOINTS.CLIENTS.BOTTLE_REFUNDS(selectedClient.id), {
+        method: 'POST',
+        body: JSON.stringify({
+          product_id: refundForm.product_id,
+          quantity: refundForm.refund_all ? (selectedRefundBalance?.outstanding_bottles_count ?? 0) : qty,
+          refund_all: refundForm.refund_all,
+          note: refundForm.note.trim(),
+        }),
+      });
+      toast.success(tr('Deposit refund saved.', 'Возврат депозита сохранён.', 'Depozit qaytimi saqlandi.'));
+      await loadWorkspace(selectedClient.id);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : tr('Failed to save refund.', 'Ошибка сохранения.', "Saqlab bo'lmadi."));
+    } finally {
+      setRefundSaving(false);
+    }
+  };
+
+  const handleIncrementSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedClient) return;
+    const qty = parseQuantity(incrementForm.quantity);
+    if (!incrementForm.product_id) return toast.warning(tr('Select a product.', 'Выберите товар.', 'Mahsulotni tanlang.'));
+    if (qty <= 0) return toast.warning(tr('Quantity must be > 0.', 'Количество должно быть > 0.', "Soni 0 dan katta bo'lishi kerak."));
+    try {
+      setIncrementSaving(true);
+      await apiRequest(ENDPOINTS.CLIENTS.BOTTLE_INCREMENTS(selectedClient.id), {
+        method: 'POST',
+        body: JSON.stringify({ product_id: incrementForm.product_id, quantity: qty, note: incrementForm.note.trim(), actor: 'admin-ui' }),
+      });
+      toast.success(tr('Bottle balance increased.', 'Баланс бутылок увеличен.', 'Idish balansi oshirildi.'));
+      await loadWorkspace(selectedClient.id);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : tr('Failed to add bottles.', 'Ошибка добавления.', "Qo'shib bo'lmadi."));
+    } finally {
+      setIncrementSaving(false);
+    }
+  };
+
+  const selectBalanceForAction = (productId: string, action: ActionType) => {
+    if (action === 'return') setReturnForm({ product_id: productId, quantity: '1', note: '' });
+    else if (action === 'refund') setRefundForm({ product_id: productId, quantity: '1', refund_all: false, note: '' });
+    else setIncrementForm({ product_id: productId, quantity: '1', note: '' });
+  };
+
+  // ── Shared class tokens ────────────────────────────────────────────────────
+
+  const inputCls =
+    'w-full rounded-xl border border-light-border bg-slate-50 px-3.5 py-2.5 text-sm text-slate-800 outline-none transition focus:border-primary-blue focus:bg-white focus:ring-2 focus:ring-primary-blue/10 dark:border-white/10 dark:bg-navy-900 dark:text-white dark:focus:border-blue-500 dark:focus:bg-navy-800 disabled:opacity-50';
+
+  const btnCls = (color: string) =>
+    `inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50 ${color}`;
+
+  // ── Render ─────────────────────────────────────────────────────────────────
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#080d17] transition-colors duration-300">
+    <div className="space-y-6">
 
-      {/* ── sticky header ── */}
-      <div className="sticky top-0 z-30 border-b border-gray-200 bg-white/90 backdrop-blur-xl dark:border-white/[0.05] dark:bg-[#080d17]/95">
-        <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-4 px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-200 dark:shadow-emerald-900/40">
-              <Droplets size={17} className="text-white" />
-            </div>
-            <div>
-              <h1 className="text-[15px] font-bold tracking-tight text-gray-900 dark:text-white">
-                {tr('Bottle Controller', 'Контроль бутылей', 'Idish nazorati')}
-              </h1>
-              <p className="text-[11px] text-gray-400 dark:text-white/35">
-                {tr('Operator workspace', 'Рабочее место оператора', 'Operator ish maydoni')}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {workspaceLoading && (
-              <span className="hidden items-center gap-1.5 text-[11px] text-gray-400 dark:text-white/30 sm:flex">
-                <Loader2 size={11} className="animate-spin" />
-                {tr('Syncing…', 'Синхронизация…', 'Sinxronlash…')}
-              </span>
+      {/* ── Page header ── */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+            {tr('Bottle Control', 'Управление бутылками', 'Idish nazorati')}
+          </h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-white/50">
+            {tr(
+              'Manage bottle adds, returns and deposit refunds in one place.',
+              'Добавление бутылок, возвраты и депозиты в одном окне.',
+              "Idish qo'shish, qaytarish va depozitni bitta joyda boshqaring."
             )}
-            <button
-              type="button"
-              onClick={() => { void loadClients(); if (selectedClientId) void loadWorkspace(selectedClientId); }}
-              className="group flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-[12px] font-semibold text-gray-600 shadow-sm transition-all hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-white/50 dark:hover:border-white/20 dark:hover:bg-white/[0.08] dark:hover:text-white"
-            >
-              <RefreshCw size={12} className="transition-transform duration-500 group-hover:rotate-180" />
-              {tr('Refresh', 'Обновить', 'Yangilash')}
-            </button>
-          </div>
+          </p>
         </div>
+        <button
+          type="button"
+          onClick={() => void refreshAll()}
+          disabled={clientsLoading || workspaceLoading}
+          className="inline-flex items-center gap-2 rounded-xl border border-light-border bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50 dark:border-white/10 dark:bg-navy-800 dark:text-white dark:hover:bg-navy-700"
+        >
+          <RefreshCw size={15} className={clientsLoading || workspaceLoading ? 'animate-spin' : ''} />
+          {tr('Refresh', 'Обновить', 'Yangilash')}
+        </button>
       </div>
 
-      <div className="mx-auto max-w-[1600px] space-y-5 px-6 py-6">
+      {/* ── Info cards ── */}
+      <div className="grid gap-4 md:grid-cols-3">
+        {[
+          {
+            icon: <Plus size={18} />,
+            color: 'text-blue-600 bg-blue-50 dark:bg-blue-500/15 dark:text-blue-300',
+            title: tr('Add bottles', 'Добавить бутылки', "Idish qo'shish"),
+            desc: tr(
+              'Client received bottles outside a normal order.',
+              'Клиент получил бутылки вне обычного заказа.',
+              "Mijoz buyurtmadan tashqari idish olganida ishlating."
+            ),
+          },
+          {
+            icon: <ArrowRightLeft size={18} />,
+            color: 'text-amber-600 bg-amber-50 dark:bg-amber-500/15 dark:text-amber-300',
+            title: tr('Return bottles', 'Принять бутылки', 'Idish qaytimi'),
+            desc: tr(
+              'Record empty bottles returned by the client.',
+              'Фиксируйте пустые бутылки, вернувшиеся от клиента.',
+              "Bo'sh idish mijozdan qaytganda qayd qiling."
+            ),
+          },
+          {
+            icon: <Wallet size={18} />,
+            color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/15 dark:text-emerald-300',
+            title: tr('Refund deposit', 'Вернуть депозит', 'Depozit qaytarish'),
+            desc: tr(
+              'Return money to client after bottles are accepted.',
+              'Верните деньги клиенту после приёма бутылок.',
+              "Idish qabul qilinib pul qaytarilishi kerak bo'lsa ishlating."
+            ),
+          },
+        ].map(({ icon, color, title, desc }, i) => (
+          <Card key={i} className="h-full">
+            <div className="flex items-start gap-4">
+              <div className={`rounded-2xl p-3 ${color}`}>{icon}</div>
+              <div>
+                <h3 className="font-semibold text-slate-900 dark:text-white">{title}</h3>
+                <p className="mt-1 text-sm text-slate-500 dark:text-white/50">{desc}</p>
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
 
-        {/* ── top row: selector + chips ── */}
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end">
-
-          {/* Client selector dropdown */}
-          <div ref={dropdownRef} className="relative flex-1">
-            <label className="mb-2 block text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-white/25">
-              {tr('Active client', 'Активный клиент', 'Faol mijoz')}
-            </label>
-
+      {/* ── Client selector ── */}
+      <Card title={tr('Select client', 'Выбор клиента', 'Mijoz tanlash')}>
+        {/* Search input */}
+        <div className="relative">
+          <Search size={15} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/30" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={tr('Search by name, phone, username\u2026', 'Poisk po imeni, telefonu, niku\u2026', "Ism, telefon yoki login bo'yicha\u2026")}
+            className="w-full rounded-xl border border-light-border bg-slate-50 py-2.5 pl-9 pr-9 text-sm text-slate-800 outline-none transition focus:border-primary-blue focus:bg-white focus:ring-2 focus:ring-primary-blue/10 dark:border-white/10 dark:bg-navy-900 dark:text-white dark:placeholder:text-white/30 dark:focus:border-blue-500"
+          />
+          {search && (
             <button
               type="button"
-              onClick={() => setDropdownOpen((v) => !v)}
-              className={`flex w-full items-center gap-4 rounded-2xl border px-5 py-4 text-left transition-all duration-200 ${
-                dropdownOpen
-                  ? 'border-emerald-400 bg-white shadow-lg shadow-emerald-100 dark:border-emerald-500/40 dark:bg-emerald-950/20 dark:shadow-emerald-950/30'
-                  : 'border-gray-200 bg-white shadow-sm hover:border-gray-300 hover:shadow-md dark:border-white/[0.07] dark:bg-white/[0.03] dark:hover:border-white/[0.14] dark:hover:bg-white/[0.05]'
-              }`}
+              onClick={() => setSearch('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-0.5 text-slate-400 transition hover:text-slate-600 dark:text-white/30 dark:hover:text-white/70"
             >
-              {clientsLoading ? (
-                <span className="flex items-center gap-2 text-[13px] text-gray-400 dark:text-white/30">
-                  <Loader2 size={14} className="animate-spin" />
-                  {tr('Loading clients…', 'Загрузка…', 'Yuklanmoqda…')}
-                </span>
-              ) : selectedClient ? (
-                <>
-                  <div
-                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${platformGradient[selectedClient.platform]} text-[12px] font-bold text-white shadow-lg`}
-                  >
-                    {clientAvatar(selectedClient)}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[14px] font-bold text-gray-900 dark:text-white">
-                      {clientName(selectedClient)}
-                    </p>
-                    <p className="mt-0.5 truncate text-[12px] text-gray-400 dark:text-white/35">
-                      {selectedClient.phone ?? selectedClient.username ?? selectedClient.id}
-                      {selectedClient.preferred_language
-                        ? ` · ${selectedClient.preferred_language.toUpperCase()}`
-                        : ''}
-                    </p>
-                  </div>
-                  {summary && (
-                    <div className="shrink-0 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-center dark:border-emerald-500/20 dark:bg-emerald-500/10">
-                      <p className="text-[22px] font-black leading-none text-emerald-600 dark:text-emerald-400">
-                        {summary.total_outstanding_bottles_count}
-                      </p>
-                      <p className="mt-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-500/70 dark:text-emerald-400/50">
-                        {tr('outstanding', 'бутылей', 'qoldiq')}
-                      </p>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <span className="text-[13px] text-gray-400 dark:text-white/25">
-                  {tr('Select a client to begin…', 'Выберите клиента…', 'Mijozni tanlang…')}
-                </span>
-              )}
-              <ChevronDown
-                size={15}
-                className={`ml-auto shrink-0 transition-transform duration-300 ${
-                  dropdownOpen
-                    ? 'rotate-180 text-emerald-500 dark:text-emerald-400'
-                    : 'text-gray-400 dark:text-white/25'
-                }`}
-              />
+              <X size={14} />
             </button>
-
-            {/* Dropdown panel */}
-            {dropdownOpen && (
-              <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-white/[0.08] dark:bg-[#0e1623]">
-                {/* search */}
-                <div className="border-b border-gray-100 p-3 dark:border-white/[0.05]">
-                  <div className="relative">
-                    <Search
-                      size={13}
-                      className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-white/25"
-                    />
-                    <input
-                      autoFocus
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      placeholder={tr(
-                        'Search name, phone, username…',
-                        'Поиск по имени, телефону…',
-                        'Ism, telefon, username…'
-                      )}
-                      className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-9 pr-8 text-[12px] text-gray-800 placeholder-gray-400 outline-none focus:border-emerald-400 focus:bg-white dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-white dark:placeholder-white/20 dark:focus:border-emerald-500/40"
-                    />
-                    {search && (
-                      <button
-                        type="button"
-                        onClick={() => setSearch('')}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-white/25 dark:hover:text-white/50"
-                      >
-                        <X size={12} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                <ul className="max-h-64 overflow-y-auto">
-                  {filteredClients.length ? (
-                    filteredClients.map((client) => {
-                      const isActive = client.id === selectedClientId;
-                      return (
-                        <li key={client.id}>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedClientId(client.id);
-                              setDropdownOpen(false);
-                              setSearch('');
-                            }}
-                            className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors ${
-                              isActive
-                                ? 'bg-emerald-50 dark:bg-emerald-500/10'
-                                : 'hover:bg-gray-50 dark:hover:bg-white/[0.03]'
-                            }`}
-                          >
-                            <div
-                              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${platformGradient[client.platform]} text-[11px] font-bold text-white`}
-                            >
-                              {clientAvatar(client)}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p
-                                className={`truncate text-[13px] font-semibold ${
-                                  isActive
-                                    ? 'text-emerald-700 dark:text-emerald-400'
-                                    : 'text-gray-800 dark:text-white/70'
-                                }`}
-                              >
-                                {clientName(client)}
-                              </p>
-                              <p className="truncate text-[11px] text-gray-400 dark:text-white/25">
-                                {client.phone ?? client.username ?? client.id}
-                              </p>
-                            </div>
-                            {isActive && (
-                              <CheckCircle2
-                                size={14}
-                                className="shrink-0 text-emerald-500 dark:text-emerald-400"
-                              />
-                            )}
-                          </button>
-                        </li>
-                      );
-                    })
-                  ) : (
-                    <li className="px-4 py-8 text-center text-[12px] text-gray-400 dark:text-white/20">
-                      {tr('No clients found', 'Клиенты не найдены', 'Mijoz topilmadi')}
-                    </li>
-                  )}
-                </ul>
-              </div>
-            )}
-          </div>
-
-          {/* info chips */}
-          <div className="flex shrink-0 gap-2">
-            <div className="flex items-center gap-2 rounded-xl border border-sky-100 bg-sky-50 px-4 py-3 dark:border-sky-500/15 dark:bg-sky-500/5">
-              <ArrowRightLeft size={13} className="text-sky-500 dark:text-sky-400" />
-              <span className="text-[12px] font-medium text-sky-600 dark:text-sky-400/60">
-                {tr('Return flow only', 'Только возврат', 'Faqat qaytarish')}
-              </span>
-            </div>
-            <div className="flex items-center gap-2 rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 dark:border-amber-500/15 dark:bg-amber-500/5">
-              <ShieldAlert size={13} className="text-amber-500 dark:text-amber-400/60" />
-              <span className="text-[12px] font-medium text-amber-600 dark:text-amber-400/50">
-                {tr('Manual add: N/A', 'Ручное: N/A', "Qo'lda: N/A")}
-              </span>
-            </div>
-          </div>
+          )}
         </div>
 
-        {/* ═══ EMPTY STATE ═══ */}
-        {!selectedClient ? (
-          <div className="flex flex-col items-center justify-center rounded-3xl border border-gray-200 bg-white py-28 shadow-sm dark:border-white/[0.05] dark:bg-white/[0.015]">
-            <div className="relative">
-              <div className="absolute inset-0 rounded-full bg-emerald-200 blur-3xl dark:bg-emerald-500/15" />
-              <div className="relative flex h-20 w-20 items-center justify-center rounded-3xl border border-emerald-200 bg-gradient-to-br from-emerald-100 to-teal-50 shadow-xl shadow-emerald-100 dark:border-emerald-500/20 dark:from-emerald-500/15 dark:to-teal-500/10 dark:shadow-none">
-                <Droplets size={34} className="text-emerald-500 dark:text-emerald-400" />
-              </div>
+        {/* Client list */}
+        <div className="mt-3 overflow-hidden rounded-xl border border-light-border dark:border-white/10">
+          {clientsLoading ? (
+            <div className="flex items-center gap-2.5 px-4 py-4 text-sm text-slate-500 dark:text-white/40">
+              <Loader2 size={14} className="animate-spin" />
+              {tr('Loading clients…', 'Загрузка клиентов…', 'Mijozlar yuklanmoqda…')}
             </div>
-            <h2 className="mt-7 text-xl font-bold text-gray-700 dark:text-white/70">
-              {tr('Select a client to begin', 'Выберите клиента', 'Mijozni tanlang')}
+          ) : filteredClients.length === 0 ? (
+            <div className="px-4 py-5 text-center text-sm text-slate-400 dark:text-white/30">
+              {tr('No clients found.', 'Клиенты не найдены.', 'Mijoz topilmadi.')}
+            </div>
+          ) : (
+            <div className="max-h-72 divide-y divide-light-border overflow-y-auto dark:divide-white/10">
+              {filteredClients.map((client) => {
+                const name = clientDisplayName(client);
+                const sub = [client.phone, client.address, platformLabel(client.platform)].filter(Boolean).join(' · ');
+                const active = client.id === selectedClientId;
+                return (
+                  <button
+                    key={client.id}
+                    type="button"
+                    onClick={() => setSelectedClientId(client.id)}
+                    className={`flex w-full items-center gap-3.5 px-4 py-3 text-left transition ${active ? 'bg-blue-50 dark:bg-blue-500/10' : 'hover:bg-slate-50 dark:hover:bg-white/[0.03]'}`}
+                  >
+                    {/* Avatar */}
+                    <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${active ? 'bg-primary-blue text-white' : 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-white/60'}`}>
+                      {name.charAt(0).toUpperCase()}
+                    </div>
+
+                    {/* Name + sub */}
+                    <div className="min-w-0 flex-1">
+                      <p className={`truncate text-sm font-semibold ${active ? 'text-primary-blue dark:text-blue-400' : 'text-slate-900 dark:text-white'}`}>
+                        {name}
+                      </p>
+                      <p className="truncate text-xs text-slate-400 dark:text-white/35">{sub}</p>
+                    </div>
+
+                    {/* Platform + check */}
+                    <div className="flex shrink-0 items-center gap-2">
+                      <span className="hidden rounded-md bg-slate-100 px-2 py-0.5 text-xs text-slate-500 dark:bg-white/10 dark:text-white/40 sm:block">
+                        {platformLabel(client.platform)}
+                      </span>
+                      {active && <CheckCircle2 size={16} className="text-primary-blue dark:text-blue-400" />}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Footer: count + badges */}
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs text-slate-400 dark:text-white/30">
+            {filteredClients.length} {tr('clients', 'клиентов', 'mijoz')}
+            {search ? ` ${tr('found', 'найдено', 'topildi')}` : ''}
+          </p>
+          {selectedClient && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <Badge variant="info">{platformLabel(selectedClient.platform)}</Badge>
+              <Badge variant="default">{languageLabel(selectedClient.preferred_language)}</Badge>
+              {selectedClient.has_phone
+                ? <Badge variant="success">{tr('Phone', 'Телефон', 'Telefon')}</Badge>
+                : <Badge variant="warning">{tr('No phone', 'Нет телефона', "Telefon yo'q")}</Badge>}
+              {selectedClient.can_receive_telegram && (
+                <Badge variant="purple">Telegram</Badge>
+              )}
+            </div>
+          )}
+        </div>
+      </Card>
+
+      {/* ── No client selected ── */}
+      {!selectedClient ? (
+        <Card>
+          <div className="flex flex-col items-center justify-center gap-3 py-14 text-center">
+            <ShieldAlert size={32} className="text-slate-300 dark:text-white/20" />
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+              {tr('No client selected', 'Клиент не выбран', 'Mijoz tanlanmagan')}
             </h2>
-            <p className="mt-2 max-w-sm text-center text-[13px] leading-6 text-gray-400 dark:text-white/25">
+            <p className="max-w-sm text-sm text-slate-400 dark:text-white/40">
               {tr(
-                'Bottle balances, return actions, and movement history will appear here.',
-                'Балансы, возвраты и история движений загрузятся для выбранного клиента.',
-                "Tanlangan mijoz uchun balans va harakatlar tarixi bu yerda ko'rinadi."
+                'Choose a client above to manage their bottle balances and deposits.',
+                'Выберите клиента выше для управления балансом бутылок и депозитами.',
+                "Idish balansi va depozitni boshqarish uchun yuqoridan mijozni tanlang."
               )}
             </p>
           </div>
-        ) : (
-          <div className="space-y-5">
+        </Card>
+      ) : (
+        <div className="space-y-6">
 
-            {/* ═══ STAT CARDS ═══ */}
-            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-              {(
-                [
-                  {
-                    label: tr('Outstanding', 'Остаток', 'Qoldiq'),
-                    value: String(summary?.total_outstanding_bottles_count ?? 0),
-                    sub: tr('bottles', 'бутылей', 'ta idish'),
-                    icon: <Droplets size={15} />,
-                    light: 'text-emerald-600 bg-emerald-100',
-                    dark: 'dark:text-emerald-400 dark:bg-emerald-400/10',
-                    glow: 'from-emerald-400 to-teal-400',
-                  },
-                  {
-                    label: tr('Held deposit', 'Удержан депозит', 'Ushlab turilgan'),
-                    value: fmt(summary?.deposit_held_total_uzs ?? 0),
-                    sub: 'UZS',
-                    icon: <TrendingDown size={15} />,
-                    light: 'text-sky-600 bg-sky-100',
-                    dark: 'dark:text-sky-400 dark:bg-sky-400/10',
-                    glow: 'from-sky-400 to-blue-400',
-                  },
-                  {
-                    label: tr('Total charged', 'Начислено', 'Jami olingan'),
-                    value: fmt(summary?.total_deposit_charged_uzs ?? 0),
-                    sub: 'UZS',
-                    icon: <Activity size={15} />,
-                    light: 'text-violet-600 bg-violet-100',
-                    dark: 'dark:text-violet-400 dark:bg-violet-400/10',
-                    glow: 'from-violet-400 to-purple-400',
-                  },
-                  {
-                    label: tr('Total refunded', 'Возвращено', 'Qaytarilgan'),
-                    value: fmt(summary?.total_deposit_refunded_uzs ?? 0),
-                    sub: 'UZS',
-                    icon: <CheckCircle2 size={15} />,
-                    light: 'text-amber-600 bg-amber-100',
-                    dark: 'dark:text-amber-400 dark:bg-amber-400/10',
-                    glow: 'from-amber-400 to-orange-400',
-                  },
-                ] as const
-              ).map(({ label, value, sub, icon, light, dark, glow }) => (
-                <div
-                  key={label}
-                  className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-all hover:shadow-md dark:border-white/[0.06] dark:bg-white/[0.03] dark:hover:border-white/[0.12] dark:hover:bg-white/[0.05]"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400 dark:text-white/25">
-                      {label}
-                    </p>
-                    <span className={`rounded-lg p-1.5 ${light} ${dark}`}>{icon}</span>
+          {/* ── Client detail card ── */}
+          <Card accent="blue">
+            <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr),minmax(0,1fr)]">
+              <div className="space-y-4">
+                <div>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="info">{platformLabel(selectedClient.platform)}</Badge>
+                    <Badge variant="default">{languageLabel(selectedClient.preferred_language)}</Badge>
+                    {selectedClient.is_platform_identity_verified
+                      ? <Badge variant="success">{tr('Verified', 'Подтверждён', 'Tasdiqlangan')}</Badge>
+                      : <Badge variant="warning">{tr('Unverified', 'Не подтверждён', 'Tasdiqlanmagan')}</Badge>}
                   </div>
-                  <p className="mt-3 text-[26px] font-black tracking-tight text-gray-900 leading-none dark:text-white">
-                    {value}
+                  <h2 className="mt-3 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                    {clientDisplayName(selectedClient)}
+                  </h2>
+                  <p className="mt-1.5 text-sm text-slate-500 dark:text-white/50">
+                    {selectedClient.phone ?? tr('No phone', 'Нет телефона', "Telefon yo'q")}
+                    {selectedClient.address ? ` · ${selectedClient.address}` : ''}
                   </p>
-                  <p className="mt-1.5 text-[11px] text-gray-400 dark:text-white/20">{sub}</p>
-                  <div
-                    className={`absolute -bottom-6 -right-6 h-24 w-24 rounded-full bg-gradient-to-br ${glow} opacity-[0.08] blur-xl transition-opacity group-hover:opacity-[0.16] dark:opacity-[0.06] dark:group-hover:opacity-[0.13]`}
-                  />
                 </div>
-              ))}
-            </div>
-
-            {/* ═══ CLIENT PROFILE + RETURN FORM ═══ */}
-            <div className="grid grid-cols-1 gap-5 xl:grid-cols-[300px_1fr]">
-
-              {/* Client profile */}
-              <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-white/[0.06] dark:bg-white/[0.03]">
-                <p className="mb-5 text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-white/20">
-                  {tr('Client profile', 'Профиль клиента', 'Mijoz profili')}
-                </p>
-
-                <div className="flex items-center gap-4">
-                  <div
-                    className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${platformGradient[selectedClient.platform]} text-[13px] font-black text-white shadow-xl`}
-                  >
-                    {clientAvatar(selectedClient)}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="truncate text-[15px] font-bold text-gray-900 dark:text-white">
-                      {clientName(selectedClient)}
-                    </p>
-                    <span
-                      className={`mt-1.5 inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
-                        selectedClient.platform === 'telegram'
-                          ? 'bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-400'
-                          : selectedClient.platform === 'instagram'
-                          ? 'bg-pink-100 text-pink-700 dark:bg-pink-500/15 dark:text-pink-400'
-                          : 'bg-gray-100 text-gray-600 dark:bg-slate-500/15 dark:text-slate-400'
-                      }`}
-                    >
-                      {platformLabel(selectedClient.platform)}
-                    </span>
-                  </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <StatCard highlight label={tr('Outstanding', 'На руках', 'Mijozdagi')} value={summary?.total_outstanding_bottles_count ?? 0} />
+                  <StatCard label={tr('Held deposit', 'Депозит', 'Depozit')} value={formatCurrency(summary?.deposit_held_total_uzs ?? 0)} />
+                  <StatCard label={tr('Refunded', 'Возвращено', 'Qaytarilgan')} value={formatCurrency(summary?.total_deposit_refunded_uzs ?? 0)} />
                 </div>
-
-                <div className="mt-6 space-y-3.5 border-t border-gray-100 pt-5 dark:border-white/[0.04]">
-                  {[
-                    {
-                      icon: <Phone size={12} />,
-                      label: tr('Phone', 'Телефон', 'Telefon'),
-                      value: selectedClient.phone ?? '—',
-                    },
-                    {
-                      icon: <MapPin size={12} />,
-                      label: tr('Address', 'Адрес', 'Manzil'),
-                      value: selectedClient.address ?? '—',
-                    },
-                    {
-                      icon: <User size={12} />,
-                      label: tr('Username', 'Username', 'Username'),
-                      value: selectedClient.username ?? '—',
-                    },
-                  ].map(({ icon, label, value }) => (
-                    <div key={label} className="flex items-start gap-3">
-                      <span className="mt-0.5 shrink-0 text-gray-300 dark:text-white/20">{icon}</span>
-                      <div className="min-w-0">
-                        <p className="text-[10px] font-medium text-gray-400 dark:text-white/20">{label}</p>
-                        <p className="mt-0.5 truncate text-[12px] font-medium text-gray-600 dark:text-white/50">{value}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* deposit progress bar */}
-                {summary && summary.total_deposit_charged_uzs > 0 && (
-                  <div className="mt-5 border-t border-gray-100 pt-5 dark:border-white/[0.04]">
-                    <div className="mb-2 flex items-center justify-between">
-                      <span className="text-[10px] font-medium text-gray-400 dark:text-white/20">
-                        {tr('Deposit refund rate', 'Доля возврата депозита', 'Qaytarish darajasi')}
-                      </span>
-                      <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-                        {Math.round(
-                          (summary.total_deposit_refunded_uzs /
-                            summary.total_deposit_charged_uzs) *
-                            100
-                        )}%
-                      </span>
-                    </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-white/[0.05]">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-700"
-                        style={{
-                          width: `${Math.min(
-                            100,
-                            Math.round(
-                              (summary.total_deposit_refunded_uzs /
-                                summary.total_deposit_charged_uzs) *
-                                100
-                            )
-                          )}%`,
-                        }}
-                      />
-                    </div>
-                  </div>
-                )}
               </div>
 
-              {/* Return form */}
-              <div
-                className={`rounded-2xl border p-6 shadow-sm transition-all duration-300 ${
-                  successPulse
-                    ? 'border-emerald-300 bg-emerald-50/50 shadow-emerald-100 dark:border-emerald-500/50 dark:bg-emerald-950/20 dark:shadow-emerald-950/30'
-                    : 'border-gray-200 bg-white dark:border-white/[0.06] dark:bg-white/[0.03]'
-                }`}
-              >
-                {/* form header */}
-                <div className="mb-6 flex items-center gap-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-50 dark:border-emerald-500/20 dark:bg-emerald-500/10">
-                    <Undo2 size={16} className="text-emerald-600 dark:text-emerald-400" />
-                  </div>
-                  <div>
-                    <p className="text-[14px] font-bold text-gray-900 dark:text-white">
-                      {tr(
-                        'Record bottle return',
-                        'Записать возврат бутылей',
-                        'Idish qaytarishni qayd etish'
-                      )}
-                    </p>
-                    <p className="text-[11px] text-gray-400 dark:text-white/30">
-                      {tr(
-                        'Physical handback — reduces outstanding balance immediately',
-                        'Физический возврат — сразу уменьшает остаток',
-                        "Fizikaviy qaytarish — qoldiqni darhol kamaytiradi"
-                      )}
-                    </p>
-                  </div>
+              <div className="grid grid-cols-2 gap-3">
+                <StatCard label={tr('Balance rows', 'Строк баланса', 'Balans qatori')} value={balances.length} />
+                <StatCard label={tr('Movements', 'Движений', 'Harakatlar')} value={movements.length} />
+                <div className="col-span-2 rounded-2xl border border-light-border bg-slate-50 px-4 py-4 dark:border-white/10 dark:bg-navy-900">
+                  <p className="text-xs font-medium uppercase tracking-widest text-slate-500 dark:text-white/40">
+                    {tr('Client since', 'Klient sana', "Mijoz bo'lgan sana")}
+                  </p>
+                  <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">{formatDate(selectedClient.created_at)}</p>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* ── Action forms ── */}
+          <div className="grid gap-6 2xl:grid-cols-3">
+
+            {/* Add bottles */}
+            <Card title={tr('Add bottles', 'Добавить бутылки', "Idish qo'shish")} action={<Droplets size={16} className="text-blue-500" />}>
+              <form onSubmit={handleIncrementSubmit} className="space-y-4">
+                <FormField label={tr('Product', 'Товар', 'Mahsulot')}>
+                  <select
+                    value={incrementForm.product_id}
+                    onChange={(e) => setIncrementForm((s) => ({ ...s, product_id: e.target.value }))}
+                    className={inputCls}
+                  >
+                    <option value="">{tr('Choose product', 'Выберите товар', 'Mahsulotni tanlang')}</option>
+                    {returnableProducts.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}{p.size_liters ? ` · ${p.size_liters}L` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </FormField>
+
+                <FormField label={tr('Quantity', 'Количество', 'Soni')}>
+                  <input
+                    type="number" min="1" step="1"
+                    value={incrementForm.quantity}
+                    onChange={(e) => setIncrementForm((s) => ({ ...s, quantity: e.target.value }))}
+                    className={inputCls}
+                  />
+                </FormField>
+
+                <FormField label={tr('Note', 'Примечание', 'Izoh')}>
+                  <textarea
+                    rows={2}
+                    value={incrementForm.note}
+                    onChange={(e) => setIncrementForm((s) => ({ ...s, note: e.target.value }))}
+                    placeholder={tr('Optional reason…', 'Причина (необяз.)…', 'Sabab (ixtiyoriy)…')}
+                    className={inputCls}
+                  />
+                </FormField>
+
+                <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm dark:border-blue-500/20 dark:bg-blue-500/10">
+                  <p className="font-semibold text-blue-900 dark:text-blue-200">{tr('Preview', 'Предпросмотр', "Ko'rinish")}</p>
+                  <p className="mt-0.5 text-blue-700 dark:text-blue-300">
+                    {incrementPreviewQty} {tr('bottles', 'бутылок', 'idish')} · {formatCurrency(incrementPreviewAmount)}
+                  </p>
                 </div>
 
-                <form onSubmit={handleReturnSubmit} className="space-y-4">
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    {/* product */}
-                    <div>
-                      <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400 dark:text-white/25">
-                        {tr('Product balance', 'Баланс продукта', 'Mahsulot balansi')}
-                      </label>
-                      <div className="relative">
-                        <select
-                          value={returnForm.product_id}
-                          onChange={(e) =>
-                            setReturnForm((p) => ({ ...p, product_id: e.target.value }))
-                          }
-                          className="w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-[13px] font-medium text-gray-800 shadow-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 dark:border-white/[0.07] dark:bg-white/[0.04] dark:text-white dark:focus:border-emerald-500/40 dark:focus:ring-0"
-                        >
-                          <option value="">
-                            {tr('Choose product…', 'Выберите продукт…', 'Mahsulotni tanlang…')}
-                          </option>
-                          {balances.map((b) => (
-                            <option key={b.id} value={b.product_id}>
-                              {b.product_name}
-                              {b.product_size_liters ? ` ${b.product_size_liters}L` : ''} —{' '}
-                              {b.outstanding_bottles_count} {tr('pcs', 'шт.', 'ta')}
-                            </option>
-                          ))}
-                        </select>
-                        <ChevronDown
-                          size={12}
-                          className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-white/25"
-                        />
-                      </div>
-                    </div>
+                <button
+                  type="submit"
+                  disabled={incrementSaving || workspaceLoading || !incrementForm.product_id}
+                  className={btnCls('bg-primary-blue hover:bg-blue-600')}
+                >
+                  {incrementSaving ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />}
+                  {tr('Add bottles', 'Добавить бутылки', "Idish qo'shish")}
+                </button>
+              </form>
+            </Card>
 
-                    {/* quantity */}
-                    <div>
-                      <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400 dark:text-white/25">
-                        {tr('Quantity', 'Количество', 'Soni')}
-                      </label>
-                      <input
-                        type="number"
-                        min="1"
-                        max={selectedReturnBalance?.outstanding_bottles_count}
-                        value={returnForm.quantity}
-                        onChange={(e) =>
-                          setReturnForm((p) => ({ ...p, quantity: e.target.value }))
-                        }
-                        disabled={returnForm.return_all}
-                        className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-[13px] font-medium text-gray-800 shadow-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 disabled:opacity-40 dark:border-white/[0.07] dark:bg-white/[0.04] dark:text-white dark:focus:border-emerald-500/40 dark:focus:ring-0 dark:disabled:opacity-30"
-                      />
-                    </div>
-                  </div>
+            {/* Return bottles */}
+            <Card title={tr('Return bottles', 'Принять бутылки', 'Idish qaytimi')} action={<Undo2 size={16} className="text-amber-500" />}>
+              <form onSubmit={handleReturnSubmit} className="space-y-4">
+                <FormField label={tr('Product', 'Товар', 'Mahsulot')}>
+                  <select
+                    value={returnForm.product_id}
+                    onChange={(e) => setReturnForm((s) => ({ ...s, product_id: e.target.value }))}
+                    className={inputCls}
+                  >
+                    <option value="">{tr('Choose product', 'Выберите товар', 'Mahsulotni tanlang')}</option>
+                    {balances.map((b) => (
+                      <option key={b.id} value={b.product_id}>
+                        {b.product_name}{b.product_size_liters ? ` · ${b.product_size_liters}L` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </FormField>
 
-                  {/* return all toggle */}
-                  <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 transition hover:bg-gray-100 dark:border-white/[0.05] dark:bg-white/[0.025] dark:hover:bg-white/[0.04]">
-                    <div
-                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition-all duration-200 ${
-                        returnForm.return_all
-                          ? 'border-emerald-500 bg-emerald-500 shadow-sm shadow-emerald-200 dark:shadow-emerald-900/50'
-                          : 'border-gray-300 bg-white dark:border-white/15 dark:bg-transparent'
-                      }`}
-                    >
-                      {returnForm.return_all && <CheckCircle2 size={12} className="text-white" />}
-                    </div>
+                <FormField label={tr('Quantity', 'Количество', 'Soni')}>
+                  <input
+                    type="number" min="1" step="1"
+                    value={returnForm.quantity}
+                    onChange={(e) => setReturnForm((s) => ({ ...s, quantity: e.target.value }))}
+                    className={inputCls}
+                  />
+                </FormField>
+
+                <FormField label={tr('Note', 'Примечание', 'Izoh')}>
+                  <textarea
+                    rows={2}
+                    value={returnForm.note}
+                    onChange={(e) => setReturnForm((s) => ({ ...s, note: e.target.value }))}
+                    placeholder={tr('Optional details…', 'Детали (необяз.)…', 'Tafsilot (ixtiyoriy)…')}
+                    className={inputCls}
+                  />
+                </FormField>
+
+                <div className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm dark:border-amber-500/20 dark:bg-amber-500/10">
+                  <p className="font-semibold text-amber-900 dark:text-amber-200">{tr('Preview', 'Предпросмотр', "Ko'rinish")}</p>
+                  <p className="mt-0.5 text-amber-700 dark:text-amber-300">
+                    {returnPreviewQty} {tr('bottles returned', 'бутылок будет принято', 'idish qaytariladi')}
+                  </p>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={returnSaving || workspaceLoading || !returnForm.product_id}
+                  className={btnCls('bg-amber-500 hover:bg-amber-600')}
+                >
+                  {returnSaving ? <Loader2 size={15} className="animate-spin" /> : <ArrowRightLeft size={15} />}
+                  {tr('Save return', 'Сохранить возврат', 'Qaytimni saqlash')}
+                </button>
+              </form>
+            </Card>
+
+            {/* Refund deposit */}
+            <Card title={tr('Refund deposit', 'Вернуть депозит', 'Depozit qaytarish')} action={<Wallet size={16} className="text-emerald-500" />}>
+              <form onSubmit={handleRefundSubmit} className="space-y-4">
+                <FormField label={tr('Product', 'Товар', 'Mahsulot')}>
+                  <select
+                    value={refundForm.product_id}
+                    onChange={(e) => setRefundForm((s) => ({ ...s, product_id: e.target.value }))}
+                    className={inputCls}
+                  >
+                    <option value="">{tr('Choose product', 'Выберите товар', 'Mahsulotni tanlang')}</option>
+                    {balances.map((b) => (
+                      <option key={b.id} value={b.product_id}>
+                        {b.product_name}{b.product_size_liters ? ` · ${b.product_size_liters}L` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </FormField>
+
+                <div className="grid grid-cols-[1fr,auto] items-end gap-3">
+                  <FormField label={tr('Quantity', 'Количество', 'Soni')}>
+                    <input
+                      type="number" min="1" step="1"
+                      value={refundForm.quantity}
+                      onChange={(e) => setRefundForm((s) => ({ ...s, quantity: e.target.value }))}
+                      disabled={refundForm.refund_all}
+                      className={inputCls}
+                    />
+                  </FormField>
+                  <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-light-border px-3 py-2.5 text-sm text-slate-700 transition hover:bg-slate-50 dark:border-white/10 dark:text-white/70 dark:hover:bg-white/5">
                     <input
                       type="checkbox"
-                      className="sr-only"
-                      checked={returnForm.return_all}
-                      onChange={(e) =>
-                        setReturnForm((p) => ({ ...p, return_all: e.target.checked }))
-                      }
+                      checked={refundForm.refund_all}
+                      onChange={(e) => setRefundForm((s) => ({ ...s, refund_all: e.target.checked }))}
+                      className="h-4 w-4 rounded accent-primary-blue"
                     />
-                    <span className="flex-1 text-[13px] font-medium text-gray-600 dark:text-white/50">
-                      {tr(
-                        'Return all outstanding for this product',
-                        'Вернуть все бутыли по этому продукту',
-                        "Bu mahsulot bo'yicha barcha idishni qaytarish"
-                      )}
-                    </span>
-                    {selectedReturnBalance && (
-                      <span className="rounded-lg border border-gray-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-gray-500 dark:border-white/[0.07] dark:bg-white/[0.04] dark:text-white/30">
-                        {selectedReturnBalance.outstanding_bottles_count}
-                      </span>
-                    )}
+                    {tr('All', 'Все', 'Hammasi')}
                   </label>
-                  {/* note */}
-                  <div>
-                    <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400 dark:text-white/25">
-                      {tr('Operator note', 'Комментарий оператора', 'Operator izohi')}
-                    </label>
-                    <textarea
-                      value={returnForm.note}
-                      onChange={(e) =>
-                        setReturnForm((p) => ({ ...p, note: e.target.value }))
-                      }
-                      rows={3}
-                      placeholder={tr(
-                        'E.g. client returned 2 empty bottles at the gate.',
-                        'Напр.: клиент вернул 2 пустые бутыли у входа.',
-                        "Masalan: eshik oldida 2 ta bo'sh idish qaytardi."
-                      )}
-                      className="w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-[13px] text-gray-800 placeholder-gray-300 shadow-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 dark:border-white/[0.07] dark:bg-white/[0.04] dark:text-white dark:placeholder-white/15 dark:focus:border-emerald-500/40 dark:focus:ring-0"
-                    />
-                  </div>
+                </div>
 
-                  <div className="flex justify-end pt-1">
-                    <button
-                      type="submit"
-                      disabled={returnSaving || !balances.length}
-                      className="group relative inline-flex items-center gap-2.5 overflow-hidden rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 px-7 py-3 text-[13px] font-bold text-white shadow-lg shadow-emerald-200 transition-all hover:shadow-emerald-300 hover:brightness-105 disabled:opacity-40 dark:shadow-emerald-950/50 dark:hover:shadow-emerald-950/70"
-                    >
-                      <div className="absolute inset-0 -translate-x-full bg-white/10 transition-transform duration-500 group-hover:translate-x-full" />
-                      {returnSaving ? (
-                        <Loader2 size={14} className="animate-spin" />
-                      ) : (
-                        <Undo2 size={14} />
-                      )}
-                      {returnSaving
-                        ? tr('Saving…', 'Сохранение…', 'Saqlanmoqda…')
-                        : tr('Save return', 'Сохранить возврат', 'Qaytarishni saqlash')}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
+                <FormField label={tr('Note', 'Примечание', 'Izoh')}>
+                  <textarea
+                    rows={2}
+                    value={refundForm.note}
+                    onChange={(e) => setRefundForm((s) => ({ ...s, note: e.target.value }))}
+                    placeholder={tr('Optional refund note…', 'Примечание к возврату…', 'Qaytim izohi…')}
+                    className={inputCls}
+                  />
+                </FormField>
 
-            {/* ═══ BALANCES TABLE ═══ */}
-            <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-white/[0.06] dark:bg-white/[0.03]">
-              <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-white/[0.05]">
-                <div className="flex items-center gap-2.5">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gray-100 dark:bg-white/[0.05]">
-                    <Package size={13} className="text-gray-500 dark:text-white/40" />
-                  </div>
-                  <p className="text-[13px] font-bold text-gray-700 dark:text-white/60">
-                    {tr('Balances by product', 'Балансы по продуктам', "Mahsulotlar bo'yicha balans")}
+                <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm dark:border-emerald-500/20 dark:bg-emerald-500/10">
+                  <p className="font-semibold text-emerald-900 dark:text-emerald-200">{tr('Preview', 'Предпросмотр', "Ko'rinish")}</p>
+                  <p className="mt-0.5 text-emerald-700 dark:text-emerald-300">
+                    {refundPreviewQty} {tr('bottles', 'бутылок', 'idish')} · {formatCurrency(refundPreviewAmount)}
                   </p>
                 </div>
-                {workspaceLoading && (
-                  <Loader2 size={12} className="animate-spin text-gray-400 dark:text-white/20" />
-                )}
-              </div>
 
+                <button
+                  type="submit"
+                  disabled={refundSaving || workspaceLoading || !refundForm.product_id}
+                  className={btnCls('bg-emerald-600 hover:bg-emerald-700')}
+                >
+                  {refundSaving ? <Loader2 size={15} className="animate-spin" /> : <Wallet size={15} />}
+                  {tr('Save refund', 'Сохранить возврат', 'Qaytimni saqlash')}
+                </button>
+              </form>
+            </Card>
+          </div>
+
+          {/* ── Bottle balances table ── */}
+          <Card title={tr('Bottle balances', 'Баланс бутылок', 'Idish balansi')} action={<ClipboardList size={16} className="text-slate-400" />}>
+            {workspaceLoading ? (
+              <div className="flex items-center justify-center gap-2.5 rounded-xl border border-dashed border-light-border py-12 text-sm text-slate-400 dark:border-white/10 dark:text-white/30">
+                <Loader2 size={15} className="animate-spin" />
+                {tr('Loading…', 'Загрузка…', 'Yuklanmoqda…')}
+              </div>
+            ) : balances.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-light-border py-12 text-center text-sm text-slate-400 dark:border-white/10 dark:text-white/30">
+                {tr('No bottle balances for this client yet.', 'У этого клиента нет баланса бутылок.', "Bu mijozda idish balansi yo'q.")}
+              </div>
+            ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-left">
+                <table className="min-w-full">
                   <thead>
-                    <tr className="border-b border-gray-100 dark:border-white/[0.03]">
+                    <tr className="border-b border-light-border text-left dark:border-white/10">
                       {[
-                        tr('Product', 'Продукт', 'Mahsulot'),
-                        tr('Outstanding', 'Остаток', 'Qoldiq'),
-                        tr('Held', 'Удержано', 'Ushlab turilgan'),
-                        tr('Charged', 'Начислено', 'Olingan'),
-                        tr('Refunded', 'Возвращено', 'Qaytarilgan'),
-                        '',
+                        tr('Product', 'Товар', 'Mahsulot'),
+                        tr('Outstanding', 'На руках', 'Mijozdagi'),
+                        tr('Deposit held', 'Депозит', 'Depozit'),
+                        tr('Updated', 'Обновлено', 'Yangilangan'),
+                        tr('Actions', 'Действия', 'Amallar'),
                       ].map((h, i) => (
-                        <th
-                          key={i}
-                          className={`bg-gray-50/70 px-6 py-3 text-[10px] font-bold uppercase tracking-[0.13em] text-gray-400 dark:bg-white/[0.015] dark:text-white/20 ${
-                            i > 0 && i < 5 ? 'text-right' : ''
-                          }`}
-                        >
+                        <th key={i} className={`pb-3 pr-4 text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-white/30 ${i === 4 ? 'text-right' : ''}`}>
                           {h}
                         </th>
                       ))}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100 dark:divide-white/[0.025]">
-                    {balances.length ? (
-                      balances.map((b) => (
-                        <tr
-                          key={b.id}
-                          className="transition-colors hover:bg-gray-50 dark:hover:bg-white/[0.025]"
-                        >
-                          <td className="px-6 py-4">
-                            <p className="text-[13px] font-bold text-gray-800 dark:text-white/75">
-                              {b.product_name}
-                            </p>
-                            <p className="mt-0.5 text-[11px] text-gray-400 dark:text-white/25">
-                              {b.product_size_liters ? `${b.product_size_liters}L` : '—'}
-                              {b.product_sku ? ` · ${b.product_sku}` : ''}
-                            </p>
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            <span className="inline-flex items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1 text-[13px] font-black text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400">
-                              {b.outstanding_bottles_count}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-right text-[13px] font-semibold text-gray-700 dark:text-white/55">
-                            {fmt(b.deposit_held_uzs)}
-                          </td>
-                          <td className="px-6 py-4 text-right text-[13px] text-gray-500 dark:text-white/35">
-                            {fmt(b.total_deposit_charged_uzs)}
-                          </td>
-                          <td className="px-6 py-4 text-right text-[13px] text-gray-500 dark:text-white/35">
-                            {fmt(b.total_deposit_refunded_uzs)}
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setReturnForm((p) => ({
-                                  ...p,
-                                  product_id: b.product_id,
-                                  return_all: false,
-                                  quantity: '1',
-                                }))
-                              }
-                              className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[11px] font-bold text-emerald-700 transition-all hover:border-emerald-300 hover:bg-emerald-100 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:border-emerald-500/40 dark:hover:bg-emerald-500/20"
-                            >
-                              <Undo2 size={11} />
-                              {tr('Select', 'Выбрать', 'Tanlash')}
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td
-                          colSpan={6}
-                          className="px-6 py-14 text-center text-[13px] text-gray-400 dark:text-white/15"
-                        >
-                          {workspaceLoading
-                            ? tr('Loading…', 'Загрузка…', 'Yuklanmoqda…')
-                            : tr(
-                                'No bottle balances found.',
-                                'Балансы не найдены.',
-                                'Balans topilmadi.'
-                              )}
+                  <tbody className="divide-y divide-light-border dark:divide-white/10">
+                    {balances.map((b) => (
+                      <tr key={b.id} className="align-middle">
+                        <td className="py-4 pr-4">
+                          <p className="font-semibold text-slate-900 dark:text-white">{b.product_name}</p>
+                          <p className="mt-0.5 text-xs text-slate-400 dark:text-white/35">
+                            {b.product_size_liters ? `${b.product_size_liters}L` : '—'}
+                            {b.product_sku ? ` · ${b.product_sku}` : ''}
+                          </p>
+                        </td>
+                        <td className="py-4 pr-4 text-sm font-bold text-slate-900 dark:text-white">
+                          {b.outstanding_bottles_count}
+                        </td>
+                        <td className="py-4 pr-4 text-sm text-slate-600 dark:text-white/70">
+                          {formatCurrency(b.deposit_held_uzs)}
+                        </td>
+                        <td className="py-4 pr-4 text-sm text-slate-400 dark:text-white/35">
+                          {formatDate(b.updated_at)}
+                        </td>
+                        <td className="py-4 text-right">
+                          <div className="inline-flex gap-2">
+                            {(
+                              [
+                                { action: 'increment' as ActionType, label: tr('Add', 'Добавить', "Qo'shish"), cls: 'border-blue-200 text-blue-700 hover:bg-blue-50 dark:border-blue-500/30 dark:text-blue-400 dark:hover:bg-blue-500/10' },
+                                { action: 'return' as ActionType, label: tr('Return', 'Принять', 'Qaytim'), cls: 'border-amber-200 text-amber-700 hover:bg-amber-50 dark:border-amber-500/30 dark:text-amber-400 dark:hover:bg-amber-500/10' },
+                                { action: 'refund' as ActionType, label: tr('Refund', 'Вернуть', 'Qaytarish'), cls: 'border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-500/30 dark:text-emerald-400 dark:hover:bg-emerald-500/10' },
+                              ] as const
+                            ).map(({ action, label, cls }) => (
+                              <button
+                                key={action}
+                                type="button"
+                                onClick={() => selectBalanceForAction(b.product_id, action)}
+                                className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${cls}`}
+                              >
+                                {label}
+                              </button>
+                            ))}
+                          </div>
                         </td>
                       </tr>
-                    )}
+                    ))}
                   </tbody>
                 </table>
               </div>
-            </div>
+            )}
+          </Card>
 
-            {/* ═══ MOVEMENT LOG ═══ */}
-            <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-white/[0.06] dark:bg-white/[0.03]">
-              <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-white/[0.05]">
-                <div className="flex items-center gap-2.5">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gray-100 dark:bg-white/[0.05]">
-                    <Activity size={13} className="text-gray-500 dark:text-white/40" />
-                  </div>
-                  <p className="text-[13px] font-bold text-gray-700 dark:text-white/60">
-                    {tr('Movement audit log', 'Журнал движений', 'Harakatlar jurnali')}
-                  </p>
-                </div>
-                <span className="rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1 text-[11px] font-semibold text-gray-400 dark:border-white/[0.06] dark:bg-white/[0.03] dark:text-white/25">
-                  {movements.length}
-                </span>
+          {/* ── Movements feed ── */}
+          <Card title={tr('Recent movements', 'Последние движения', "So'nggi harakatlar")} action={<ShieldAlert size={16} className="text-slate-400" />}>
+            {workspaceLoading ? (
+              <div className="flex items-center justify-center gap-2.5 rounded-xl border border-dashed border-light-border py-12 text-sm text-slate-400 dark:border-white/10 dark:text-white/30">
+                <Loader2 size={15} className="animate-spin" />
+                {tr('Loading…', 'Загрузка…', 'Yuklanmoqda…')}
               </div>
-
-              <div className="divide-y divide-gray-100 dark:divide-white/[0.025]">
-                {movements.length ? (
-                  movements.map((mv) => {
-                    const colors = mvColors(mv.movement_type);
-                    return (
-                      <div
-                        key={mv.id}
-                        className="flex flex-col gap-4 px-6 py-5 transition-colors hover:bg-gray-50/70 dark:hover:bg-white/[0.02] lg:flex-row lg:items-center lg:justify-between"
-                      >
-                        {/* left: type + meta */}
-                        <div className="flex items-start gap-4">
-                          <div
-                            className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border ${colors.badge}`}
-                          >
-                            {mvIcon(mv.movement_type)}
-                          </div>
-                          <div>
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span
-                                className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] font-bold ${colors.badge}`}
-                              >
-                                {mvIcon(mv.movement_type)}
-                                {mvLabel(mv.movement_type)}
-                              </span>
-                              <span className="text-[13px] font-semibold text-gray-800 dark:text-white/65">
-                                {mv.product_name ?? '—'}
-                                {mv.product_size_liters ? ` · ${mv.product_size_liters}L` : ''}
-                              </span>
-                              {mv.product_sku && (
-                                <span className="rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-400 dark:bg-white/[0.05] dark:text-white/25">
-                                  {mv.product_sku}
-                                </span>
-                              )}
-                            </div>
-                            <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-gray-400 dark:text-white/20">
-                              <span className="flex items-center gap-1">
-                                <Clock size={10} />
-                                {fmtDate(mv.created_at)}
-                              </span>
-                              {mv.actor && (
-                                <>
-                                  <span className="h-3 w-px bg-gray-200 dark:bg-white/10" />
-                                  <span className="font-medium">{mv.actor}</span>
-                                </>
-                              )}
-                              {mv.order_id && (
-                                <>
-                                  <span className="h-3 w-px bg-gray-200 dark:bg-white/10" />
-                                  <span className="font-mono text-[10px]">
-                                    {tr('Order', 'Заказ', 'Buyurtma')} #{mv.order_id.slice(0, 8)}
-                                  </span>
-                                </>
-                              )}
-                            </div>
-                            {mv.note && (
-                              <p className="mt-2 max-w-md rounded-lg border border-gray-100 bg-gray-50 px-3 py-1.5 text-[12px] italic text-gray-500 dark:border-white/[0.04] dark:bg-white/[0.025] dark:text-white/30">
-                                {mv.note}
-                              </p>
-                            )}
-                          </div>
+            ) : movements.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-light-border py-12 text-center text-sm text-slate-400 dark:border-white/10 dark:text-white/30">
+                {tr('No movement history yet.', 'История движений пуста.', "Harakatlar tarixi yo'q.")}
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                {movements.slice(0, 20).map((m) => {
+                  const delta = typeof m.bottles_delta === 'number' ? m.bottles_delta : (m.quantity ?? 0);
+                  return (
+                    <div key={m.id} className="flex flex-col gap-3 rounded-xl border border-light-border bg-white px-4 py-4 sm:flex-row sm:items-start sm:justify-between dark:border-white/10 dark:bg-navy-900">
+                      <div className="min-w-0 space-y-1.5">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge variant={movementVariant(m.movement_type)}>{movementLabel(m.movement_type)}</Badge>
+                          <span className={`text-sm font-bold ${delta >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                            {delta >= 0 ? '+' : ''}{delta}
+                          </span>
                         </div>
-
-                        {/* right: delta chips */}
-                        <div className="flex shrink-0 flex-wrap items-center gap-2 lg:gap-3">
-                          {/* bottles delta */}
-                          <div className="min-w-[80px] rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5 text-center dark:border-white/[0.05] dark:bg-white/[0.03]">
-                            <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400 dark:text-white/20">
-                              {tr('Bottles', 'Бутыли', 'Idish')} Δ
-                            </p>
-                            <p
-                              className={`mt-1 text-[15px] font-black ${
-                                mv.bottles_delta < 0
-                                  ? 'text-emerald-600 dark:text-emerald-400'
-                                  : 'text-amber-600 dark:text-amber-400'
-                              }`}
-                            >
-                              {mv.bottles_delta > 0 ? '+' : ''}
-                              {mv.bottles_delta}
-                            </p>
-                          </div>
-
-                          {/* deposit delta */}
-                          <div className="min-w-[110px] rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5 text-center dark:border-white/[0.05] dark:bg-white/[0.03]">
-                            <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400 dark:text-white/20">
-                              {tr('Deposit', 'Депозит', 'Depozit')} Δ
-                            </p>
-                            <p
-                              className={`mt-1 text-[13px] font-black ${
-                                mv.deposit_delta_uzs < 0
-                                  ? 'text-emerald-600 dark:text-emerald-400'
-                                  : 'text-amber-600 dark:text-amber-400'
-                              }`}
-                            >
-                              {mv.deposit_delta_uzs > 0 ? '+' : ''}
-                              {fmt(mv.deposit_delta_uzs)}
-                            </p>
-                          </div>
-
-                          {/* balance flow */}
-                          <div className="min-w-[100px] rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5 text-center dark:border-white/[0.05] dark:bg-white/[0.03]">
-                            <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400 dark:text-white/20">
-                              {tr('Balance', 'Баланс', 'Balans')}
-                            </p>
-                            <p className="mt-1 text-[13px] font-bold text-gray-600 dark:text-white/50">
-                              {mv.balance_before_count ?? '—'}
-                              <span className="mx-1 text-gray-300 dark:text-white/20">→</span>
-                              {mv.balance_after_count ?? '—'}
-                            </p>
-                          </div>
-                        </div>
+                        <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                          {m.product_name ?? tr('Unknown product', 'Неизвестный товар', "Noma'lum mahsulot")}
+                        </p>
+                        <p className="text-xs text-slate-400 dark:text-white/35">
+                          {formatCurrency(m.deposit_delta_uzs ?? 0)}
+                          {m.actor ? ` · ${m.actor}` : ''}
+                          {m.order_id ? ` · #${m.order_id.slice(0, 8)}` : ''}
+                        </p>
+                        {m.note && <p className="text-sm text-slate-500 dark:text-white/60">{m.note}</p>}
                       </div>
-                    );
-                  })
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <ClipboardList
-                      size={22}
-                      className="text-gray-300 dark:text-white/10"
-                    />
-                    <p className="mt-3 text-[13px] text-gray-400 dark:text-white/15">
-                      {workspaceLoading
-                        ? tr('Loading history…', 'Загрузка истории…', 'Yuklanmoqda…')
-                        : tr(
-                            'No movements yet for this client.',
-                            'История движений пуста.',
-                            "Bu mijoz uchun hali harakat yo'q."
-                          )}
-                    </p>
-                  </div>
-                )}
+                      <p className="shrink-0 text-xs text-slate-400 dark:text-white/30">{formatDate(m.created_at)}</p>
+                    </div>
+                  );
+                })}
               </div>
-            </div>
+            )}
+          </Card>
 
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
