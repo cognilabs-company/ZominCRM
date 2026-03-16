@@ -134,8 +134,8 @@ export const ClientCheckoutPreviewPage: React.FC = () => {
       <ClientPage title={t('checkout.title')} subtitle={t('checkout.address_required_subtitle')}>
         <ClientPanel className="p-5">
           <p className="text-sm leading-6 text-[#5b6770]">{t('checkout.address_required_description')}</p>
-          <button type="button" onClick={goBackToCart} className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-[#21404d] px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(33,64,77,0.18)] transition hover:brightness-105">
-            <ArrowLeft size={15} />
+          <button type="button" onClick={goBackToCart} className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#21404d] px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:brightness-105">
+            <ArrowLeft size={13} />
             {t('checkout.back_to_cart')}
           </button>
         </ClientPanel>
@@ -151,9 +151,9 @@ export const ClientCheckoutPreviewPage: React.FC = () => {
         <button
           type="button"
           onClick={goBackToCart}
-          className="inline-flex items-center gap-2 rounded-2xl border border-[#d9cdbd] bg-[rgba(255,248,240,0.94)] px-4 py-3 text-sm font-semibold text-[#31424d] transition hover:bg-white"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-[#d9cdbd] bg-[rgba(255,248,240,0.94)] px-3 py-2 text-xs font-semibold text-[#31424d] transition hover:bg-white"
         >
-          <ArrowLeft size={15} />
+          <ArrowLeft size={13} />
           {t('checkout.back_to_cart')}
         </button>
       }
@@ -197,7 +197,7 @@ export const ClientCheckoutPreviewPage: React.FC = () => {
                   {getOrderStatusLabel(preview.active_order.status, language)}
                 </div>
               </div>
-              <button type="button" onClick={() => navigate(`/app/orders/${preview.active_order!.id}`)} className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-[#21404d] px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(33,64,77,0.18)] transition hover:brightness-105">
+              <button type="button" onClick={() => navigate(`/app/orders/${preview.active_order!.id}`)} className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#21404d] px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:brightness-105">
                 {t('checkout.open_orders')}
               </button>
             </div>
@@ -262,13 +262,13 @@ export const ClientCheckoutPreviewPage: React.FC = () => {
                 type="button"
                 onClick={handleCreateOrder}
                 disabled={submitting || !canRequestPreview}
-                className={`inline-flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-medium transition ${
+                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition ${
                   submitting || !canRequestPreview
                     ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
-                    : 'bg-[linear-gradient(135deg,#f59e0b_0%,#e76f51_100%)] text-white shadow-[0_12px_24px_rgba(231,111,81,0.24)] hover:brightness-105'
+                    : 'bg-[linear-gradient(135deg,#f59e0b_0%,#e76f51_100%)] text-white shadow-sm hover:brightness-105'
                 }`}
               >
-                <CheckCircle2 size={18} />
+                <CheckCircle2 size={14} />
                 {submitting ? t('checkout.creating_order') : t('checkout.create_order')}
               </button>
             </div>

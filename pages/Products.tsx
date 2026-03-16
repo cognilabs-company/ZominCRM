@@ -871,9 +871,9 @@ const Products: React.FC = () => {
         </div>
         <button
           onClick={openCreate}
-          className="inline-flex items-center gap-2 rounded-xl bg-primary-blue px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-600"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-primary-blue px-3 py-1.5 text-xs font-medium text-white transition hover:bg-blue-600"
         >
-          <Plus size={16} /> {t('create')}
+          <Plus size={14} /> {t('create')}
         </button>
       </div>
 
@@ -1262,14 +1262,14 @@ const Products: React.FC = () => {
             <button
               type="button"
               onClick={closeEditor}
-              className="rounded-lg px-4 py-2 text-sm text-gray-600 transition hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-navy-700"
+              className="rounded-lg px-3 py-1.5 text-xs text-gray-600 transition hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-navy-700"
             >
               {t('cancel')}
             </button>
             <button
               disabled={saving}
               type="submit"
-              className="rounded-lg bg-primary-blue px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-600 disabled:opacity-50"
+              className="rounded-lg bg-primary-blue px-3 py-1.5 text-xs font-medium text-white transition hover:bg-blue-600 disabled:opacity-50"
             >
               {saving ? tr('Saving…', 'Сохранение…', 'Saqlanmoqda…') : t('save')}
             </button>
@@ -1430,9 +1430,9 @@ const Products: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => { closeDetail(); openEdit(detailProduct); }}
-                    className="inline-flex items-center gap-2 rounded-xl bg-[#21404d] px-4 py-2.5 text-sm font-medium text-white transition hover:brightness-110"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#21404d] px-3 py-2 text-xs font-medium text-white transition hover:brightness-110"
                   >
-                    <Edit2 size={14} /> {tr('Edit this product', 'Редактировать товар', 'Mahsulotni tahrirlash')}
+                    <Edit2 size={12} /> {tr('Edit this product', 'Редактировать товар', 'Mahsulotni tahrirlash')}
                   </button>
                 </div>
               </div>

@@ -118,11 +118,11 @@ export const Header: React.FC<{ onMenuClick?: () => void }> = ({ onMenuClick }) 
         />
       </div>
 
-      <div className="flex items-center gap-1 sm:gap-2 ml-auto min-w-0">
+      <div className="flex items-center gap-1 sm:gap-1.5 ml-auto min-w-0">
         <div className="relative">
           <button
             onClick={() => { setIsLangOpen(!isLangOpen); setIsNotifOpen(false); }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-light-muted dark:text-white/70 hover:text-light-text dark:hover:text-white hover:bg-light-bg dark:hover:bg-white/6 border border-transparent hover:border-light-border dark:hover:border-white/8 transition-all"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-light-muted dark:text-white/70 hover:text-light-text dark:hover:text-white hover:bg-light-bg dark:hover:bg-white/6 border border-transparent hover:border-light-border dark:hover:border-white/8 transition-all"
           >
             <span>{langLabel}</span>
             <ChevronDown size={12} className={`transition-transform ${isLangOpen ? 'rotate-180' : ''}`} />
@@ -131,12 +131,12 @@ export const Header: React.FC<{ onMenuClick?: () => void }> = ({ onMenuClick }) 
           {isLangOpen && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setIsLangOpen(false)} />
-              <div className="absolute right-0 top-full mt-2 w-40 bg-white dark:bg-navy-800 border border-light-border dark:border-white/8 rounded-xl shadow-modal py-1.5 z-20 animate-fade-in-up">
+              <div className="absolute right-0 top-full mt-1.5 w-32 bg-white dark:bg-navy-800 border border-light-border dark:border-white/8 rounded-lg shadow-modal py-1 z-20 animate-fade-in-up">
                 {(['en', 'ru', 'uz'] as Language[]).map((lang) => (
                   <button
                     key={lang}
                     onClick={() => handleLangSelect(lang)}
-                    className={`w-full text-left px-4 py-2.5 text-sm flex items-center justify-between hover:bg-light-bg dark:hover:bg-white/6 transition-colors ${language === lang ? 'text-primary-blue dark:text-blue-300 font-semibold' : 'text-light-text dark:text-white/70'}`}
+                    className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-light-bg dark:hover:bg-white/6 transition-colors ${language === lang ? 'text-primary-blue dark:text-blue-300 font-semibold' : 'text-light-text dark:text-white/70'}`}
                   >
                     <span>{lang === 'en' ? 'English' : lang === 'ru' ? 'Russkiy' : "O'zbek"}</span>
                     {language === lang && <Check size={13} className="text-primary-blue dark:text-blue-300" />}
@@ -149,18 +149,18 @@ export const Header: React.FC<{ onMenuClick?: () => void }> = ({ onMenuClick }) 
 
         <button
           onClick={toggleTheme}
-          className="p-2 rounded-lg text-light-muted dark:text-white/60 hover:text-light-text dark:hover:text-white hover:bg-light-bg dark:hover:bg-white/6 transition-all border border-transparent hover:border-light-border dark:hover:border-white/8"
+          className="p-1.5 rounded-lg text-light-muted dark:text-white/60 hover:text-light-text dark:hover:text-white hover:bg-light-bg dark:hover:bg-white/6 transition-all border border-transparent hover:border-light-border dark:hover:border-white/8"
           title={theme === 'dark' ? 'Switch to Light' : 'Switch to Dark'}
         >
-          {theme === 'dark' ? <Sun size={18} className="text-yellow-400" /> : <Moon size={18} />}
+          {theme === 'dark' ? <Sun size={16} className="text-yellow-400" /> : <Moon size={16} />}
         </button>
 
         <div className="relative">
           <button
             onClick={() => { setIsNotifOpen(!isNotifOpen); setIsLangOpen(false); }}
-            className={`relative p-2 rounded-lg transition-all border ${isNotifOpen ? 'bg-light-bg dark:bg-white/8 border-light-border dark:border-white/10 text-primary-blue dark:text-blue-300' : 'text-light-muted dark:text-white/60 border-transparent hover:border-light-border dark:hover:border-white/8 hover:bg-light-bg dark:hover:bg-white/6 hover:text-light-text dark:hover:text-white'}`}
+            className={`relative p-1.5 rounded-lg transition-all border ${isNotifOpen ? 'bg-light-bg dark:bg-white/8 border-light-border dark:border-white/10 text-primary-blue dark:text-blue-300' : 'text-light-muted dark:text-white/60 border-transparent hover:border-light-border dark:hover:border-white/8 hover:bg-light-bg dark:hover:bg-white/6 hover:text-light-text dark:hover:text-white'}`}
           >
-            <Bell size={18} />
+            <Bell size={16} />
             {hasUnread && (
               <span className="absolute top-1.5 right-1.5 min-w-[14px] h-3.5 rounded-full bg-primary-red text-white text-[9px] font-bold flex items-center justify-center px-0.5 leading-none shadow-glow-red border border-white dark:border-navy-900">
                 {unreadCount > 9 ? '9+' : unreadCount}
@@ -171,9 +171,9 @@ export const Header: React.FC<{ onMenuClick?: () => void }> = ({ onMenuClick }) 
           {isNotifOpen && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setIsNotifOpen(false)} />
-              <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-navy-800 border border-light-border dark:border-white/8 rounded-xl shadow-modal py-0 z-20 overflow-hidden animate-fade-in-up">
-                <div className="px-4 py-3 border-b border-light-border dark:border-white/6 flex items-center justify-between bg-light-bg dark:bg-white/3">
-                  <h4 className="font-semibold text-light-text dark:text-white text-sm">{tr('Notifications', 'Notifications', 'Bildirishnomalar')}</h4>
+              <div className="absolute right-0 top-full mt-1.5 w-72 bg-white dark:bg-navy-800 border border-light-border dark:border-white/8 rounded-lg shadow-modal py-0 z-20 overflow-hidden animate-fade-in-up">
+                <div className="px-3 py-2.5 border-b border-light-border dark:border-white/6 flex items-center justify-between bg-light-bg dark:bg-white/3">
+                  <h4 className="font-semibold text-light-text dark:text-white text-xs">{tr('Notifications', 'Notifications', 'Bildirishnomalar')}</h4>
                   {hasUnread && (
                     <span className="text-[10px] bg-primary-red text-white rounded-full px-1.5 py-0.5 font-bold">{unreadCount}</span>
                   )}
@@ -181,8 +181,8 @@ export const Header: React.FC<{ onMenuClick?: () => void }> = ({ onMenuClick }) 
 
                 <div className="max-h-64 overflow-y-auto">
                   {notifications.length === 0 ? (
-                    <div className="px-4 py-8 text-center">
-                      <Bell size={24} className="mx-auto text-light-muted/30 dark:text-white/15 mb-2" />
+                    <div className="px-4 py-6 text-center">
+                      <Bell size={20} className="mx-auto text-light-muted/30 dark:text-white/15 mb-2" />
                       <p className="text-sm text-light-muted dark:text-white/40">
                         {tr('No notifications yet.', 'No notifications yet.', "Hozircha bildirishnoma yo'q.")}
                       </p>
@@ -192,13 +192,13 @@ export const Header: React.FC<{ onMenuClick?: () => void }> = ({ onMenuClick }) 
                       <div
                         key={notif.id}
                         onClick={() => markNotificationRead(notif.id)}
-                        className={`px-4 py-3 hover:bg-light-bg dark:hover:bg-white/4 border-b border-light-border/50 dark:border-white/4 last:border-0 cursor-pointer transition-colors ${notif.read ? 'opacity-60' : ''}`}
+                        className={`px-3 py-2.5 hover:bg-light-bg dark:hover:bg-white/4 border-b border-light-border/50 dark:border-white/4 last:border-0 cursor-pointer transition-colors ${notif.read ? 'opacity-60' : ''}`}
                       >
-                        <div className="flex gap-3 items-start">
-                          <div className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${notif.read ? 'bg-gray-300 dark:bg-white/20' : notif.type === 'error' ? 'bg-primary-red shadow-glow-red' : notif.type === 'success' ? 'bg-accent-emerald' : 'bg-primary-blue shadow-glow-blue'}`} style={!notif.read ? { boxShadow: notif.type === 'error' ? '0 0 6px rgba(229,57,53,0.8)' : notif.type === 'info' ? '0 0 6px rgba(47,107,255,0.8)' : '' } : {}} />
+                        <div className="flex gap-2 items-start">
+                          <div className={`mt-1 w-1.5 h-1.5 rounded-full shrink-0 ${notif.read ? 'bg-gray-300 dark:bg-white/20' : notif.type === 'error' ? 'bg-primary-red shadow-glow-red' : notif.type === 'success' ? 'bg-accent-emerald' : 'bg-primary-blue shadow-glow-blue'}`} style={!notif.read ? { boxShadow: notif.type === 'error' ? '0 0 6px rgba(229,57,53,0.8)' : notif.type === 'info' ? '0 0 6px rgba(47,107,255,0.8)' : '' } : {}} />
                           <div className="min-w-0">
-                            <p className="text-sm text-light-text dark:text-white/85 leading-snug">{notif.text}</p>
-                            <p className="text-[11px] text-light-muted dark:text-white/35 mt-0.5">{notif.time}</p>
+                            <p className="text-xs text-light-text dark:text-white/85 leading-snug">{notif.text}</p>
+                            <p className="text-[10px] text-light-muted dark:text-white/35 mt-0.5">{notif.time}</p>
                           </div>
                         </div>
                       </div>
@@ -206,11 +206,11 @@ export const Header: React.FC<{ onMenuClick?: () => void }> = ({ onMenuClick }) 
                   )}
                 </div>
 
-                <div className="px-4 py-2.5 border-t border-light-border dark:border-white/6 bg-light-bg/80 dark:bg-white/3 text-center">
+                <div className="px-3 py-2 border-t border-light-border dark:border-white/6 bg-light-bg/80 dark:bg-white/3 text-center">
                   <button
                     onClick={markAllAsRead}
                     disabled={!hasUnread}
-                    className="text-xs font-semibold text-primary-blue dark:text-blue-300 hover:text-primary-blueDark dark:hover:text-blue-200 transition-colors disabled:opacity-40"
+                    className="text-[10px] font-semibold text-primary-blue dark:text-blue-300 hover:text-primary-blueDark dark:hover:text-blue-200 transition-colors disabled:opacity-40"
                   >
                     {tr('Mark all as read', 'Mark all as read', "Barchasini o'qilgan qilish")}
                   </button>
@@ -224,10 +224,10 @@ export const Header: React.FC<{ onMenuClick?: () => void }> = ({ onMenuClick }) 
 
         <button
           onClick={async () => { await logout(); navigate('/login', { replace: true }); }}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-light-muted dark:text-white/60 hover:text-primary-red dark:hover:text-primary-red hover:bg-red-50 dark:hover:bg-red-900/15 border border-transparent hover:border-red-100 dark:hover:border-red-900/30 transition-all group"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-light-muted dark:text-white/60 hover:text-primary-red dark:hover:text-primary-red hover:bg-red-50 dark:hover:bg-red-900/15 border border-transparent hover:border-red-100 dark:hover:border-red-900/30 transition-all group"
           title={tr('Logout', 'Logout', 'Chiqish')}
         >
-          <LogOut size={16} className="transition-transform group-hover:translate-x-0.5" />
+          <LogOut size={14} className="transition-transform group-hover:translate-x-0.5" />
           <span className="hidden sm:inline">{tr('Logout', 'Logout', 'Chiqish')}</span>
         </button>
       </div>

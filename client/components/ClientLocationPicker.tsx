@@ -171,57 +171,57 @@ export const ClientLocationPicker: React.FC<ClientLocationPickerProps> = ({
 
   return (
     <div className="space-y-3">
-      <div className="rounded-[28px] border border-[#dbe5e0] bg-[linear-gradient(135deg,rgba(239,246,243,0.96)_0%,rgba(252,248,243,0.94)_100%)] p-4 shadow-[0_18px_42px_rgba(47,71,64,0.08)]">
-        <div className="flex items-start justify-between gap-4">
+      <div className="rounded-lg border border-[#dbe5e0] bg-[linear-gradient(135deg,rgba(239,246,243,0.96)_0%,rgba(252,248,243,0.94)_100%)] p-3 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between sm:gap-3 gap-2">
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#40635b]">{copy.liveMap}</p>
-            <p className="mt-2 text-sm leading-6 text-[#5b6770]">{t('cart.map_description')}</p>
-            <p className="mt-3 text-sm font-medium text-[#1f2933]">
+            <p className="text-xs font-semibold uppercase tracking-wider text-[#40635b]">{copy.liveMap}</p>
+            <p className="mt-1.5 text-xs leading-5 text-[#5b6770]">{t('cart.map_description')}</p>
+            <p className="mt-2 text-xs font-medium text-[#1f2933]">
               {selectedAddress || address || t('cart.map_selected_empty')}
             </p>
           </div>
           <button
             type="button"
             onClick={() => setOpenState(!open)}
-            className="inline-flex items-center gap-2 rounded-2xl bg-[#21404d] px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(33,64,77,0.18)] transition hover:brightness-105"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[#21404d] px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:brightness-105 shrink-0"
           >
-            <MapPin size={16} />
+            <MapPin size={14} />
             {open ? t('cart.map_close') : t('cart.map_open')}
           </button>
         </div>
       </div>
 
       {open ? (
-        <div className="rounded-[30px] border border-white/70 bg-[rgba(255,252,247,0.96)] p-4 shadow-[0_28px_60px_rgba(58,44,28,0.12)]">
-          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="rounded-lg border border-white/70 bg-[rgba(255,252,247,0.96)] p-3 shadow-sm">
+          <div className="mb-3 flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm font-semibold text-[#1f2933]">{t('cart.map_picker')}</p>
-              <p className="mt-1 text-xs text-[#7b8790]">{copy.dragHint}</p>
+              <p className="text-xs font-semibold text-[#1f2933]">{t('cart.map_picker')}</p>
+              <p className="mt-1 text-[11px] text-[#7b8790]">{copy.dragHint}</p>
             </div>
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={handleUseCurrentLocation}
-                className="inline-flex items-center gap-2 rounded-2xl border border-[#d9cdbd] bg-[rgba(255,248,240,0.94)] px-3 py-2 text-xs font-semibold text-[#31424d] transition hover:bg-white"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[#d9cdbd] bg-[rgba(255,248,240,0.94)] px-2.5 py-1.5 text-xs font-semibold text-[#31424d] transition hover:bg-white"
               >
-                <Crosshair size={14} />
+                <Crosshair size={12} />
                 {t('cart.map_use_current')}
               </button>
               <button
                 type="button"
                 onClick={() => setOpenState(false)}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-[#d9cdbd] bg-[rgba(255,248,240,0.94)] text-[#31424d] transition hover:bg-white"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#d9cdbd] bg-[rgba(255,248,240,0.94)] text-[#31424d] transition hover:bg-white"
               >
-                <X size={16} />
+                <X size={14} />
               </button>
             </div>
           </div>
 
-          <div className="relative overflow-hidden rounded-[28px] border border-[#d9e4df] shadow-[0_20px_40px_rgba(38,70,83,0.10)]">
-            <div className="pointer-events-none absolute left-4 top-4 z-[500] rounded-full bg-[rgba(255,255,255,0.92)] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#40635b] shadow-[0_10px_24px_rgba(31,41,51,0.10)]">
+          <div className="relative overflow-hidden rounded-lg border border-[#d9e4df] shadow-sm">
+            <div className="pointer-events-none absolute left-2.5 top-2.5 z-[500] rounded-full bg-[rgba(255,255,255,0.92)] px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-[#40635b] shadow-sm">
               {t('cart.map_select_hint')}
             </div>
-            <MapContainer center={selectedPosition} zoom={15} scrollWheelZoom className="h-[360px] w-full">
+            <MapContainer center={selectedPosition} zoom={15} scrollWheelZoom className="h-64 w-full">
               <TileLayer
                 attribution='&copy; OpenStreetMap contributors &copy; CARTO'
                 url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
@@ -243,18 +243,18 @@ export const ClientLocationPicker: React.FC<ClientLocationPickerProps> = ({
             </MapContainer>
           </div>
 
-          <div className="mt-4 grid gap-3 md:grid-cols-[1.4fr,1fr]">
-            <div className="rounded-[24px] bg-[linear-gradient(135deg,rgba(33,64,77,0.96)_0%,rgba(61,108,119,0.94)_100%)] p-4 text-white">
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-2xl bg-white/12 text-white">
-                  <Navigation size={15} />
+          <div className="mt-3 grid gap-2.5 md:grid-cols-[1.4fr,1fr]">
+            <div className="rounded-lg bg-[linear-gradient(135deg,rgba(33,64,77,0.96)_0%,rgba(61,108,119,0.94)_100%)] p-3 text-white">
+              <div className="flex items-start gap-2">
+                <div className="mt-0.5 flex h-7 w-7 items-center justify-center rounded-lg bg-white/12 text-white shrink-0">
+                  <Navigation size={13} />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/60">{t('cart.map_selected_title')}</p>
-                  <p className="mt-2 text-sm font-semibold leading-6 text-white">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-white/60">{t('cart.map_selected_title')}</p>
+                  <p className="mt-1.5 text-xs font-semibold leading-5 text-white">
                     {resolvingAddress ? t('cart.map_loading_address') : (selectedAddress || address || t('cart.map_selected_empty'))}
                   </p>
-                  <p className="mt-2 text-xs text-white/70">
+                  <p className="mt-1.5 text-[10px] text-white/70">
                     {t('cart.map_selected_coords', {
                       lat: formatCoordinate(selectedPosition[0]),
                       lng: formatCoordinate(selectedPosition[1]),
@@ -264,20 +264,20 @@ export const ClientLocationPicker: React.FC<ClientLocationPickerProps> = ({
               </div>
             </div>
 
-            <div className="rounded-[24px] bg-[rgba(255,248,240,0.94)] p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#9a6b3a]">{copy.readyTitle}</p>
-              <p className="mt-2 text-sm leading-6 text-[#5b6770]">{copy.readyDescription}</p>
-              {mapError ? <p className="mt-3 text-xs text-rose-600">{mapError}</p> : null}
+            <div className="rounded-lg bg-[rgba(255,248,240,0.94)] p-3">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-[#9a6b3a]">{copy.readyTitle}</p>
+              <p className="mt-1.5 text-xs leading-5 text-[#5b6770]">{copy.readyDescription}</p>
+              {mapError ? <p className="mt-2 text-[10px] text-rose-600">{mapError}</p> : null}
             </div>
           </div>
 
-          <div className="mt-4 flex justify-end">
+          <div className="mt-3 flex justify-end">
             <button
               type="button"
               onClick={handleApply}
-              className="inline-flex items-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#f59e0b_0%,#e76f51_100%)] px-5 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(231,111,81,0.24)] transition hover:brightness-105"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[linear-gradient(135deg,#f59e0b_0%,#e76f51_100%)] px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:brightness-105"
             >
-              <MapPin size={16} />
+              <MapPin size={14} />
               {t('cart.map_confirm')}
             </button>
           </div>

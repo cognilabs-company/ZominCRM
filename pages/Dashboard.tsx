@@ -655,7 +655,7 @@ const Dashboard: React.FC = () => {
                 type="button"
                 onClick={loadStats}
                 disabled={loading}
-                className="flex-1 md:flex-none inline-flex justify-center items-center gap-2 rounded-lg bg-white dark:bg-navy-800 border border-light-border dark:border-navy-600 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-navy-700 hover:text-primary-blue transition-all shadow-sm disabled:opacity-50"
+                className="flex-1 md:flex-none inline-flex justify-center items-center gap-1.5 rounded-lg bg-white dark:bg-navy-800 border border-light-border dark:border-navy-600 px-3 py-1.5 text-xs font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-navy-700 hover:text-primary-blue transition-all shadow-sm disabled:opacity-50"
               >
                 <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
                 {tr('Refresh', 'Refresh', 'Yangilash')}
@@ -664,7 +664,7 @@ const Dashboard: React.FC = () => {
                 type="button"
                 onClick={downloadStats}
                 disabled={downloading}
-                className="flex-1 md:flex-none inline-flex justify-center items-center gap-2 rounded-lg bg-primary-blue px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-all shadow-sm disabled:opacity-60 relative overflow-hidden group"
+                className="flex-1 md:flex-none inline-flex justify-center items-center gap-1.5 rounded-lg bg-primary-blue px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition-all shadow-sm disabled:opacity-60 relative overflow-hidden group"
               >
                 <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                 <Download size={15} className="relative z-10" />
@@ -704,7 +704,7 @@ const Dashboard: React.FC = () => {
                 setDepositsModalOpen(true);
                 void loadDeposits(0, false);
               }}
-              className="rounded-lg border border-light-border bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-navy-700 dark:bg-navy-900 dark:text-gray-200 dark:hover:bg-navy-800"
+              className="rounded-lg border border-light-border bg-white px-2.5 py-1 text-xs font-medium text-gray-700 transition hover:bg-gray-50 dark:border-navy-700 dark:bg-navy-900 dark:text-gray-200 dark:hover:bg-navy-800"
             >
               {tr('Details', 'Details', 'Tafsilotlar')}
             </button>
@@ -859,7 +859,7 @@ const Dashboard: React.FC = () => {
               type="button"
               onClick={() => void loadDeposits(0, false)}
               disabled={depositsLoading}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-light-border dark:border-navy-700 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:bg-navy-900 dark:text-gray-200 dark:hover:bg-navy-800 disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-light-border dark:border-navy-700 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 dark:bg-navy-900 dark:text-gray-200 dark:hover:bg-navy-800 disabled:opacity-50"
             >
               <RefreshCw size={15} className={depositsLoading ? 'animate-spin' : ''} />
               {tr('Refresh', 'Refresh', 'Yangilash')}
@@ -1000,7 +1000,7 @@ const Dashboard: React.FC = () => {
                 type="button"
                 onClick={() => void loadDeposits(depositsOffset + (depositsData.limit || 50), true)}
                 disabled={depositsLoading}
-                className="inline-flex items-center gap-2 rounded-xl border border-light-border dark:border-navy-700 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:bg-navy-900 dark:text-gray-200 dark:hover:bg-navy-800 disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-light-border dark:border-navy-700 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 dark:bg-navy-900 dark:text-gray-200 dark:hover:bg-navy-800 disabled:opacity-50"
               >
                 {depositsLoading ? tr('Loading...', 'Loading...', 'Yuklanmoqda...') : tr('Load more', 'Load more', 'Yana yuklash')}
               </button>
