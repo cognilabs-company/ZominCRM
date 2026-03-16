@@ -120,15 +120,15 @@ export const ClientCartPage: React.FC = () => {
         <button
           type="button"
           onClick={goToCheckout}
-          className={`inline-flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium transition ${
+          className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition ${
             hasItems
-              ? 'bg-[linear-gradient(135deg,#21404d_0%,#3d6c77_100%)] text-white shadow-[0_12px_24px_rgba(33,64,77,0.18)] hover:brightness-105'
+              ? 'bg-[linear-gradient(135deg,#21404d_0%,#3d6c77_100%)] text-white shadow-sm hover:brightness-105'
               : 'bg-slate-200 text-slate-400 cursor-not-allowed pointer-events-none'
           }`}
           aria-disabled={!hasItems}
         >
           {t('cart.preview')}
-          <ArrowRight size={15} />
+          <ArrowRight size={13} />
         </button>
       }
     >
