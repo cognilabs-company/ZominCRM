@@ -19,24 +19,25 @@ const accentBar: Record<string, string> = {
 export const Card: React.FC<CardProps> = ({ children, className = '', title, action, accent = 'none' }) => {
   return (
     <div className={`
-      bg-white dark:bg-navy-800
-      border border-light-border dark:border-white/6
-      rounded-lg shadow-card dark:shadow-card-dark
+      bg-white dark:bg-navy-900
+      border border-gray-200 dark:border-white/8
+      rounded-lg shadow-sm
       transition-all duration-200
+      hover:shadow-md dark:hover:shadow-lg
       ${accentBar[accent] || ''}
       ${className}
     `}>
       {(title || action) && (
-        <div className="px-4 py-3 border-b border-light-border dark:border-white/6 flex justify-between items-center gap-2">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-white/10 flex justify-between items-center gap-4">
           {title && (
-            <h3 className="text-sm font-semibold text-light-text dark:text-white/90 tracking-tight">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white tracking-tight">
               {title}
             </h3>
           )}
           {action && <div>{action}</div>}
         </div>
       )}
-      <div className="p-4">
+      <div className="p-6">
         {children}
       </div>
     </div>

@@ -5,39 +5,40 @@
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 
-  --color-navy-950: #060D18;
-  --color-navy-900: #0B1220;
-  --color-navy-800: #0F1B2E;
-  --color-navy-750: #132038;
-  --color-navy-700: #1A2C45;
-  --color-navy-600: #203552;
-  --color-navy-500: #2A4568;
+  --color-navy-950: #0F1119;
+  --color-navy-900: #111826;
+  --color-navy-850: #151D2B;
+  --color-navy-800: #1A2332;
+  --color-navy-750: #1F2A3A;
+  --color-navy-700: #2A3A52;
+  --color-navy-600: #3A4A62;
+  --color-navy-500: #4A5A72;
 
   --color-primary-red: #E53935;
   --color-primary-redDark: #C62828;
   --color-primary-redGlow: rgba(229, 57, 53, 0.25);
-  --color-primary-blue: #2F6BFF;
-  --color-primary-blueDark: #1A4FCC;
-  --color-primary-blueGlow: rgba(47, 107, 255, 0.22);
-  --color-primary-navy: #123A6F;
+  --color-primary-blue: #1F7E8F;
+  --color-primary-blueDark: #155C6B;
+  --color-primary-blueGlow: rgba(31, 126, 143, 0.22);
+  --color-primary-navy: #1F7E8F;
 
-  --color-light-bg: #F0F4FB;
+  --color-light-bg: #FAFBFC;
   --color-light-surface: #FFFFFF;
-  --color-light-border: #DDE3F0;
-  --color-light-text: #0B1220;
-  --color-light-muted: #64748B;
+  --color-light-border: #E5E7EB;
+  --color-light-text: #111827;
+  --color-light-muted: #6B7280;
 
   --color-accent-cyan: #06B6D4;
   --color-accent-purple: #8B5CF6;
   --color-accent-amber: #F59E0B;
-  --color-accent-emerald: #10B981;
+  --color-accent-emerald: #059669;
 
   --shadow-glow-red: 0 0 20px rgba(229, 57, 53, 0.3), 0 0 40px rgba(229, 57, 53, 0.1);
-  --shadow-glow-blue: 0 0 20px rgba(47, 107, 255, 0.3), 0 0 40px rgba(47, 107, 255, 0.1);
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.06);
-  --shadow-card-dark: 0 1px 3px rgba(0, 0, 0, 0.3), 0 4px 24px rgba(0, 0, 0, 0.25);
-  --shadow-modal: 0 8px 40px rgba(0, 0, 0, 0.35);
-  --shadow-sidebar: 2px 0 20px rgba(0, 0, 0, 0.15);
+  --shadow-glow-blue: 0 0 20px rgba(31, 126, 143, 0.2), 0 0 40px rgba(31, 126, 143, 0.05);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-card-dark: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.1);
+  --shadow-modal: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-sidebar: 1px 0 3px rgba(0, 0, 0, 0.05);
 
   --animate-fade-in: fadeIn 0.2s ease-out;
   --animate-fade-in-up: fadeInUp 0.25s ease-out;
@@ -126,12 +127,12 @@ body {
   font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: #F0F4FB;
-  color: #0B1220;
+  background: #F9FAFB;
+  color: #111827;
 }
 
 .dark body {
-  background: #0B1220;
+  background: #0F1119;
   color: #FFFFFF;
 }
 
@@ -175,28 +176,33 @@ body {
 }
 
 .sidebar-bg {
-  background: linear-gradient(180deg, #060D18 0%, #0B1220 40%, #0F1B2E 100%);
+  background: linear-gradient(180deg, #111826 0%, #111826 40%, #151D2B 100%);
 }
 
 .nav-item {
-  border-left: 3px solid transparent;
-  border: 1px solid transparent;
-  transition: all 0.16s ease;
+  transition: all 0.2s ease;
 }
 
 .nav-item:hover {
-  background: rgba(229, 57, 53, 0.07);
-  border-left-color: rgba(229, 57, 53, 0.35);
-  border-color: rgba(229, 57, 53, 0.12);
-  color: #EF5350;
+  background: rgba(47, 107, 255, 0.08);
+  color: #2F6BFF;
+}
+
+.dark .nav-item:hover {
+  background: rgba(147, 197, 253, 0.12);
+  color: #93C5FD;
 }
 
 .nav-active {
-  background: linear-gradient(90deg, rgba(229, 57, 53, 0.18) 0%, rgba(229, 57, 53, 0.04) 100%);
-  border-left: 3px solid #E53935 !important;
-  border-color: rgba(229, 57, 53, 0.18) !important;
-  color: #EF5350 !important;
-  box-shadow: inset 0 0 0 1px rgba(229, 57, 53, 0.1), 0 10px 24px rgba(229, 57, 53, 0.08);
+  background: linear-gradient(90deg, rgba(47, 107, 255, 0.15) 0%, rgba(47, 107, 255, 0.05) 100%);
+  color: #2F6BFF !important;
+  box-shadow: inset 0 0 0 1px rgba(47, 107, 255, 0.2);
+}
+
+.dark .nav-active {
+  background: linear-gradient(90deg, rgba(147, 197, 253, 0.15) 0%, rgba(147, 197, 253, 0.05) 100%);
+  color: #93C5FD !important;
+  box-shadow: inset 0 0 0 1px rgba(147, 197, 253, 0.2);
 }
 
 .card-lift {

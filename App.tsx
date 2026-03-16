@@ -52,11 +52,13 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [mobileSidebarOpen, setMobileSidebarOpen] = React.useState(false);
 
   return (
-    <div className="min-h-screen bg-light-bg dark:bg-navy-900 transition-colors duration-300">
+    <div className="min-h-screen bg-white dark:bg-navy-900 transition-colors duration-300">
       <Sidebar mobileOpen={mobileSidebarOpen} onCloseMobile={() => setMobileSidebarOpen(false)} />
       <Header onMenuClick={() => setMobileSidebarOpen((prev) => !prev)} />
-      <main className="pt-20 pb-6 px-3 sm:px-6 md:ml-64 min-h-screen">
-        {children}
+      <main className="pt-16 pb-8 px-4 sm:px-6 md:ml-64 md:pb-8 min-h-screen">
+        <div className="max-w-7xl mx-auto">
+          {children}
+        </div>
       </main>
     </div>
   );
@@ -69,12 +71,12 @@ const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #060D18, #0B1220)' }}>
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #E53935, #C62828)' }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a10 10 0 1 1 0 20A10 10 0 0 1 12 2" /><path d="M8 9.05v-.1" /><path d="M16 9.05v-.1" /><path d="M8.5 14a3.5 3.5 0 0 0 7 0" /></svg>
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-navy-900">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 rounded-lg flex items-center justify-center animate-pulse" style={{ background: 'linear-gradient(135deg, #1F7E8F, #155C6B)' }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a10 10 0 1 1 0 20A10 10 0 0 1 12 2" /></svg>
           </div>
-          <p className="text-sm text-white/40">{tr('Loading...', 'Loading...', 'Yuklanmoqda...')}</p>
+          <p className="text-sm text-gray-500 dark:text-white/50">{tr('Loading...', 'Loading...', 'Yuklanmoqda...')}</p>
         </div>
       </div>
     );

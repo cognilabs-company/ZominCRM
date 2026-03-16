@@ -29,26 +29,26 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-navy-950/70 backdrop-blur-sm animate-fade-in"
+        className="absolute inset-0 bg-black/30 backdrop-blur-sm animate-fade-in"
         onClick={onClose}
       />
 
       {/* Panel */}
       <div className={`
         relative bg-white dark:bg-navy-800
-        rounded-2xl shadow-modal w-full ${maxWidthClass}
+        rounded-lg shadow-modal w-full ${maxWidthClass}
         overflow-hidden flex flex-col max-h-[90vh]
-        border border-light-border dark:border-white/8
+        border border-light-border/60 dark:border-white/5
         modal-enter
       `}>
         {/* Header */}
-        <div className="px-6 py-4 border-b border-light-border dark:border-white/6 flex justify-between items-center shrink-0 bg-light-bg/60 dark:bg-white/3">
-          <h3 className="text-base font-semibold text-light-text dark:text-white tracking-tight">{title}</h3>
+        <div className="px-6 py-5 border-b border-light-border/50 dark:border-white/5 flex justify-between items-center shrink-0 bg-white/80 dark:bg-white/2">
+          <h3 className="text-base font-semibold text-light-text dark:text-white/95 tracking-tight">{title}</h3>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-light-muted dark:text-white/40
-              hover:text-light-text dark:hover:text-white
-              hover:bg-light-border dark:hover:bg-white/8 transition-all"
+            className="p-1.5 rounded-lg text-gray-400 dark:text-white/40
+              hover:text-gray-600 dark:hover:text-white/60
+              hover:bg-gray-100 dark:hover:bg-white/8 transition-all"
           >
             <X size={18} />
           </button>
@@ -61,7 +61,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
 
         {/* Footer */}
         {footer && (
-          <div className="px-6 py-4 bg-light-bg/60 dark:bg-navy-900/50 border-t border-light-border dark:border-white/6 flex justify-end gap-3 shrink-0">
+          <div className="px-6 py-4 bg-gray-50/50 dark:bg-navy-900/30 border-t border-light-border/50 dark:border-white/5 flex justify-end gap-3 shrink-0">
             {footer}
           </div>
         )}

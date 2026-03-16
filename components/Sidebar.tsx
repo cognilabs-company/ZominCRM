@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { NAV_ITEMS } from '../constants';
 import { useLanguage } from '../context/LanguageContext';
-import { Bot, X, Zap } from 'lucide-react';
+import { Bot, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 interface SidebarProps {
@@ -45,11 +45,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onCloseMob
   })();
 
   const renderNav = (isMobile = false) => (
-    <nav className="relative flex-1 overflow-y-auto py-2 px-2">
-      <p className="px-3 mb-2 text-[9px] font-semibold uppercase tracking-widest text-gray-400 dark:text-white/25 select-none">
-        {tr('Menu', 'Menu', 'Menyu')}
+    <nav className="relative flex-1 overflow-y-auto py-4 px-3">
+      <p className="px-3 mb-4 text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-white/30 select-none">
+        {tr('Menu', 'Меню', 'Menyu')}
       </p>
-      <ul className="space-y-0.5">
+      <ul className="space-y-1">
         {NAV_ITEMS.map((item) =>
           canAccessNavItem(item.id) ? (
             <li key={item.id}>
@@ -60,16 +60,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onCloseMob
                   if (isMobile) onCloseMobile?.();
                 }}
                 className={({ isActive }) =>
-                  `nav-item flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all select-none ${isActive
-                    ? 'nav-active'
-                    : 'text-gray-500 hover:text-gray-900 dark:text-white/55 dark:hover:text-white/90'
+                  `nav-item flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all select-none ${isActive
+                    ? 'bg-blue-50 dark:bg-blue-500/20 text-primary-blue dark:text-blue-400 shadow-sm'
+                    : 'text-gray-600 dark:text-white/50 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/8'
                   }`
                 }
               >
                 {({ isActive }) => (
                   <>
-                    <span className={`shrink-0 transition-colors ${isActive ? 'text-primary-red' : ''}`}>
-                      <item.icon size={17} strokeWidth={isActive ? 2.2 : 1.8} />
+                    <span className={`shrink-0 transition-colors ${isActive ? 'text-primary-blue dark:text-blue-400' : ''}`}>
+                      <item.icon size={19} strokeWidth={isActive ? 2.2 : 1.8} />
                     </span>
                     <span className={`truncate ${isActive ? 'font-semibold' : ''}`}>{t(item.labelKey)}</span>
                   </>
@@ -83,100 +83,70 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onCloseMob
   );
 
   const renderProfile = () => (
-    <div className="relative px-3 py-3 border-t border-light-border dark:border-white/6 shrink-0">
-      <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer group">
+    <div className="relative px-4 py-4 border-t border-gray-200 dark:border-white/10 shrink-0">
+      <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/8 transition-colors cursor-pointer group">
         <div className="relative shrink-0">
           <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold shrink-0"
+            className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-sm font-bold shrink-0"
             style={{ background: 'linear-gradient(135deg, #2F6BFF 0%, #1A4FCC 100%)' }}
           >
             {initials}
           </div>
-          <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-accent-emerald border-2 border-white dark:border-navy-900" />
+          <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-green-500 border-2 border-white dark:border-navy-900" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-semibold text-gray-900 dark:text-white truncate leading-tight">
-            {user?.first_name ? `${user.first_name} ${user.last_name || ''}`.trim() : user?.username || tr('User', 'User', 'Foydalanuvchi')}
+          <p className="text-sm font-semibold text-gray-900 dark:text-white truncate leading-tight">
+            {user?.first_name ? `${user.first_name} ${user.last_name || ''}`.trim() : user?.username || tr('User', 'Пользователь', 'Foydalanuvchi')}
           </p>
-          <p className="text-[10px] text-gray-500 dark:text-white/40 font-medium uppercase tracking-wide truncate">
+          <p className="text-[11px] text-gray-500 dark:text-white/40 font-medium uppercase tracking-wider truncate">
             {user?.role || '-'}
           </p>
         </div>
-        <div
-          className="shrink-0 w-1.5 h-1.5 rounded-full bg-accent-emerald opacity-80"
-          style={{ boxShadow: '0 0 5px rgba(16,185,129,0.9)' }}
-        />
       </div>
     </div>
   );
 
-  const sidebarBody = (isMobile = false) => (
+  return (
     <>
-      <div
-        className="absolute inset-0 pointer-events-none hidden dark:block"
-        style={{
-          background:
-            'radial-gradient(ellipse at 20% 0%, rgba(229,57,53,0.08) 0%, transparent 60%), radial-gradient(ellipse at 80% 100%, rgba(47,107,255,0.06) 0%, transparent 60%)',
-        }}
-      />
+      {/* Mobile Overlay */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 bg-black/30 z-30 md:hidden"
+          onClick={onCloseMobile}
+        />
+      )}
 
-      <div className="relative h-16 flex items-center px-5 border-b border-light-border dark:border-white/6 shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center text-white shadow-glow-red"
-              style={{ background: 'linear-gradient(135deg, #E53935 0%, #C62828 100%)' }}
-            >
-              <Bot size={19} strokeWidth={2.2} />
+      {/* Sidebar */}
+      <aside
+        className={`fixed left-0 top-0 h-screen w-64 bg-white dark:bg-navy-950 border-r border-gray-200 dark:border-white/10 z-30 transition-transform duration-200 flex flex-col md:translate-x-0 ${
+          mobileOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        {/* Logo/Header */}
+        <div className="px-4 py-6 flex items-center justify-between border-b border-gray-200 dark:border-white/10">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary-blue to-primary-blue/80 flex items-center justify-center text-white font-bold">
+              <Bot size={22} />
             </div>
-            <div
-              className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-accent-emerald border-2 border-white dark:border-navy-900"
-              style={{ boxShadow: '0 0 6px rgba(16,185,129,0.8)' }}
-            />
+            <div>
+              <h2 className="font-bold text-gray-900 dark:text-white text-base">Admin</h2>
+              <p className="text-[10px] text-gray-500 dark:text-white/40 font-semibold uppercase tracking-wider">Panel</p>
+            </div>
           </div>
-          <div>
-            <span className="font-bold text-gray-900 dark:text-white text-base tracking-tight">Zomin</span>
-            <span className="font-bold text-[15px] tracking-tight" style={{ color: '#E53935' }}> CRM</span>
-          </div>
-        </div>
-
-        {isMobile ? (
           <button
             onClick={onCloseMobile}
-            className="ml-auto p-2 rounded-lg text-gray-500 hover:text-gray-900 dark:text-white/60 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5"
-            title={tr('Close', 'Close', 'Yopish')}
+            className="md:hidden p-1.5 rounded-lg text-gray-500 dark:text-white/40 hover:bg-gray-100 dark:hover:bg-white/8 transition-colors"
           >
             <X size={18} />
           </button>
-        ) : (
-          <div className="ml-auto">
-            <Zap size={13} className="text-yellow-400 opacity-70" />
-          </div>
-        )}
-      </div>
+        </div>
 
-      {renderNav(isMobile)}
-      {renderProfile()}
-    </>
-  );
+        {/* Navigation */}
+        {renderNav(mobileOpen)}
 
-  return (
-    <>
-      <aside className="w-64 fixed h-full z-30 hidden md:flex flex-col bg-white dark:bg-[#0B1220] border-r border-light-border dark:border-white/5 shadow-sm dark:shadow-sidebar transition-colors">
-        {sidebarBody(false)}
+        {/* Profile */}
+        {renderProfile()}
       </aside>
-
-      <div className={`md:hidden fixed inset-0 z-40 transition ${mobileOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}>
-        <div
-          className={`absolute inset-0 bg-black/40 transition-opacity ${mobileOpen ? 'opacity-100' : 'opacity-0'}`}
-          onClick={onCloseMobile}
-        />
-        <aside
-          className={`absolute inset-y-0 left-0 w-[86vw] max-w-80 flex flex-col bg-white dark:bg-[#0B1220] border-r border-light-border dark:border-white/5 shadow-xl transition-transform duration-200 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}
-        >
-          {sidebarBody(true)}
-        </aside>
-      </div>
     </>
   );
 };

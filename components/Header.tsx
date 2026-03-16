@@ -98,48 +98,52 @@ export const Header: React.FC<{ onMenuClick?: () => void }> = ({ onMenuClick }) 
   }, [language]);
 
   return (
-    <header className="h-16 fixed top-0 right-0 left-0 md:left-64 z-20 px-3 sm:px-6 flex items-center justify-between bg-white/90 dark:bg-navy-900/95 border-b border-light-border dark:border-white/6 backdrop-blur-md transition-colors duration-300">
-      <div className="flex md:hidden items-center mr-2">
+    <header className="h-16 fixed top-0 right-0 left-0 md:left-64 z-20 px-4 sm:px-8 flex items-center justify-between bg-white dark:bg-navy-900 border-b border-gray-200 dark:border-white/8 shadow-sm transition-colors duration-300">
+      {/* Mobile Menu */}
+      <div className="flex md:hidden items-center">
         <button
           onClick={onMenuClick}
-          className="p-2 rounded-lg text-light-muted dark:text-white/60 hover:text-light-text dark:hover:text-white hover:bg-light-bg dark:hover:bg-white/6 border border-light-border/70 dark:border-white/10 transition-colors"
+          className="p-2.5 rounded-lg text-gray-600 dark:text-white/50 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/8 transition-colors"
           title={tr('Menu', 'Menu', 'Menyu')}
         >
-          <Menu size={18} />
+          <Menu size={20} />
         </button>
       </div>
 
-      <div className="hidden sm:flex items-center relative w-56 lg:w-72">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-light-muted dark:text-white/30 pointer-events-none" size={16} />
+      {/* Search Bar */}
+      <div className="hidden sm:flex items-center relative flex-1 max-w-sm">
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-white/30 pointer-events-none" size={18} />
         <input
           type="text"
-          placeholder={tr('Search anything...', 'Search anything...', 'Qidirish...')}
-          className="w-full bg-light-bg dark:bg-white/5 text-light-text dark:text-white/80 pl-9 pr-4 py-2 rounded-lg border border-light-border dark:border-white/8 text-sm transition-all input-glow placeholder:text-light-muted/60 dark:placeholder:text-white/25"
+          placeholder={tr('Search...', 'Поиск...', 'Qidirish...')}
+          className="w-full bg-gray-50 dark:bg-white/6 text-gray-900 dark:text-white pl-11 pr-4 py-2.5 rounded-lg border border-gray-200 dark:border-white/10 text-sm transition-all placeholder:text-gray-400 dark:placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-primary-blue/30 focus:border-primary-blue dark:focus:ring-primary-blue/30"
         />
       </div>
 
-      <div className="flex items-center gap-1 sm:gap-1.5 ml-auto min-w-0">
+      {/* Right Controls */}
+      <div className="flex items-center gap-3 ml-auto">
+        {/* Language Selector */}
         <div className="relative">
           <button
             onClick={() => { setIsLangOpen(!isLangOpen); setIsNotifOpen(false); }}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-light-muted dark:text-white/70 hover:text-light-text dark:hover:text-white hover:bg-light-bg dark:hover:bg-white/6 border border-transparent hover:border-light-border dark:hover:border-white/8 transition-all"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-gray-700 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/8 transition-colors"
           >
             <span>{langLabel}</span>
-            <ChevronDown size={12} className={`transition-transform ${isLangOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown size={14} className={`transition-transform duration-200 ${isLangOpen ? 'rotate-180' : ''}`} />
           </button>
 
           {isLangOpen && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setIsLangOpen(false)} />
-              <div className="absolute right-0 top-full mt-1.5 w-32 bg-white dark:bg-navy-800 border border-light-border dark:border-white/8 rounded-lg shadow-modal py-1 z-20 animate-fade-in-up">
+              <div className="absolute right-0 top-full mt-2 w-36 bg-white dark:bg-navy-800 border border-gray-200 dark:border-white/10 rounded-lg shadow-lg py-1.5 z-20 animate-fade-in-up">
                 {(['en', 'ru', 'uz'] as Language[]).map((lang) => (
                   <button
                     key={lang}
                     onClick={() => handleLangSelect(lang)}
-                    className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-light-bg dark:hover:bg-white/6 transition-colors ${language === lang ? 'text-primary-blue dark:text-blue-300 font-semibold' : 'text-light-text dark:text-white/70'}`}
+                    className={`w-full text-left px-4 py-2 text-xs flex items-center justify-between transition-colors ${language === lang ? 'bg-blue-50 dark:bg-blue-500/20 text-primary-blue dark:text-blue-400 font-semibold' : 'text-gray-700 dark:text-white/60 hover:bg-gray-50 dark:hover:bg-white/5'}`}
                   >
-                    <span>{lang === 'en' ? 'English' : lang === 'ru' ? 'Russkiy' : "O'zbek"}</span>
-                    {language === lang && <Check size={13} className="text-primary-blue dark:text-blue-300" />}
+                    <span>{lang === 'en' ? 'English' : lang === 'ru' ? 'Русский' : "Ўзбек"}</span>
+                    {language === lang && <Check size={14} className="text-primary-blue dark:text-blue-400" />}
                   </button>
                 ))}
               </div>
@@ -147,22 +151,24 @@ export const Header: React.FC<{ onMenuClick?: () => void }> = ({ onMenuClick }) 
           )}
         </div>
 
+        {/* Theme Toggle */}
         <button
           onClick={toggleTheme}
-          className="p-1.5 rounded-lg text-light-muted dark:text-white/60 hover:text-light-text dark:hover:text-white hover:bg-light-bg dark:hover:bg-white/6 transition-all border border-transparent hover:border-light-border dark:hover:border-white/8"
-          title={theme === 'dark' ? 'Switch to Light' : 'Switch to Dark'}
+          className="p-2.5 rounded-lg text-gray-600 dark:text-white/50 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/8 transition-colors"
+          title={theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
         >
-          {theme === 'dark' ? <Sun size={16} className="text-yellow-400" /> : <Moon size={16} />}
+          {theme === 'dark' ? <Sun size={18} className="text-amber-400" /> : <Moon size={18} />}
         </button>
 
+        {/* Notifications */}
         <div className="relative">
           <button
             onClick={() => { setIsNotifOpen(!isNotifOpen); setIsLangOpen(false); }}
-            className={`relative p-1.5 rounded-lg transition-all border ${isNotifOpen ? 'bg-light-bg dark:bg-white/8 border-light-border dark:border-white/10 text-primary-blue dark:text-blue-300' : 'text-light-muted dark:text-white/60 border-transparent hover:border-light-border dark:hover:border-white/8 hover:bg-light-bg dark:hover:bg-white/6 hover:text-light-text dark:hover:text-white'}`}
+            className={`relative p-2.5 rounded-lg transition-colors ${isNotifOpen ? 'bg-blue-50 dark:bg-blue-500/20 text-primary-blue dark:text-blue-400' : 'text-gray-600 dark:text-white/50 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/8'}`}
           >
-            <Bell size={16} />
+            <Bell size={18} />
             {hasUnread && (
-              <span className="absolute top-1.5 right-1.5 min-w-[14px] h-3.5 rounded-full bg-primary-red text-white text-[9px] font-bold flex items-center justify-center px-0.5 leading-none shadow-glow-red border border-white dark:border-navy-900">
+              <span className="absolute top-1.5 right-1.5 min-w-[18px] h-5 rounded-full bg-primary-red text-white text-[10px] font-bold flex items-center justify-center px-1 leading-none shadow-lg">
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
@@ -171,20 +177,22 @@ export const Header: React.FC<{ onMenuClick?: () => void }> = ({ onMenuClick }) 
           {isNotifOpen && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setIsNotifOpen(false)} />
-              <div className="absolute right-0 top-full mt-1.5 w-72 bg-white dark:bg-navy-800 border border-light-border dark:border-white/8 rounded-lg shadow-modal py-0 z-20 overflow-hidden animate-fade-in-up">
-                <div className="px-3 py-2.5 border-b border-light-border dark:border-white/6 flex items-center justify-between bg-light-bg dark:bg-white/3">
-                  <h4 className="font-semibold text-light-text dark:text-white text-xs">{tr('Notifications', 'Notifications', 'Bildirishnomalar')}</h4>
+              <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-navy-800 border border-gray-200 dark:border-white/10 rounded-lg shadow-lg z-20 overflow-hidden animate-fade-in-up">
+                {/* Header */}
+                <div className="px-4 py-3 border-b border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/3 flex items-center justify-between">
+                  <h4 className="font-semibold text-gray-900 dark:text-white text-sm">{tr('Notifications', 'Уведомления', 'Bildirishnomalar')}</h4>
                   {hasUnread && (
-                    <span className="text-[10px] bg-primary-red text-white rounded-full px-1.5 py-0.5 font-bold">{unreadCount}</span>
+                    <span className="text-[11px] bg-primary-red text-white rounded-full px-2 py-1 font-bold">{unreadCount}</span>
                   )}
                 </div>
 
-                <div className="max-h-64 overflow-y-auto">
+                {/* Notifications List */}
+                <div className="max-h-72 overflow-y-auto">
                   {notifications.length === 0 ? (
-                    <div className="px-4 py-6 text-center">
-                      <Bell size={20} className="mx-auto text-light-muted/30 dark:text-white/15 mb-2" />
-                      <p className="text-sm text-light-muted dark:text-white/40">
-                        {tr('No notifications yet.', 'No notifications yet.', "Hozircha bildirishnoma yo'q.")}
+                    <div className="px-4 py-12 text-center">
+                      <Bell size={24} className="mx-auto text-gray-300 dark:text-white/15 mb-3" />
+                      <p className="text-sm text-gray-500 dark:text-white/40">
+                        {tr('No notifications', 'Нет уведомлений', "Bildirishnoma yo'q")}
                       </p>
                     </div>
                   ) : (
@@ -192,13 +200,13 @@ export const Header: React.FC<{ onMenuClick?: () => void }> = ({ onMenuClick }) 
                       <div
                         key={notif.id}
                         onClick={() => markNotificationRead(notif.id)}
-                        className={`px-3 py-2.5 hover:bg-light-bg dark:hover:bg-white/4 border-b border-light-border/50 dark:border-white/4 last:border-0 cursor-pointer transition-colors ${notif.read ? 'opacity-60' : ''}`}
+                        className={`px-4 py-3 border-b border-gray-200 dark:border-white/8 last:border-0 cursor-pointer transition-colors ${notif.read ? 'bg-white dark:bg-navy-800 opacity-60' : 'bg-blue-50/50 dark:bg-blue-500/10'} hover:bg-gray-50 dark:hover:bg-white/5`}
                       >
-                        <div className="flex gap-2 items-start">
-                          <div className={`mt-1 w-1.5 h-1.5 rounded-full shrink-0 ${notif.read ? 'bg-gray-300 dark:bg-white/20' : notif.type === 'error' ? 'bg-primary-red shadow-glow-red' : notif.type === 'success' ? 'bg-accent-emerald' : 'bg-primary-blue shadow-glow-blue'}`} style={!notif.read ? { boxShadow: notif.type === 'error' ? '0 0 6px rgba(229,57,53,0.8)' : notif.type === 'info' ? '0 0 6px rgba(47,107,255,0.8)' : '' } : {}} />
-                          <div className="min-w-0">
-                            <p className="text-xs text-light-text dark:text-white/85 leading-snug">{notif.text}</p>
-                            <p className="text-[10px] text-light-muted dark:text-white/35 mt-0.5">{notif.time}</p>
+                        <div className="flex gap-3 items-start">
+                          <div className={`mt-1.5 w-2 h-2 rounded-full shrink-0 flex-none ${notif.read ? 'bg-gray-300 dark:bg-white/20' : notif.type === 'error' ? 'bg-primary-red' : notif.type === 'success' ? 'bg-green-500' : 'bg-primary-blue'}`} />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm text-gray-900 dark:text-white font-medium leading-tight">{notif.text}</p>
+                            <p className="text-xs text-gray-500 dark:text-white/40 mt-1">{notif.time}</p>
                           </div>
                         </div>
                       </div>
@@ -206,29 +214,33 @@ export const Header: React.FC<{ onMenuClick?: () => void }> = ({ onMenuClick }) 
                   )}
                 </div>
 
-                <div className="px-3 py-2 border-t border-light-border dark:border-white/6 bg-light-bg/80 dark:bg-white/3 text-center">
-                  <button
-                    onClick={markAllAsRead}
-                    disabled={!hasUnread}
-                    className="text-[10px] font-semibold text-primary-blue dark:text-blue-300 hover:text-primary-blueDark dark:hover:text-blue-200 transition-colors disabled:opacity-40"
-                  >
-                    {tr('Mark all as read', 'Mark all as read', "Barchasini o'qilgan qilish")}
-                  </button>
-                </div>
+                {/* Footer */}
+                {hasUnread && (
+                  <div className="px-4 py-2.5 border-t border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/3 text-center">
+                    <button
+                      onClick={markAllAsRead}
+                      className="text-xs font-semibold text-primary-blue dark:text-blue-400 hover:text-primary-blue/80 transition-colors"
+                    >
+                      {tr('Mark all as read', 'Отметить все как прочитанные', "Barchasini o'qilgan qilish")}
+                    </button>
+                  </div>
+                )}
               </div>
             </>
           )}
         </div>
 
-        <div className="w-px h-6 bg-light-border dark:bg-white/10 mx-1" />
+        {/* Divider */}
+        <div className="h-6 w-px bg-gray-200 dark:bg-white/10" />
 
+        {/* Logout */}
         <button
           onClick={async () => { await logout(); navigate('/login', { replace: true }); }}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-light-muted dark:text-white/60 hover:text-primary-red dark:hover:text-primary-red hover:bg-red-50 dark:hover:bg-red-900/15 border border-transparent hover:border-red-100 dark:hover:border-red-900/30 transition-all group"
-          title={tr('Logout', 'Logout', 'Chiqish')}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-gray-600 dark:text-white/50 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+          title={tr('Logout', 'Выход', 'Chiqish')}
         >
-          <LogOut size={14} className="transition-transform group-hover:translate-x-0.5" />
-          <span className="hidden sm:inline">{tr('Logout', 'Logout', 'Chiqish')}</span>
+          <LogOut size={16} />
+          <span className="hidden sm:inline">{tr('Logout', 'Выход', 'Chiqish')}</span>
         </button>
       </div>
     </header>
