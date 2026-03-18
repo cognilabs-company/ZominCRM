@@ -1,12 +1,10 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { AlertTriangle, ArrowLeft, CheckCircle2, ReceiptText } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, CheckCircle2, Loader2, MapPin, Package } from 'lucide-react';
 import { clientApiRequest } from '../api/clientApi';
 import { useClientApp } from '../bootstrap/ClientAppContext';
 import { useClientCart } from '../bootstrap/ClientCartContext';
 import { useClientLanguage } from '../bootstrap/ClientLanguageContext';
-import { ClientPage } from '../components/ClientPage';
-import { ClientPanel } from '../components/ClientPanel';
 import { ClientCreateOrderResponse, ClientOrderPreviewResponse, ClientProfile } from '../types';
 import { formatAmount, formatDateTime, formatOrderRef, getOrderStatusClasses, getOrderStatusLabel, getPaymentMethodLabel, parseNumericInput } from '../utils';
 
@@ -42,10 +40,7 @@ export const ClientCheckoutPreviewPage: React.FC = () => {
         location_lng: parseNumericInput(orderDraft.location_lng),
         delivery_time_requested: orderDraft.delivery_time_requested ? new Date(orderDraft.delivery_time_requested).toISOString() : null,
       },
-      items: items.map((item) => ({
-        product_id: item.product_id,
-        quantity: item.quantity,
-      })),
+      items: items.map((item) => ({ product_id: item.product_id, quantity: item.quantity })),
     };
 
     if (includeClient && client) {
@@ -67,24 +62,19 @@ export const ClientCheckoutPreviewPage: React.FC = () => {
       setError(null);
       const response = await clientApiRequest<ClientOrderPreviewResponse>(
         '/orders/preview/',
-        {
-          method: 'POST',
-          body: JSON.stringify(buildPayload(false)),
-        },
+        { method: 'POST', body: JSON.stringify(buildPayload(false)) },
         sessionToken
       );
       setPreview(response);
-    } catch (loadError) {
+    } catch (e) {
       setPreview(null);
-      setError(loadError instanceof Error ? loadError.message : t('checkout.error_preview'));
+      setError(e instanceof Error ? e.message : t('checkout.error_preview'));
     } finally {
       setLoading(false);
     }
   }, [buildPayload, canRequestPreview, sessionToken, t]);
 
-  React.useEffect(() => {
-    void loadPreview();
-  }, [loadPreview]);
+  React.useEffect(() => { void loadPreview(); }, [loadPreview]);
 
   const handleCreateOrder = async () => {
     if (!sessionToken || !canRequestPreview) return;
@@ -93,191 +83,187 @@ export const ClientCheckoutPreviewPage: React.FC = () => {
       setError(null);
       const response = await clientApiRequest<ClientCreateOrderResponse>(
         '/orders/',
-        {
-          method: 'POST',
-          body: JSON.stringify(buildPayload(true)),
-        },
+        { method: 'POST', body: JSON.stringify(buildPayload(true)) },
         sessionToken
       );
       clearCart();
       await refreshBootstrap();
       navigate(`/app/orders/${response.order.id}`);
-    } catch (createError) {
-      setError(createError instanceof Error ? createError.message : t('checkout.error_create'));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t('checkout.error_create'));
     } finally {
       setSubmitting(false);
     }
   };
 
-  const goBackToCart = () => {
-    navigate('/app/cart', { state: { from: location.pathname } });
-  };
+  const goBack = () => navigate('/app/cart', { state: { from: location.pathname } });
 
   if (!isAuthenticated) {
     return (
-      <ClientPage title={t('checkout.title')} subtitle={t('checkout.unauth_subtitle')}>
-        <ClientPanel className="p-5 text-sm text-slate-500">{t('checkout.unauth_description')}</ClientPanel>
-      </ClientPage>
+      <div className="py-10 text-center">
+        <p className="text-sm text-slate-500">{t('checkout.unauth_description')}</p>
+      </div>
     );
   }
 
   if (!items.length) {
     return (
-      <ClientPage title={t('checkout.title')} subtitle={t('checkout.empty_subtitle')}>
-        <ClientPanel className="p-5 text-sm text-slate-500">{t('checkout.empty_description')}</ClientPanel>
-      </ClientPage>
+      <div className="py-10 text-center">
+        <p className="text-sm text-slate-500">{t('checkout.empty_description')}</p>
+        <button type="button" onClick={() => navigate('/app/products')} className="mt-4 text-sm font-medium text-blue-600">
+          {t('nav.products')}
+        </button>
+      </div>
     );
   }
 
   if (!orderDraft.location_text.trim()) {
     return (
-      <ClientPage title={t('checkout.title')} subtitle={t('checkout.address_required_subtitle')}>
-        <ClientPanel className="p-5">
-          <p className="text-sm text-slate-500">{t('checkout.address_required_description')}</p>
-          <button
-            type="button"
-            onClick={goBackToCart}
-            className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(15,23,42,0.18)] transition hover:bg-slate-800"
-          >
-            <ArrowLeft size={15} />
-            {t('checkout.back_to_cart')}
-          </button>
-        </ClientPanel>
-      </ClientPage>
+      <div className="py-10 text-center">
+        <p className="text-sm text-slate-500">{t('checkout.address_required_description')}</p>
+        <button type="button" onClick={goBack} className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white">
+          <ArrowLeft size={14} />
+          {t('checkout.back_to_cart')}
+        </button>
+      </div>
     );
   }
 
   return (
-    <ClientPage
-      title={t('checkout.title')}
-      action={
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center gap-3">
         <button
           type="button"
-          onClick={goBackToCart}
-          className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+          onClick={goBack}
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50"
         >
-          <ArrowLeft size={15} />
-          {t('checkout.back_to_cart')}
+          <ArrowLeft size={16} />
         </button>
-      }
-    >
-      <div className="grid grid-cols-3 gap-2">
-        <ClientPanel className="p-3 text-center opacity-70">
-          <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400">1</p>
-          <p className="mt-1 text-xs font-semibold text-slate-950">{t('nav.products')}</p>
-        </ClientPanel>
-        <ClientPanel className="p-3 text-center opacity-70">
-          <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400">2</p>
-          <p className="mt-1 text-xs font-semibold text-slate-950">{t('nav.cart')}</p>
-        </ClientPanel>
-        <ClientPanel className="border-slate-950 bg-slate-950 p-3 text-center">
-          <p className="text-[11px] uppercase tracking-[0.16em] text-white/55">3</p>
-          <p className="mt-1 text-xs font-semibold text-white">{t('nav.checkout')}</p>
-        </ClientPanel>
+        <h1 className="text-xl font-bold text-slate-950">{t('checkout.title')}</h1>
       </div>
 
+      {/* Error */}
       {error ? (
-        <ClientPanel className="border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{error}</ClientPanel>
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>
       ) : null}
 
+      {/* Loading preview */}
       {loading ? (
-        <ClientPanel className="p-5 text-sm text-slate-500">{t('checkout.loading')}</ClientPanel>
+        <div className="flex items-center justify-center py-8 text-slate-400">
+          <Loader2 size={24} className="animate-spin" />
+        </div>
       ) : null}
 
+      {/* Blocked by active order */}
       {preview?.blocked_by_active_order && preview.active_order ? (
-        <ClientPanel className="p-5">
-          <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
-              <AlertTriangle size={20} />
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600">
+              <AlertTriangle size={18} />
             </div>
             <div className="min-w-0 flex-1">
-              <h2 className="text-base font-semibold text-slate-950">{t('checkout.blocked_title')}</h2>
-              <p className="mt-2 text-sm text-slate-500">{t('checkout.blocked_description')}</p>
-              <div className="mt-4 rounded-[20px] border border-slate-200 bg-slate-50 p-4">
+              <p className="font-semibold text-amber-900">{t('checkout.blocked_title')}</p>
+              <p className="mt-1 text-sm text-amber-700">{t('checkout.blocked_description')}</p>
+              <div className="mt-3 rounded-xl border border-amber-200 bg-white p-3">
                 <p className="text-sm font-semibold text-slate-950">{formatOrderRef(preview.active_order.id)}</p>
-                <p className="mt-1 text-sm text-slate-500">{preview.active_order.location_text || t('checkout.delivery_pending')}</p>
-                <div className={`mt-3 inline-flex rounded-full px-3 py-1 text-xs font-medium ${getOrderStatusClasses(preview.active_order.status)}`}>
+                <p className="mt-0.5 text-sm text-slate-500">{preview.active_order.location_text || t('checkout.delivery_pending')}</p>
+                <div className={`mt-2 inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${getOrderStatusClasses(preview.active_order.status)}`}>
                   {getOrderStatusLabel(preview.active_order.status, language)}
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => navigate(`/app/orders/${preview.active_order!.id}`)}
-                className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(15,23,42,0.18)] transition hover:bg-slate-800"
+                className="mt-3 inline-flex items-center gap-2 rounded-xl bg-amber-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-amber-700"
               >
+                <Package size={14} />
                 {t('checkout.open_orders')}
               </button>
             </div>
           </div>
-        </ClientPanel>
+        </div>
       ) : null}
 
+      {/* Order preview */}
       {preview?.preview ? (
         <>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <ClientPanel className="p-4">
-              <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{t('checkout.product_subtotal')}</p>
-              <p className="mt-2 text-xl font-semibold text-slate-950">{formatAmount(preview.preview.product_subtotal_uzs, language)}</p>
-            </ClientPanel>
-            <ClientPanel className="p-4">
-              <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{t('checkout.deposit')}</p>
-              <p className="mt-2 text-xl font-semibold text-slate-950">{formatAmount(preview.preview.bottle_deposit_total_uzs, language)}</p>
-            </ClientPanel>
-            <ClientPanel className="p-4">
-              <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{t('checkout.total_payable')}</p>
-              <p className="mt-2 text-xl font-semibold text-slate-950">{formatAmount(preview.preview.total_amount_uzs, language)}</p>
-            </ClientPanel>
+          {/* Totals */}
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+            <div className="px-4 py-3 border-b border-slate-100">
+              <p className="text-sm font-semibold text-slate-950">{t('checkout.delivery_payment')}</p>
+            </div>
+            <div className="divide-y divide-slate-100">
+              <div className="flex items-center justify-between px-4 py-3 text-sm">
+                <span className="text-slate-500">{t('checkout.product_subtotal')}</span>
+                <span className="font-semibold text-slate-950">{formatAmount(preview.preview.product_subtotal_uzs, language)}</span>
+              </div>
+              <div className="flex items-center justify-between px-4 py-3 text-sm">
+                <span className="text-slate-500">{t('checkout.deposit')}</span>
+                <span className="font-semibold text-slate-950">{formatAmount(preview.preview.bottle_deposit_total_uzs, language)}</span>
+              </div>
+              <div className="flex items-center justify-between bg-slate-950 px-4 py-3">
+                <span className="text-sm font-semibold text-white/70">{t('checkout.total_payable')}</span>
+                <span className="text-lg font-bold text-white">{formatAmount(preview.preview.total_amount_uzs, language)}</span>
+              </div>
+            </div>
           </div>
 
-          <div className="grid gap-3">
+          {/* Items */}
+          <div className="space-y-2">
             {preview.preview.items.map((item) => (
-              <ClientPanel key={`${item.product_id}-${item.product_name}`} className="p-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h2 className="text-sm font-semibold text-slate-950">{item.product_name}</h2>
-                    <p className="mt-1 text-sm text-slate-500">{item.product_size_liters || '-'}L / {t('orders.qty', { count: item.quantity })}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-semibold text-slate-950">{formatAmount(item.line_total_uzs, language)}</p>
-                    <p className="mt-1 text-xs text-slate-500">{t('orders.deposit_item', { amount: formatAmount(item.bottle_deposit_total_uzs || 0, language) })}</p>
-                  </div>
+              <div key={`${item.product_id}-${item.product_name}`} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-slate-950">{item.product_name}</p>
+                  <p className="mt-0.5 text-sm text-slate-500">{item.product_size_liters || '-'}L · ×{item.quantity}</p>
+                  {item.requires_returnable_bottle ? (
+                    <p className="mt-1 text-xs text-blue-600">
+                      {t('checkout.deposit_charge_qty', { count: item.bottle_deposit_charge_quantity || 0 })} {t('checkout.covered_bottles', { count: item.already_covered_bottle_count || 0 })}
+                    </p>
+                  ) : null}
                 </div>
-                {item.requires_returnable_bottle ? (
-                  <div className="mt-4 rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
-                    {t('checkout.covered_bottles', { count: item.already_covered_bottle_count || 0 })} / {t('checkout.deposit_charge_qty', { count: item.bottle_deposit_charge_quantity || 0 })}
-                  </div>
-                ) : null}
-              </ClientPanel>
+                <div className="text-right">
+                  <p className="font-bold text-slate-950">{formatAmount(item.line_total_uzs, language)}</p>
+                  {(item.bottle_deposit_total_uzs || 0) > 0 ? (
+                    <p className="text-xs text-slate-400">+{formatAmount(item.bottle_deposit_total_uzs || 0, language)}</p>
+                  ) : null}
+                </div>
+              </div>
             ))}
           </div>
 
-          <ClientPanel className="p-5">
-            <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
-                <ReceiptText size={20} />
+          {/* Delivery info */}
+          <div className="rounded-2xl border border-slate-200 bg-white p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+                <MapPin size={16} />
               </div>
-              <div className="min-w-0 flex-1">
-                <h2 className="text-base font-semibold text-slate-950">{t('checkout.delivery_payment')}</h2>
-                <p className="mt-2 text-sm text-slate-500">{orderDraft.location_text}</p>
-                <p className="mt-2 text-sm text-slate-500">{t('checkout.payment_method')}: {getPaymentMethodLabel(orderDraft.payment_method, language)}</p>
-                <p className="mt-1 text-sm text-slate-500">{t('checkout.requested_delivery')}: {formatDateTime(orderDraft.delivery_time_requested ? new Date(orderDraft.delivery_time_requested).toISOString() : null, language)}</p>
+              <div className="min-w-0 flex-1 text-sm">
+                <p className="font-semibold text-slate-950">{orderDraft.location_text}</p>
+                <p className="mt-1 text-slate-500">{getPaymentMethodLabel(orderDraft.payment_method, language)}</p>
+                {orderDraft.delivery_time_requested ? (
+                  <p className="text-slate-500">{formatDateTime(new Date(orderDraft.delivery_time_requested).toISOString(), language)}</p>
+                ) : null}
               </div>
             </div>
+          </div>
 
-            <div className="mt-5 flex justify-end">
-              <button
-                type="button"
-                onClick={() => void handleCreateOrder()}
-                disabled={submitting}
-                className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(15,23,42,0.18)] transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <CheckCircle2 size={16} />
-                {submitting ? t('checkout.submitting') : t('checkout.confirm')}
-              </button>
-            </div>
-          </ClientPanel>
+          {/* Place order CTA */}
+          <button
+            type="button"
+            onClick={() => void handleCreateOrder()}
+            disabled={submitting}
+            className="flex w-full items-center justify-center gap-3 rounded-3xl bg-blue-600 py-4 text-base font-bold text-white shadow-[0_8px_28px_rgba(37,99,235,0.35)] transition hover:bg-blue-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {submitting ? (
+              <Loader2 size={18} className="animate-spin" />
+            ) : (
+              <CheckCircle2 size={18} />
+            )}
+            {submitting ? t('checkout.submitting') : t('checkout.confirm')}
+          </button>
         </>
       ) : null}
-    </ClientPage>
+    </div>
   );
 };

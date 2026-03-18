@@ -1,5 +1,5 @@
 import React from 'react';
-import { Droplets, Home, Package, ShoppingBag, ShoppingCart, UserRound } from 'lucide-react';
+import { Droplets, Package, ShoppingBag, ShoppingCart, UserRound } from 'lucide-react';
 
 const ClientBottlesPage = React.lazy(() => import('./pages/ClientBottlesPage').then((module) => ({ default: module.ClientBottlesPage })));
 const ClientCartPage = React.lazy(() => import('./pages/ClientCartPage').then((module) => ({ default: module.ClientCartPage })));
@@ -24,8 +24,8 @@ export const clientRouteDefinitions: ClientRouteDefinition[] = [
     id: 'home',
     path: 'home',
     navLabelKey: 'nav.home',
-    icon: Home,
-    showInNav: true,
+    icon: ShoppingBag,
+    showInNav: false,
     element: <ClientHomePage />,
   },
   {
@@ -81,7 +81,7 @@ export const clientRouteDefinitions: ClientRouteDefinition[] = [
     path: 'idishlar',
     navLabelKey: 'nav.bottles',
     icon: Droplets,
-    showInNav: true,
+    showInNav: false,
     element: <ClientBottlesPage />,
   },
   {
@@ -97,7 +97,7 @@ export const clientRouteDefinitions: ClientRouteDefinition[] = [
     path: 'profile',
     navLabelKey: 'nav.profile',
     icon: UserRound,
-    showInNav: false,
+    showInNav: true,
     element: <ClientProfilePage />,
   },
 ];

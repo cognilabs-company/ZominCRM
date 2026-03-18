@@ -129,53 +129,32 @@ export const ClientProfilePage: React.FC = () => {
     { key: 'identity_verified', label: t('profile.identity_verified'), value: profile?.is_platform_identity_verified ? t('profile.yes') : t('profile.no') },
   ];
 
+  const languageOptions = [
+    { code: 'uz' as const, label: 'O\'zb' },
+    { code: 'ru' as const, label: 'Рус' },
+    { code: 'en' as const, label: 'Eng' },
+  ];
+
   return (
     <ClientPage
       title={t('profile.title')}
-      subtitle={t('profile.subtitle')}
       action={
-        editing ? (
-          <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white p-1">
+          {languageOptions.map((opt) => (
             <button
+              key={opt.code}
               type="button"
-              onClick={handleCancel}
-              disabled={saving}
-              className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              onClick={() => setLanguage(opt.code)}
+              className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${
+                language === opt.code
+                  ? 'bg-slate-950 text-white shadow-sm'
+                  : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+              }`}
             >
-              <X size={15} />
-              {t('profile.cancel')}
+              {opt.label}
             </button>
-            <button
-              type="button"
-              onClick={() => void handleSave()}
-              disabled={saving}
-              className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(15,23,42,0.18)] transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <CheckCircle2 size={15} />
-              {saving ? t('profile.saving') : t('profile.save')}
-            </button>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setEditing(true)}
-              className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(15,23,42,0.18)] transition hover:bg-slate-800"
-            >
-              <Pencil size={15} />
-              {t('profile.edit')}
-            </button>
-            <button
-              type="button"
-              onClick={() => void loadProfile()}
-              disabled={loading}
-              className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
-              {t('orders.refresh')}
-            </button>
-          </div>
-        )
+          ))}
+        </div>
       }
     >
       {error ? (
@@ -195,16 +174,26 @@ export const ClientProfilePage: React.FC = () => {
       {loading && !profile ? <SkeletonProfileCard /> : null}
 
       <ClientPanel className="p-5">
-        <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
-            <UserRound size={20} />
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
+              <UserRound size={20} />
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-base font-semibold text-slate-950">{profile?.full_name || telegramUser?.first_name || telegramUser?.username || t('layout.telegram_client')}</h2>
+              <p className="mt-0.5 text-xs text-slate-500">{telegramAvailable ? t('profile.context_detected') : t('profile.context_preview')}</p>
+            </div>
           </div>
-          <div className="min-w-0 flex-1">
-            <h2 className="text-base font-semibold text-slate-950">{profile?.full_name || telegramUser?.first_name || telegramUser?.username || t('layout.telegram_client')}</h2>
-            <p className="mt-1 text-sm text-slate-500">
-              {telegramAvailable ? t('profile.context_detected') : t('profile.context_preview')}
-            </p>
-          </div>
+          {!editing ? (
+            <button
+              type="button"
+              onClick={() => setEditing(true)}
+              className="flex items-center gap-1.5 rounded-xl bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
+            >
+              <Pencil size={13} />
+              {t('profile.edit')}
+            </button>
+          ) : null}
         </div>
 
         <div className="mt-5">
@@ -254,6 +243,29 @@ export const ClientProfilePage: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {editing ? (
+          <div className="mt-4 flex gap-2">
+            <button
+              type="button"
+              onClick={() => void handleSave()}
+              disabled={saving}
+              className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-slate-950 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
+            >
+              <CheckCircle2 size={15} />
+              {saving ? t('profile.saving') : t('profile.save')}
+            </button>
+            <button
+              type="button"
+              onClick={handleCancel}
+              disabled={saving}
+              className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:opacity-60"
+            >
+              <X size={15} />
+              {t('profile.cancel')}
+            </button>
+          </div>
+        ) : null}
       </ClientPanel>
 
       <ClientPanel className="p-5">

@@ -1,42 +1,33 @@
 import React from 'react';
-import { Crosshair, MapPin, Navigation, X } from 'lucide-react';
+import { Crosshair, MapPin, X } from 'lucide-react';
 import { DivIcon } from 'leaflet';
 import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 import { useClientLanguage } from '../bootstrap/ClientLanguageContext';
 
 const markerIcon = new DivIcon({
   className: '',
-  html: '<div style="position:relative;width:30px;height:30px;"><div style="position:absolute;inset:0;border-radius:999px;background:#0f172a;box-shadow:0 14px 32px rgba(15,23,42,0.24);"></div><div style="position:absolute;left:8px;top:8px;width:14px;height:14px;border-radius:999px;background:white;"></div></div>',
-  iconSize: [30, 30],
-  iconAnchor: [15, 15],
+  html: `<div style="position:relative;width:32px;height:32px;">
+    <div style="position:absolute;inset:0;border-radius:999px;background:#2563eb;box-shadow:0 4px 14px rgba(37,99,235,0.45);"></div>
+    <div style="position:absolute;left:9px;top:9px;width:14px;height:14px;border-radius:999px;background:white;"></div>
+  </div>`,
+  iconSize: [32, 32],
+  iconAnchor: [16, 16],
 });
 
 const MapEvents: React.FC<{ onSelect: (lat: number, lng: number) => void }> = ({ onSelect }) => {
   useMapEvents({
-    click(event) {
-      onSelect(event.latlng.lat, event.latlng.lng);
-    },
+    click(e) { onSelect(e.latlng.lat, e.latlng.lng); },
   });
-
   return null;
 };
 
 const MapViewport: React.FC<{ position: [number, number] }> = ({ position }) => {
   const map = useMap();
-
   React.useEffect(() => {
-    map.flyTo(position, Math.max(map.getZoom(), 15), {
-      animate: true,
-      duration: 0.45,
-    });
-
-    const timeout = window.setTimeout(() => {
-      map.invalidateSize();
-    }, 50);
-
-    return () => window.clearTimeout(timeout);
+    map.flyTo(position, Math.max(map.getZoom(), 15), { animate: true, duration: 0.45 });
+    const t = window.setTimeout(() => map.invalidateSize(), 50);
+    return () => window.clearTimeout(t);
   }, [map, position]);
-
   return null;
 };
 
@@ -49,7 +40,7 @@ interface ClientLocationPickerProps {
   onExpandedChange?: (next: boolean) => void;
 }
 
-const formatCoordinate = (value: number) => value.toFixed(6);
+const fmt = (v: number) => v.toFixed(6);
 
 export const ClientLocationPicker: React.FC<ClientLocationPickerProps> = ({
   address,
@@ -59,35 +50,15 @@ export const ClientLocationPicker: React.FC<ClientLocationPickerProps> = ({
   expanded,
   onExpandedChange,
 }) => {
-  const { language, t } = useClientLanguage();
-  const copy = React.useMemo(() => {
-    if (language === 'ru') {
-      return {
-        liveMap: 'Карта',
-        dragHint: 'Нажмите на карту или перетащите пин.',
-        readyTitle: 'Точка выбрана',
-        readyDescription: 'Сохраните адрес для заказа.',
-      };
-    }
-
-    if (language === 'en') {
-      return {
-        liveMap: 'Map',
-        dragHint: 'Tap the map or drag the pin.',
-        readyTitle: 'Point selected',
-        readyDescription: 'Save this address for the order.',
-      };
-    }
-
-    return {
-      liveMap: 'Xarita',
-      dragHint: 'Xaritani bosing yoki pinni suring.',
-      readyTitle: 'Nuqta tanlandi',
-      readyDescription: 'Buyurtma uchun manzilni saqlang.',
-    };
-  }, [language]);
-  const [internalOpen, setInternalOpen] = React.useState(false);
+  const { t } = useClientLanguage();
+  const [internalOpen, setInternalOpen] = React.useState(true);
   const open = expanded ?? internalOpen;
+
+  const setOpenState = React.useCallback((next: boolean) => {
+    if (expanded === undefined) setInternalOpen(next);
+    onExpandedChange?.(next);
+  }, [expanded, onExpandedChange]);
+
   const initialLat = Number(latitude);
   const initialLng = Number(longitude);
   const initialPosition = React.useMemo<[number, number]>(
@@ -96,42 +67,30 @@ export const ClientLocationPicker: React.FC<ClientLocationPickerProps> = ({
   );
   const [selectedPosition, setSelectedPosition] = React.useState<[number, number]>(initialPosition);
   const [selectedAddress, setSelectedAddress] = React.useState(address);
-  const [resolvingAddress, setResolvingAddress] = React.useState(false);
+  const [resolving, setResolving] = React.useState(false);
   const [mapError, setMapError] = React.useState<string | null>(null);
 
-  const setOpenState = React.useCallback((next: boolean) => {
-    if (expanded === undefined) {
-      setInternalOpen(next);
-    }
-    onExpandedChange?.(next);
-  }, [expanded, onExpandedChange]);
-
-  React.useEffect(() => {
-    setSelectedPosition(initialPosition);
-  }, [initialPosition]);
-
-  React.useEffect(() => {
-    setSelectedAddress(address);
-  }, [address]);
+  React.useEffect(() => { setSelectedPosition(initialPosition); }, [initialPosition]);
+  React.useEffect(() => { setSelectedAddress(address); }, [address]);
 
   const resolveAddress = React.useCallback(async (lat: number, lng: number) => {
     try {
-      setResolvingAddress(true);
+      setResolving(true);
       setMapError(null);
-      const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`);
-      const data = await response.json();
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`);
+      const data = await res.json();
       const label = typeof data?.display_name === 'string' && data.display_name.trim()
         ? data.display_name
-        : `${formatCoordinate(lat)}, ${formatCoordinate(lng)}`;
+        : `${fmt(lat)}, ${fmt(lng)}`;
       setSelectedAddress(label);
       return label;
     } catch {
       setMapError(t('cart.map_reverse_error'));
-      const fallback = `${formatCoordinate(lat)}, ${formatCoordinate(lng)}`;
+      const fallback = `${fmt(lat)}, ${fmt(lng)}`;
       setSelectedAddress(fallback);
       return fallback;
     } finally {
-      setResolvingAddress(false);
+      setResolving(false);
     }
   }, [t]);
 
@@ -141,148 +100,126 @@ export const ClientLocationPicker: React.FC<ClientLocationPickerProps> = ({
   }, [resolveAddress]);
 
   const handleUseCurrentLocation = React.useCallback(() => {
-    if (!navigator.geolocation) {
-      setMapError(t('cart.map_geolocation_error'));
-      return;
-    }
-
+    if (!navigator.geolocation) { setMapError(t('cart.map_geolocation_error')); return; }
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const nextLat = position.coords.latitude;
-        const nextLng = position.coords.longitude;
-        setSelectedPosition([nextLat, nextLng]);
-        void resolveAddress(nextLat, nextLng);
+      (pos) => {
+        setSelectedPosition([pos.coords.latitude, pos.coords.longitude]);
+        void resolveAddress(pos.coords.latitude, pos.coords.longitude);
       },
-      () => {
-        setMapError(t('cart.map_geolocation_error'));
-      },
+      () => setMapError(t('cart.map_geolocation_error')),
       { enableHighAccuracy: true, timeout: 10000 }
     );
   }, [resolveAddress, t]);
 
   const handleApply = React.useCallback(() => {
     onApply({
-      location_text: selectedAddress || `${formatCoordinate(selectedPosition[0])}, ${formatCoordinate(selectedPosition[1])}`,
-      location_lat: formatCoordinate(selectedPosition[0]),
-      location_lng: formatCoordinate(selectedPosition[1]),
+      location_text: selectedAddress || `${fmt(selectedPosition[0])}, ${fmt(selectedPosition[1])}`,
+      location_lat: fmt(selectedPosition[0]),
+      location_lng: fmt(selectedPosition[1]),
     });
     setOpenState(false);
   }, [onApply, selectedAddress, selectedPosition, setOpenState]);
 
+  const hasPosition = selectedAddress && selectedAddress !== address;
+
+  if (!open) {
+    return (
+      <div className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <MapPin size={15} className="shrink-0 text-blue-600" />
+          <p className="truncate text-sm text-slate-700">{selectedAddress || address || t('cart.map_selected_empty')}</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setOpenState(true)}
+          className="shrink-0 text-xs font-medium text-blue-600 transition hover:text-blue-700"
+        >
+          {t('cart.map_open')}
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
-      <div className="rounded-[20px] border border-slate-200 bg-slate-50 p-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">{copy.liveMap}</p>
-            <p className="mt-2 text-sm text-slate-500">{t('cart.map_description')}</p>
-            <p className="mt-3 text-sm font-medium text-slate-950">
-              {selectedAddress || address || t('cart.map_selected_empty')}
-            </p>
+      {/* Map container */}
+      <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
+        {/* Map header */}
+        <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-white px-3 py-2.5">
+          <div className="flex items-center gap-2">
+            <MapPin size={15} className="text-blue-600" />
+            <span className="text-sm font-semibold text-slate-950">{t('cart.map_picker')}</span>
           </div>
-          <button
-            type="button"
-            onClick={() => setOpenState(!open)}
-            className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(15,23,42,0.18)] transition hover:bg-slate-800"
-          >
-            <MapPin size={16} />
-            {open ? t('cart.map_close') : t('cart.map_open')}
-          </button>
-        </div>
-      </div>
-
-      {open ? (
-        <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-[0_18px_40px_rgba(15,23,42,0.08)]">
-          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm font-semibold text-slate-950">{t('cart.map_picker')}</p>
-              <p className="mt-1 text-xs text-slate-500">{copy.dragHint}</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleUseCurrentLocation}
-                className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-white"
-              >
-                <Crosshair size={14} />
-                {t('cart.map_use_current')}
-              </button>
-              <button
-                type="button"
-                onClick={() => setOpenState(false)}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-white"
-              >
-                <X size={16} />
-              </button>
-            </div>
-          </div>
-
-          <div className="relative overflow-hidden rounded-[24px] border border-slate-200 shadow-[0_18px_36px_rgba(15,23,42,0.08)]">
-            <div className="pointer-events-none absolute left-4 top-4 z-[500] rounded-full bg-white/95 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 shadow-[0_10px_24px_rgba(15,23,42,0.08)]">
-              {t('cart.map_select_hint')}
-            </div>
-            <MapContainer center={selectedPosition} zoom={15} scrollWheelZoom className="h-[360px] w-full">
-              <TileLayer
-                attribution="&copy; OpenStreetMap contributors &copy; CARTO"
-                url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-              />
-              <MapViewport position={selectedPosition} />
-              <Marker
-                position={selectedPosition}
-                icon={markerIcon}
-                draggable
-                eventHandlers={{
-                  dragend: (event) => {
-                    const marker = event.target;
-                    const next = marker.getLatLng();
-                    handleSelect(next.lat, next.lng);
-                  },
-                }}
-              />
-              <MapEvents onSelect={handleSelect} />
-            </MapContainer>
-          </div>
-
-          <div className="mt-4 grid gap-3 md:grid-cols-[1.4fr,1fr]">
-            <div className="rounded-[18px] bg-slate-950 p-4 text-white">
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-2xl bg-white/12 text-white">
-                  <Navigation size={15} />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">{t('cart.map_selected_title')}</p>
-                  <p className="mt-2 text-sm font-semibold leading-6 text-white">
-                    {resolvingAddress ? t('cart.map_loading_address') : (selectedAddress || address || t('cart.map_selected_empty'))}
-                  </p>
-                  <p className="mt-2 text-xs text-white/70">
-                    {t('cart.map_selected_coords', {
-                      lat: formatCoordinate(selectedPosition[0]),
-                      lng: formatCoordinate(selectedPosition[1]),
-                    })}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-[18px] border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">{copy.readyTitle}</p>
-              <p className="mt-2 text-sm text-slate-500">{copy.readyDescription}</p>
-              {mapError ? <p className="mt-3 text-xs text-rose-600">{mapError}</p> : null}
-            </div>
-          </div>
-
-          <div className="mt-4 flex justify-end">
+          <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={handleApply}
-              className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(15,23,42,0.18)] transition hover:bg-slate-800"
+              onClick={handleUseCurrentLocation}
+              className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-white"
             >
-              <MapPin size={16} />
-              {t('cart.map_confirm')}
+              <Crosshair size={12} />
+              {t('cart.map_use_current')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setOpenState(false)}
+              className="flex h-7 w-7 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500 transition hover:bg-white"
+            >
+              <X size={14} />
             </button>
           </div>
         </div>
-      ) : null}
+
+        {/* Map */}
+        <div className="relative">
+          <MapContainer center={selectedPosition} zoom={15} scrollWheelZoom className="h-[300px] w-full">
+            <TileLayer
+              attribution="&copy; OpenStreetMap contributors &copy; CARTO"
+              url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+            />
+            <MapViewport position={selectedPosition} />
+            <Marker
+              position={selectedPosition}
+              icon={markerIcon}
+              draggable
+              eventHandlers={{
+                dragend: (e) => {
+                  const ll = e.target.getLatLng();
+                  handleSelect(ll.lat, ll.lng);
+                },
+              }}
+            />
+            <MapEvents onSelect={handleSelect} />
+          </MapContainer>
+          {/* Tap hint */}
+          <div className="pointer-events-none absolute left-1/2 top-3 z-[500] -translate-x-1/2 rounded-full bg-white/90 px-3 py-1 text-[11px] font-medium text-slate-600 shadow-sm backdrop-blur-sm">
+            {t('cart.map_select_hint')}
+          </div>
+        </div>
+
+        {/* Selected address */}
+        <div className="border-t border-slate-100 bg-white px-3 py-3">
+          {resolving ? (
+            <p className="text-sm text-slate-400">{t('cart.map_loading_address')}</p>
+          ) : (
+            <p className="text-sm text-slate-700 leading-snug">{selectedAddress || address || t('cart.map_selected_empty')}</p>
+          )}
+          {mapError ? <p className="mt-1 text-xs text-rose-600">{mapError}</p> : null}
+          <p className="mt-1 text-xs text-slate-400">
+            {fmt(selectedPosition[0])}, {fmt(selectedPosition[1])}
+          </p>
+        </div>
+      </div>
+
+      {/* Confirm button */}
+      <button
+        type="button"
+        onClick={handleApply}
+        disabled={resolving}
+        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 py-3 text-sm font-bold text-white shadow-[0_4px_14px_rgba(37,99,235,0.30)] transition hover:bg-blue-700 active:scale-[0.99] disabled:opacity-60"
+      >
+        <MapPin size={15} />
+        {hasPosition ? t('cart.map_confirm') : (t('cart.map_confirm') || 'Confirm location')}
+      </button>
     </div>
   );
 };

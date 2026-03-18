@@ -1,17 +1,14 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Images, Minus, Plus, RefreshCw, ShoppingBag, ShoppingCart } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Minus, Plus, RefreshCw, ShoppingBag, ShoppingCart } from 'lucide-react';
 import { clientApiRequest, resolveClientMediaUrl } from '../api/clientApi';
 import { useClientApp } from '../bootstrap/ClientAppContext';
 import { useClientCart } from '../bootstrap/ClientCartContext';
 import { useClientLanguage } from '../bootstrap/ClientLanguageContext';
-import { ClientEmptyState } from '../components/ClientEmptyState';
 import { ClientErrorPanel } from '../components/ClientErrorPanel';
-import { ClientPage } from '../components/ClientPage';
-import { ClientPanel } from '../components/ClientPanel';
 import { SkeletonProductList } from '../components/ClientSkeleton';
 import { ClientProduct, ClientProductsResponse } from '../types';
-import { formatAmount, getAvailabilityLabel } from '../utils';
+import { formatAmount } from '../utils';
 
 type ProductImageSlide = {
   id: string;
@@ -48,7 +45,7 @@ const getProductImages = (product: ClientProduct) => {
   return slides;
 };
 
-type ProductCatalogCardProps = {
+type ProductCardProps = {
   product: ClientProduct;
   quantity: number;
   unavailable: boolean;
@@ -58,15 +55,7 @@ type ProductCatalogCardProps = {
   updateQuantity: (productId: string, quantity: number) => void;
 };
 
-const ProductCatalogCard: React.FC<ProductCatalogCardProps> = ({
-  product,
-  quantity,
-  unavailable,
-  language,
-  t,
-  addProduct,
-  updateQuantity,
-}) => {
+const ProductCard: React.FC<ProductCardProps> = ({ product, quantity, unavailable, language, t, addProduct, updateQuantity }) => {
   const media = React.useMemo(() => getProductImages(product), [product]);
   const [activeImageIndex, setActiveImageIndex] = React.useState(0);
   const [failedUrls, setFailedUrls] = React.useState<Record<string, boolean>>({});
@@ -74,139 +63,105 @@ const ProductCatalogCard: React.FC<ProductCatalogCardProps> = ({
   React.useEffect(() => {
     setActiveImageIndex(0);
     setFailedUrls({});
-  }, [product.id, product.image_thumb_url, product.image_url, product.images]);
-
-  React.useEffect(() => {
-    if (!media.length && activeImageIndex !== 0) {
-      setActiveImageIndex(0);
-    }
-  }, [activeImageIndex, media.length]);
+  }, [product.id]);
 
   const currentSlide = media[activeImageIndex];
-  const currentImageUrl = currentSlide?.candidates.find((candidate) => !failedUrls[candidate]) || null;
+  const currentImageUrl = currentSlide?.candidates.find((c) => !failedUrls[c]) || null;
   const galleryCount = media.length;
 
-  React.useEffect(() => {
-    if (currentImageUrl || galleryCount < 2) return;
-    const nextIndex = media.findIndex((slide, index) => {
-      if (index === activeImageIndex) return false;
-      return slide.candidates.some((candidate) => !failedUrls[candidate]);
-    });
-    if (nextIndex !== -1) {
-      setActiveImageIndex(nextIndex);
-    }
-  }, [activeImageIndex, currentImageUrl, failedUrls, galleryCount, media]);
-
-  const shiftImage = (direction: number) => {
+  const shiftImage = (dir: number) => {
     if (galleryCount < 2) return;
-    setActiveImageIndex((current) => (current + direction + galleryCount) % galleryCount);
+    setActiveImageIndex((i) => (i + dir + galleryCount) % galleryCount);
   };
 
   return (
-    <ClientPanel className="overflow-hidden p-0">
-      <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
+    <div className={`overflow-hidden rounded-3xl border bg-white shadow-sm transition ${unavailable ? 'border-slate-200 opacity-70' : 'border-slate-200'}`}>
+      {/* Image */}
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100">
         {currentImageUrl ? (
           <img
             src={currentImageUrl}
             alt={product.name}
             className="h-full w-full object-cover"
-            onError={() => {
-              setFailedUrls((current) => (currentImageUrl ? { ...current, [currentImageUrl]: true } : current));
-            }}
+            onError={() => setFailedUrls((f) => currentImageUrl ? { ...f, [currentImageUrl]: true } : f)}
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center text-center">
-            <div>
-              <ShoppingBag size={34} className="mx-auto text-slate-400" />
-              <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{t('products.photo_none')}</p>
-            </div>
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-300">
+            <ShoppingBag size={40} />
           </div>
         )}
 
-        <div className="absolute right-4 top-4 inline-flex items-center gap-2 rounded-full bg-white/92 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-700">
-          {getAvailabilityLabel(product.availability_status, language)}
+        {/* Gradient overlay */}
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent px-4 pb-4 pt-12">
+          <div className="flex items-end justify-between gap-2">
+            <div className="min-w-0">
+              <p className="truncate text-base font-bold text-white leading-tight">{product.name}</p>
+              <p className="mt-0.5 text-sm text-white/75">{product.size_liters}L</p>
+            </div>
+            <div className="shrink-0 text-right">
+              <p className="text-base font-bold text-white">{formatAmount(product.price_uzs, language)}</p>
+              {product.requires_returnable_bottle ? (
+                <p className="text-xs text-white/65">+{formatAmount(product.bottle_deposit_uzs, language)}</p>
+              ) : null}
+            </div>
+          </div>
         </div>
 
+        {/* Availability badge */}
+        {unavailable ? (
+          <div className="absolute left-3 top-3 rounded-full bg-rose-600 px-2.5 py-1 text-[11px] font-semibold text-white shadow">
+            {t('products.out_of_stock') || 'Out of stock'}
+          </div>
+        ) : null}
+
+        {/* Gallery arrows */}
         {galleryCount > 1 ? (
           <>
             <button
               type="button"
               onClick={() => shiftImage(-1)}
-              className="absolute left-4 top-1/2 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/92 text-slate-700 transition hover:bg-white"
+              className="absolute left-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm transition hover:bg-black/50"
             >
-              <ChevronLeft size={18} />
+              <ChevronLeft size={16} />
             </button>
             <button
               type="button"
               onClick={() => shiftImage(1)}
-              className="absolute right-4 top-1/2 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/92 text-slate-700 transition hover:bg-white"
+              className="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm transition hover:bg-black/50"
             >
-              <ChevronRight size={18} />
+              <ChevronRight size={16} />
             </button>
+            <div className="absolute bottom-16 right-3 flex items-center gap-1">
+              {media.map((_, i) => (
+                <div key={i} className={`rounded-full transition-all ${i === activeImageIndex ? 'h-1.5 w-3 bg-white' : 'h-1.5 w-1.5 bg-white/50'}`} />
+              ))}
+            </div>
           </>
         ) : null}
-
-        <div className="absolute inset-x-0 bottom-0 bg-[linear-gradient(180deg,rgba(15,23,42,0)_0%,rgba(15,23,42,0.62)_100%)] px-4 pb-4 pt-10 text-white">
-          <div className="flex items-end justify-between gap-3">
-            <div className="min-w-0">
-              <p className="truncate text-lg font-semibold">{product.name}</p>
-              <p className="mt-1 text-sm text-white/78">{product.size_liters}L</p>
-            </div>
-            {galleryCount > 1 ? (
-              <span className="shrink-0 rounded-full bg-white/14 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-white">
-                {t('products.gallery_position', { current: activeImageIndex + 1, total: galleryCount })}
-              </span>
-            ) : null}
-          </div>
-        </div>
       </div>
 
-      <div className="space-y-4 p-4">
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div className="rounded-[18px] bg-slate-50 px-3 py-3">
-            <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{t('products.price')}</p>
-            <p className="mt-1 font-semibold text-slate-950">{formatAmount(product.price_uzs, language)}</p>
-          </div>
-          <div className="rounded-[18px] bg-slate-50 px-3 py-3">
-            <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{t('products.deposit')}</p>
-            <p className="mt-1 font-semibold text-slate-950">
-              {product.requires_returnable_bottle ? formatAmount(product.bottle_deposit_uzs, language) : t('products.no_deposit')}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-          <span className={`inline-flex items-center rounded-full px-2.5 py-1 font-semibold ${unavailable ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-700'}`}>
-            {t('products.available_count', { count: product.count })}
-          </span>
-          {galleryCount > 1 ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-600">
-              <Images size={12} />
-              {t('products.gallery_hint')}
-            </span>
-          ) : null}
-        </div>
-
+      {/* Actions */}
+      <div className="px-4 py-3">
         {quantity > 0 ? (
-          <div className="flex items-center justify-between gap-3 rounded-[18px] bg-slate-950 px-3 py-3 text-white shadow-[0_12px_24px_rgba(15,23,42,0.16)]">
-            <div>
-              <p className="text-xs uppercase tracking-[0.18em] text-white/55">{t('products.cart')}</p>
-              <p className="mt-1 text-sm font-semibold">{quantity}</p>
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-sm font-medium text-slate-500">
+              {t('products.cart')}: <span className="text-slate-950">{formatAmount(product.price_uzs * quantity, language)}</span>
             </div>
-            <div className="inline-flex items-center gap-2">
+            <div className="flex items-center gap-2 rounded-2xl bg-slate-950 px-1.5 py-1.5">
               <button
                 type="button"
                 onClick={() => updateQuantity(product.id, Math.max(0, quantity - 1))}
-                className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 transition hover:bg-white/20 active:bg-white/25"
+                className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/12 text-white transition hover:bg-white/22 active:scale-95"
               >
-                <Minus size={16} />
+                <Minus size={15} />
               </button>
+              <span className="min-w-7 text-center text-sm font-bold text-white">{quantity}</span>
               <button
                 type="button"
                 onClick={() => updateQuantity(product.id, quantity + 1)}
-                className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 transition hover:bg-white/20 active:bg-white/25"
+                className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/12 text-white transition hover:bg-white/22 active:scale-95"
               >
-                <Plus size={16} />
+                <Plus size={15} />
               </button>
             </div>
           </div>
@@ -215,10 +170,10 @@ const ProductCatalogCard: React.FC<ProductCatalogCardProps> = ({
             type="button"
             onClick={() => addProduct(product)}
             disabled={unavailable}
-            className={`inline-flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium transition ${
+            className={`flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-sm font-semibold transition active:scale-[0.98] ${
               unavailable
-                ? 'cursor-not-allowed bg-slate-200 text-slate-400'
-                : 'bg-slate-950 text-white shadow-[0_12px_24px_rgba(15,23,42,0.16)] hover:bg-slate-800'
+                ? 'cursor-not-allowed bg-slate-100 text-slate-400'
+                : 'bg-slate-950 text-white shadow-[0_4px_14px_rgba(15,23,42,0.18)] hover:bg-slate-800'
             }`}
           >
             <Plus size={16} />
@@ -226,14 +181,14 @@ const ProductCatalogCard: React.FC<ProductCatalogCardProps> = ({
           </button>
         )}
       </div>
-    </ClientPanel>
+    </div>
   );
 };
 
 export const ClientProductsPage: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated, sessionToken, status, openInTelegramUrl } = useClientApp();
-  const { addProduct, updateQuantity, getItemQuantity, itemsCount } = useClientCart();
+  const { addProduct, updateQuantity, getItemQuantity, itemsCount, productSubtotal } = useClientCart();
   const { language, t } = useClientLanguage();
   const [products, setProducts] = React.useState<ClientProduct[]>([]);
   const [loading, setLoading] = React.useState(false);
@@ -255,84 +210,75 @@ export const ClientProductsPage: React.FC = () => {
 
   React.useEffect(() => {
     let active = true;
-    const run = async () => {
-      await loadProducts();
-      if (!active) return;
-    };
-
-    void run();
-    return () => {
-      active = false;
-    };
+    void loadProducts().then(() => { if (!active) return; });
+    return () => { active = false; };
   }, [loadProducts]);
 
   if (!isAuthenticated && status !== 'loading') {
     return (
-      <ClientPage title={t('products.title')} subtitle={t('products.unauth_subtitle')}>
-        <ClientPanel className="p-5">
-          <p className="text-sm text-slate-500">{t('products.unauth_description')}</p>
-          {openInTelegramUrl ? (
-            <a href={openInTelegramUrl} className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(15,23,42,0.18)] transition hover:bg-slate-800">
-              {t('home.open_in_telegram_cta')}
-            </a>
-          ) : null}
-        </ClientPanel>
-      </ClientPage>
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <ShoppingBag size={48} className="mb-4 text-slate-300" />
+        <p className="text-base font-semibold text-slate-700">{t('products.unauth_subtitle')}</p>
+        <p className="mt-1 text-sm text-slate-500">{t('products.unauth_description')}</p>
+        {openInTelegramUrl ? (
+          <a href={openInTelegramUrl} className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white shadow transition hover:bg-slate-800">
+            {t('home.open_in_telegram_cta')}
+          </a>
+        ) : null}
+      </div>
     );
   }
 
   return (
-    <ClientPage
-      title={t('products.title')}
-      action={
-        <button
-          type="button"
-          onClick={() => navigate('/app/cart')}
-          className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(15,23,42,0.18)] transition hover:bg-slate-800"
-        >
-          <ShoppingCart size={16} />
-          {t('products.cart')} {itemsCount ? `(${itemsCount})` : ''}
-        </button>
-      }
-    >
+    <div className="space-y-3">
+      {/* Page title row */}
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-xl font-bold text-slate-950">{t('products.title')}</h1>
+        {itemsCount > 0 ? (
+          <button
+            type="button"
+            onClick={() => navigate('/app/cart')}
+            className="flex items-center gap-1.5 rounded-2xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow transition hover:bg-blue-700"
+          >
+            <ShoppingCart size={14} />
+            {itemsCount}
+          </button>
+        ) : null}
+      </div>
+
       {error ? (
         <ClientErrorPanel
           title={t('common.error_title')}
           message={error}
           onRetry={() => void loadProducts()}
           retryLabel={t('orders.refresh')}
-          className="border-rose-200 bg-[rgba(255,241,240,0.95)]"
+          className="border-rose-200 bg-rose-50"
         />
       ) : null}
 
       {loading ? <SkeletonProductList /> : null}
 
       {!loading && !error && products.length === 0 ? (
-        <ClientPanel className="p-0">
-          <ClientEmptyState
-            title={t('products.empty')}
-            description={t('products.subtitle')}
-            action={
-              <button
-                type="button"
-                onClick={() => void loadProducts()}
-                className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(15,23,42,0.18)] transition hover:bg-slate-800"
-              >
-                <RefreshCw size={16} />
-                {t('orders.refresh')}
-              </button>
-            }
-          />
-        </ClientPanel>
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <ShoppingBag size={48} className="mb-4 text-slate-300" />
+          <p className="text-base font-semibold text-slate-700">{t('products.empty')}</p>
+          <button
+            type="button"
+            onClick={() => void loadProducts()}
+            className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-slate-800"
+          >
+            <RefreshCw size={14} />
+            {t('orders.refresh')}
+          </button>
+        </div>
       ) : null}
 
       <div className="grid grid-cols-1 gap-4">
         {products.map((product) => {
           const quantity = getItemQuantity(product.id);
           const unavailable = product.availability_status === 'out_of_stock' || product.count <= 0;
-
           return (
-            <ProductCatalogCard
+            <ProductCard
               key={product.id}
               product={product}
               quantity={quantity}
@@ -346,26 +292,25 @@ export const ClientProductsPage: React.FC = () => {
         })}
       </div>
 
+      {/* Sticky cart banner */}
       {itemsCount > 0 ? (
         <div className="sticky bottom-24 z-20">
-          <ClientPanel className="border-slate-950 bg-slate-950 p-4 text-white shadow-[0_24px_48px_rgba(15,23,42,0.2)]">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-xs uppercase tracking-[0.18em] text-white/55">{t('products.cart_ready')}</p>
-                <p className="mt-1 text-sm text-white/80">{t('products.cart')} {itemsCount}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => navigate('/app/cart')}
-                className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100"
-              >
-                {t('products.open_cart')}
-                <ShoppingCart size={16} />
-              </button>
+          <button
+            type="button"
+            onClick={() => navigate('/app/cart')}
+            className="flex w-full items-center justify-between gap-4 rounded-3xl bg-slate-950 px-5 py-4 text-white shadow-[0_8px_32px_rgba(15,23,42,0.28)] transition hover:bg-slate-800 active:scale-[0.99]"
+          >
+            <div className="text-left">
+              <p className="text-xs font-medium text-white/60">{itemsCount} {t('cart.items')}</p>
+              <p className="text-base font-bold">{formatAmount(productSubtotal, language)}</p>
             </div>
-          </ClientPanel>
+            <div className="flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5">
+              <ShoppingCart size={15} className="text-slate-950" />
+              <span className="text-sm font-bold text-slate-950">{t('products.open_cart')}</span>
+            </div>
+          </button>
         </div>
       ) : null}
-    </ClientPage>
+    </div>
   );
 };
