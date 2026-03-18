@@ -85,18 +85,6 @@ const ProductCatalogCard: React.FC<ProductCatalogCardProps> = ({
   const currentSlide = media[activeImageIndex];
   const currentImageUrl = currentSlide?.candidates.find((candidate) => !failedUrls[candidate]) || null;
   const galleryCount = media.length;
-  const photoBadgeLabel =
-    galleryCount > 1
-      ? t('products.photo_badge_gallery', { count: galleryCount })
-      : currentImageUrl
-        ? t('products.photo_badge_ready')
-        : t('products.photo_badge_new');
-  const photoStatusText =
-    galleryCount > 1
-      ? t('products.photo_status_gallery', { count: galleryCount })
-      : currentImageUrl
-        ? t('products.photo_status_ready')
-        : t('products.photo_status_empty');
 
   React.useEffect(() => {
     if (currentImageUrl || galleryCount < 2) return;
@@ -116,7 +104,7 @@ const ProductCatalogCard: React.FC<ProductCatalogCardProps> = ({
 
   return (
     <ClientPanel className="overflow-hidden p-0">
-      <div className="relative aspect-[16/10] w-full overflow-hidden bg-[linear-gradient(145deg,#21404d_0%,#3d6c77_58%,#d9a25f_100%)] text-white">
+      <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
         {currentImageUrl ? (
           <img
             src={currentImageUrl}
@@ -129,17 +117,13 @@ const ProductCatalogCard: React.FC<ProductCatalogCardProps> = ({
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-center">
             <div>
-              <ShoppingBag size={34} className="mx-auto" />
-              <p className="mt-2 text-xs font-semibold uppercase tracking-[0.22em] text-white/72">{t('products.photo_none')}</p>
+              <ShoppingBag size={34} className="mx-auto text-slate-400" />
+              <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{t('products.photo_none')}</p>
             </div>
           </div>
         )}
 
-        <div className="absolute left-4 top-4 inline-flex items-center gap-2 rounded-full bg-white/92 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#21404d]">
-          {photoBadgeLabel}
-        </div>
-
-        <div className="absolute right-4 top-4 inline-flex items-center gap-2 rounded-full bg-black/38 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-white">
+        <div className="absolute right-4 top-4 inline-flex items-center gap-2 rounded-full bg-white/92 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-700">
           {getAvailabilityLabel(product.availability_status, language)}
         </div>
 
@@ -148,22 +132,22 @@ const ProductCatalogCard: React.FC<ProductCatalogCardProps> = ({
             <button
               type="button"
               onClick={() => shiftImage(-1)}
-              className="absolute left-4 top-1/2 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/35 text-white transition hover:bg-black/55"
+              className="absolute left-4 top-1/2 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/92 text-slate-700 transition hover:bg-white"
             >
               <ChevronLeft size={18} />
             </button>
             <button
               type="button"
               onClick={() => shiftImage(1)}
-              className="absolute right-4 top-1/2 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/35 text-white transition hover:bg-black/55"
+              className="absolute right-4 top-1/2 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/92 text-slate-700 transition hover:bg-white"
             >
               <ChevronRight size={18} />
             </button>
           </>
         ) : null}
 
-        <div className="absolute inset-x-0 bottom-0 bg-[linear-gradient(180deg,transparent_0%,rgba(0,0,0,0.58)_100%)] px-4 pb-4 pt-10">
-          <div className="flex items-end justify-between gap-3 text-white">
+        <div className="absolute inset-x-0 bottom-0 bg-[linear-gradient(180deg,rgba(15,23,42,0)_0%,rgba(15,23,42,0.62)_100%)] px-4 pb-4 pt-10 text-white">
+          <div className="flex items-end justify-between gap-3">
             <div className="min-w-0">
               <p className="truncate text-lg font-semibold">{product.name}</p>
               <p className="mt-1 text-sm text-white/78">{product.size_liters}L</p>
@@ -179,25 +163,24 @@ const ProductCatalogCard: React.FC<ProductCatalogCardProps> = ({
 
       <div className="space-y-4 p-4">
         <div className="grid grid-cols-2 gap-3 text-sm">
-          <div className="rounded-[22px] bg-[rgba(255,246,236,0.95)] px-3 py-3">
-            <p className="text-xs uppercase tracking-[0.2em] text-[#9a6b3a]">{t('products.price')}</p>
-            <p className="mt-1 font-semibold text-[#1f2933]">{formatAmount(product.price_uzs, language)}</p>
+          <div className="rounded-[18px] bg-slate-50 px-3 py-3">
+            <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{t('products.price')}</p>
+            <p className="mt-1 font-semibold text-slate-950">{formatAmount(product.price_uzs, language)}</p>
           </div>
-          <div className="rounded-[22px] bg-[rgba(232,241,238,0.95)] px-3 py-3">
-            <p className="text-xs uppercase tracking-[0.2em] text-[#40635b]">{t('products.deposit')}</p>
-            <p className="mt-1 font-semibold text-[#1f2933]">
+          <div className="rounded-[18px] bg-slate-50 px-3 py-3">
+            <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{t('products.deposit')}</p>
+            <p className="mt-1 font-semibold text-slate-950">
               {product.requires_returnable_bottle ? formatAmount(product.bottle_deposit_uzs, language) : t('products.no_deposit')}
             </p>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 text-xs text-[#8d99a2]">
-          <span>{photoStatusText}</span>
+        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
           <span className={`inline-flex items-center rounded-full px-2.5 py-1 font-semibold ${unavailable ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-700'}`}>
             {t('products.available_count', { count: product.count })}
           </span>
           {galleryCount > 1 ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-[#eef4ff] px-2.5 py-1 font-medium text-[#355cbb]">
+            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-600">
               <Images size={12} />
               {t('products.gallery_hint')}
             </span>
@@ -205,7 +188,7 @@ const ProductCatalogCard: React.FC<ProductCatalogCardProps> = ({
         </div>
 
         {quantity > 0 ? (
-          <div className="flex items-center justify-between gap-3 rounded-[24px] bg-[#21404d] px-3 py-3 text-white shadow-[0_12px_24px_rgba(33,64,77,0.18)]">
+          <div className="flex items-center justify-between gap-3 rounded-[18px] bg-slate-950 px-3 py-3 text-white shadow-[0_12px_24px_rgba(15,23,42,0.16)]">
             <div>
               <p className="text-xs uppercase tracking-[0.18em] text-white/55">{t('products.cart')}</p>
               <p className="mt-1 text-sm font-semibold">{quantity}</p>
@@ -235,7 +218,7 @@ const ProductCatalogCard: React.FC<ProductCatalogCardProps> = ({
             className={`inline-flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium transition ${
               unavailable
                 ? 'cursor-not-allowed bg-slate-200 text-slate-400'
-                : 'bg-[linear-gradient(135deg,#f59e0b_0%,#e76f51_100%)] text-white shadow-[0_12px_24px_rgba(231,111,81,0.24)] hover:brightness-105'
+                : 'bg-slate-950 text-white shadow-[0_12px_24px_rgba(15,23,42,0.16)] hover:bg-slate-800'
             }`}
           >
             <Plus size={16} />
@@ -287,9 +270,9 @@ export const ClientProductsPage: React.FC = () => {
     return (
       <ClientPage title={t('products.title')} subtitle={t('products.unauth_subtitle')}>
         <ClientPanel className="p-5">
-          <p className="text-sm leading-6 text-[#5b6770]">{t('products.unauth_description')}</p>
+          <p className="text-sm text-slate-500">{t('products.unauth_description')}</p>
           {openInTelegramUrl ? (
-            <a href={openInTelegramUrl} className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#f59e0b_0%,#e76f51_100%)] px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(231,111,81,0.24)] transition hover:brightness-105">
+            <a href={openInTelegramUrl} className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(15,23,42,0.18)] transition hover:bg-slate-800">
               {t('home.open_in_telegram_cta')}
             </a>
           ) : null}
@@ -301,12 +284,11 @@ export const ClientProductsPage: React.FC = () => {
   return (
     <ClientPage
       title={t('products.title')}
-      subtitle={t('products.subtitle')}
       action={
         <button
           type="button"
           onClick={() => navigate('/app/cart')}
-          className="inline-flex items-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#21404d_0%,#3d6c77_100%)] px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(33,64,77,0.18)] transition hover:brightness-105"
+          className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(15,23,42,0.18)] transition hover:bg-slate-800"
         >
           <ShoppingCart size={16} />
           {t('products.cart')} {itemsCount ? `(${itemsCount})` : ''}
@@ -334,7 +316,7 @@ export const ClientProductsPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => void loadProducts()}
-                className="inline-flex items-center gap-2 rounded-2xl bg-[#21404d] px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(33,64,77,0.18)] transition hover:brightness-105"
+                className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(15,23,42,0.18)] transition hover:bg-slate-800"
               >
                 <RefreshCw size={16} />
                 {t('orders.refresh')}
@@ -366,16 +348,16 @@ export const ClientProductsPage: React.FC = () => {
 
       {itemsCount > 0 ? (
         <div className="sticky bottom-24 z-20">
-          <ClientPanel className="border-none bg-[linear-gradient(135deg,#21404d_0%,#3d6c77_100%)] p-4 text-white shadow-[0_24px_48px_rgba(33,64,77,0.28)]">
+          <ClientPanel className="border-slate-950 bg-slate-950 p-4 text-white shadow-[0_24px_48px_rgba(15,23,42,0.2)]">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-white/55">{t('products.cart_ready')}</p>
+                <p className="text-xs uppercase tracking-[0.18em] text-white/55">{t('products.cart_ready')}</p>
                 <p className="mt-1 text-sm text-white/80">{t('products.cart')} {itemsCount}</p>
               </div>
               <button
                 type="button"
                 onClick={() => navigate('/app/cart')}
-                className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-[#21404d] transition hover:bg-[#fff5ea]"
+                className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100"
               >
                 {t('products.open_cart')}
                 <ShoppingCart size={16} />

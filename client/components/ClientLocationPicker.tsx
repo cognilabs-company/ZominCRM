@@ -6,7 +6,7 @@ import { useClientLanguage } from '../bootstrap/ClientLanguageContext';
 
 const markerIcon = new DivIcon({
   className: '',
-  html: '<div style="position:relative;width:30px;height:30px;"><div style="position:absolute;inset:0;border-radius:999px;background:linear-gradient(135deg,#21404d 0%,#e76f51 100%);box-shadow:0 14px 32px rgba(33,64,77,0.28);"></div><div style="position:absolute;left:8px;top:8px;width:14px;height:14px;border-radius:999px;background:white;"></div></div>',
+  html: '<div style="position:relative;width:30px;height:30px;"><div style="position:absolute;inset:0;border-radius:999px;background:#0f172a;box-shadow:0 14px 32px rgba(15,23,42,0.24);"></div><div style="position:absolute;left:8px;top:8px;width:14px;height:14px;border-radius:999px;background:white;"></div></div>',
   iconSize: [30, 30],
   iconAnchor: [15, 15],
 });
@@ -63,27 +63,27 @@ export const ClientLocationPicker: React.FC<ClientLocationPickerProps> = ({
   const copy = React.useMemo(() => {
     if (language === 'ru') {
       return {
-        liveMap: 'Живая карта',
+        liveMap: 'Карта',
         dragHint: 'Нажмите на карту или перетащите пин.',
-        readyTitle: 'Готово к подтверждению',
-        readyDescription: 'Выбранная точка сохранится как адрес заказа.',
+        readyTitle: 'Точка выбрана',
+        readyDescription: 'Сохраните адрес для заказа.',
       };
     }
 
     if (language === 'en') {
       return {
-        liveMap: 'Live map',
+        liveMap: 'Map',
         dragHint: 'Tap the map or drag the pin.',
-        readyTitle: 'Ready to confirm',
-        readyDescription: 'The selected point will be saved as the order address.',
+        readyTitle: 'Point selected',
+        readyDescription: 'Save this address for the order.',
       };
     }
 
     return {
-      liveMap: 'Jonli xarita',
-      dragHint: 'Nuqtani xaritada bosing yoki pinni suring.',
-      readyTitle: 'Tasdiqlashga tayyor',
-      readyDescription: 'Tanlangan nuqta buyurtma manzili sifatida saqlanadi.',
+      liveMap: 'Xarita',
+      dragHint: 'Xaritani bosing yoki pinni suring.',
+      readyTitle: 'Nuqta tanlandi',
+      readyDescription: 'Buyurtma uchun manzilni saqlang.',
     };
   }, [language]);
   const [internalOpen, setInternalOpen] = React.useState(false);
@@ -171,19 +171,19 @@ export const ClientLocationPicker: React.FC<ClientLocationPickerProps> = ({
 
   return (
     <div className="space-y-3">
-      <div className="rounded-[28px] border border-[#dbe5e0] bg-[linear-gradient(135deg,rgba(239,246,243,0.96)_0%,rgba(252,248,243,0.94)_100%)] p-4 shadow-[0_18px_42px_rgba(47,71,64,0.08)]">
+      <div className="rounded-[20px] border border-slate-200 bg-slate-50 p-4">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#40635b]">{copy.liveMap}</p>
-            <p className="mt-2 text-sm leading-6 text-[#5b6770]">{t('cart.map_description')}</p>
-            <p className="mt-3 text-sm font-medium text-[#1f2933]">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">{copy.liveMap}</p>
+            <p className="mt-2 text-sm text-slate-500">{t('cart.map_description')}</p>
+            <p className="mt-3 text-sm font-medium text-slate-950">
               {selectedAddress || address || t('cart.map_selected_empty')}
             </p>
           </div>
           <button
             type="button"
             onClick={() => setOpenState(!open)}
-            className="inline-flex items-center gap-2 rounded-2xl bg-[#21404d] px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(33,64,77,0.18)] transition hover:brightness-105"
+            className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(15,23,42,0.18)] transition hover:bg-slate-800"
           >
             <MapPin size={16} />
             {open ? t('cart.map_close') : t('cart.map_open')}
@@ -192,17 +192,17 @@ export const ClientLocationPicker: React.FC<ClientLocationPickerProps> = ({
       </div>
 
       {open ? (
-        <div className="rounded-[30px] border border-white/70 bg-[rgba(255,252,247,0.96)] p-4 shadow-[0_28px_60px_rgba(58,44,28,0.12)]">
+        <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-[0_18px_40px_rgba(15,23,42,0.08)]">
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm font-semibold text-[#1f2933]">{t('cart.map_picker')}</p>
-              <p className="mt-1 text-xs text-[#7b8790]">{copy.dragHint}</p>
+              <p className="text-sm font-semibold text-slate-950">{t('cart.map_picker')}</p>
+              <p className="mt-1 text-xs text-slate-500">{copy.dragHint}</p>
             </div>
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={handleUseCurrentLocation}
-                className="inline-flex items-center gap-2 rounded-2xl border border-[#d9cdbd] bg-[rgba(255,248,240,0.94)] px-3 py-2 text-xs font-semibold text-[#31424d] transition hover:bg-white"
+                className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-white"
               >
                 <Crosshair size={14} />
                 {t('cart.map_use_current')}
@@ -210,20 +210,20 @@ export const ClientLocationPicker: React.FC<ClientLocationPickerProps> = ({
               <button
                 type="button"
                 onClick={() => setOpenState(false)}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-[#d9cdbd] bg-[rgba(255,248,240,0.94)] text-[#31424d] transition hover:bg-white"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-white"
               >
                 <X size={16} />
               </button>
             </div>
           </div>
 
-          <div className="relative overflow-hidden rounded-[28px] border border-[#d9e4df] shadow-[0_20px_40px_rgba(38,70,83,0.10)]">
-            <div className="pointer-events-none absolute left-4 top-4 z-[500] rounded-full bg-[rgba(255,255,255,0.92)] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#40635b] shadow-[0_10px_24px_rgba(31,41,51,0.10)]">
+          <div className="relative overflow-hidden rounded-[24px] border border-slate-200 shadow-[0_18px_36px_rgba(15,23,42,0.08)]">
+            <div className="pointer-events-none absolute left-4 top-4 z-[500] rounded-full bg-white/95 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 shadow-[0_10px_24px_rgba(15,23,42,0.08)]">
               {t('cart.map_select_hint')}
             </div>
             <MapContainer center={selectedPosition} zoom={15} scrollWheelZoom className="h-[360px] w-full">
               <TileLayer
-                attribution='&copy; OpenStreetMap contributors &copy; CARTO'
+                attribution="&copy; OpenStreetMap contributors &copy; CARTO"
                 url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
               />
               <MapViewport position={selectedPosition} />
@@ -244,13 +244,13 @@ export const ClientLocationPicker: React.FC<ClientLocationPickerProps> = ({
           </div>
 
           <div className="mt-4 grid gap-3 md:grid-cols-[1.4fr,1fr]">
-            <div className="rounded-[24px] bg-[linear-gradient(135deg,rgba(33,64,77,0.96)_0%,rgba(61,108,119,0.94)_100%)] p-4 text-white">
+            <div className="rounded-[18px] bg-slate-950 p-4 text-white">
               <div className="flex items-start gap-3">
                 <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-2xl bg-white/12 text-white">
                   <Navigation size={15} />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/60">{t('cart.map_selected_title')}</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">{t('cart.map_selected_title')}</p>
                   <p className="mt-2 text-sm font-semibold leading-6 text-white">
                     {resolvingAddress ? t('cart.map_loading_address') : (selectedAddress || address || t('cart.map_selected_empty'))}
                   </p>
@@ -264,9 +264,9 @@ export const ClientLocationPicker: React.FC<ClientLocationPickerProps> = ({
               </div>
             </div>
 
-            <div className="rounded-[24px] bg-[rgba(255,248,240,0.94)] p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#9a6b3a]">{copy.readyTitle}</p>
-              <p className="mt-2 text-sm leading-6 text-[#5b6770]">{copy.readyDescription}</p>
+            <div className="rounded-[18px] border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">{copy.readyTitle}</p>
+              <p className="mt-2 text-sm text-slate-500">{copy.readyDescription}</p>
               {mapError ? <p className="mt-3 text-xs text-rose-600">{mapError}</p> : null}
             </div>
           </div>
@@ -275,7 +275,7 @@ export const ClientLocationPicker: React.FC<ClientLocationPickerProps> = ({
             <button
               type="button"
               onClick={handleApply}
-              className="inline-flex items-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#f59e0b_0%,#e76f51_100%)] px-5 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(231,111,81,0.24)] transition hover:brightness-105"
+              className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(15,23,42,0.18)] transition hover:bg-slate-800"
             >
               <MapPin size={16} />
               {t('cart.map_confirm')}

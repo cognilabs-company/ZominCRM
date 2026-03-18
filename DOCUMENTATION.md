@@ -1,76 +1,193 @@
-# Zomin CRM - Developer Documentation
+# Zomin CRM Developer Documentation
 
 ## Overview
-Zomin CRM is a modern, responsive React application designed for an "AI Bot + CRM" system. It features a dual-theme system (Dark Navy/Light) and multi-language support (English, Russian, Uzbek).
 
-## Tech Stack
-- **Framework:** React 18+ (Create Root API)
-- **Language:** TypeScript
-- **Styling:** Tailwind CSS (Utility-first)
-- **Icons:** Lucide React
-- **Routing:** React Router DOM (HashRouter)
-- **Charts:** Recharts
+Zomin CRM is a single frontend repository with two runtime surfaces:
 
-## Project Structure
+- Admin CRM for operators, superusers, and admins
+- Client Telegram WebApp for customer ordering
 
-### `/src` Root
-- `App.tsx`: Main application component containing the Router and global Providers (Theme, Language).
-- `index.tsx`: Entry point rendering the React root.
-- `types.ts`: Global TypeScript definitions (Interfaces for User, Order, translations, etc.).
-- `constants.ts`: Static data including Translation dictionaries and Navigation items.
+Both are mounted from the same React application and share the same build pipeline, but they use different providers and API helpers.
 
-### `/src/context`
-- `ThemeContext.tsx`: Manages the 'dark' vs 'light' class on the HTML root element. Persists preference to LocalStorage.
-- `LanguageContext.tsx`: Manages current locale ('en', 'ru', 'uz') and provides a `t(key)` function for translating strings.
+## Current Tech Stack
 
-### `/src/components`
-- `Sidebar.tsx`: The main left-hand navigation. Uses `NavLink` for active states.
-- `Header.tsx`: Top bar containing the Language Switcher, Theme Toggle, and User Profile/Notifications.
-- `/ui`: Reusable atomic components.
-  - `Card.tsx`: Standard container with optional title/action header.
-  - `Badge.tsx`: Status indicators with color variants (success, warning, error, etc.).
+- React 19
+- TypeScript
+- Vite 6
+- Tailwind CSS 4
+- React Router DOM with `HashRouter`
+- Lucide React
+- Recharts
+- Leaflet and React Leaflet
 
-### `/src/pages`
-- `Dashboard.tsx`: High-level view with KPI cards and Recharts visualizations.
-- `Conversations.tsx`: A split-view chat interface (Sidebar List + Chat Window).
-- `Orders.tsx`: A data table listing orders with filtering UI and status badges.
+## Runtime Architecture
 
-### `/src/services`
-- `api.ts`: Central configuration file for API Endpoints. Change `API_BASE_URL` here to connect to your backend.
+### Entry Points
 
-## How to Customize
+- `index.tsx` mounts the React root and global CSS.
+- `App.tsx` composes providers and defines all admin and client routes.
 
-### Changing Colors
-Colors are defined in `tailwind.config` (inside `index.html` script tag for this build). 
-- To change the dark background, modify `colors.navy`.
-- To change the accent color, modify `colors.primary.red` or `colors.primary.blue`.
+### Admin Application
 
-### Adding Translations
-1. Open `src/constants.ts`.
-2. Add a new key to the `TRANSLATIONS` object.
-   ```typescript
-   new_key: { en: 'Hello', ru: 'Привет', uz: 'Salom' }
-   ```
-3. Use in components: `const { t } = useLanguage(); ... <span>{t('new_key')}</span>`
+Admin runtime uses:
 
-### Connecting to API
-1. Open `src/services/api.ts`.
-2. Update `API_BASE_URL` to your real backend URL.
-3. Use the defined `ENDPOINTS` in your `useEffect` hooks within pages to fetch data.
+- `context/AuthContext.tsx`
+- `context/LanguageContext.tsx`
+- `context/ThemeContext.tsx`
+- `context/ToastContext.tsx`
+- `services/api.ts`
 
-## API Integration Pattern
-Currently, data is mocked in the components. To integrate real data:
-1. Create a function in `services/api.ts` (e.g., `fetchOrders`).
-2. In `Orders.tsx`, add a `useEffect`:
-   ```typescript
-   useEffect(() => {
-     fetch(ENDPOINTS.ORDERS.LIST, { headers: getHeaders() })
-       .then(res => res.json())
-       .then(data => setOrders(data));
-   }, []);
-   ```
+Admin pages live in `pages/`.
 
-## Key Features Code Map
-- **Theme Logic:** `context/ThemeContext.tsx` -> Toggles `.dark` class on `<html>`.
-- **Language Logic:** `context/LanguageContext.tsx` -> Maps keys to strings in `constants.ts`.
-- **Layout:** `App.tsx` (MainLayout) wraps the `Sidebar`, `Header` and `Outlet` (Page Content).
+Main admin feature areas include:
+
+- dashboard
+- conversations
+- orders
+- products
+- clients
+- bottle controller
+- payments
+- couriers
+- users
+- AI tools, credentials, and automation settings
+
+### Client WebApp
+
+Client runtime uses:
+
+- `client/bootstrap/ClientAppContext.tsx`
+- `client/bootstrap/ClientCartContext.tsx`
+- `client/bootstrap/ClientLanguageContext.tsx`
+- `client/api/clientApi.ts`
+
+Client pages live in `client/pages/`.
+
+Main client feature areas include:
+
+- Telegram bootstrap and preview mode
+- product catalog
+- cart and delivery draft persistence
+- checkout preview and order creation
+- order history and order detail
+- bottle balance and movement history
+- client profile
+
+## API Layers
+
+### Admin API
+
+`services/api.ts` is the central admin API layer.
+
+Responsibilities:
+
+- resolve API base URL from environment or current host
+- define endpoint constants
+- attach bearer token headers
+- normalize backend envelope responses
+- throw typed request errors
+
+### Client API
+
+`client/api/clientApi.ts` is the client WebApp API layer.
+
+Responsibilities:
+
+- resolve client API base URL
+- attach client session token when available
+- normalize client request failures
+- resolve media URLs safely across hosts
+
+## Routing Model
+
+The project uses `HashRouter`.
+
+Route groups:
+
+- `/app/*` for the client WebApp
+- `/*` for admin auth and admin CRM routes
+
+Legacy admin routes are redirected into `/admin-app/*`.
+
+`App.tsx` also includes path normalization so direct browser access without a hash can be converted into the expected hash route.
+
+## State and Persistence
+
+### Admin
+
+- auth token stored in `localStorage`
+- token expiry stored in `localStorage`
+- theme stored in `localStorage`
+- language stored in `localStorage`
+- toast notifications are in-memory only
+
+### Client
+
+- bootstrap session token comes from `/bootstrap/`
+- cart contents stored in `sessionStorage`
+- order draft stored in `sessionStorage`
+- optional language override stored in `localStorage`
+
+## Styling
+
+- Tailwind CSS v4 is configured through `index.css`
+- shared tokens such as colors, shadows, and animations are defined with `@theme`
+- admin and client surfaces intentionally use different visual styles
+
+## Important Files
+
+- `App.tsx`
+- `index.tsx`
+- `index.css`
+- `services/api.ts`
+- `context/AuthContext.tsx`
+- `pages/Clients.tsx`
+- `pages/Orders.tsx`
+- `pages/Products.tsx`
+- `pages/Conversations.tsx`
+- `client/api/clientApi.ts`
+- `client/bootstrap/ClientAppContext.tsx`
+- `client/bootstrap/ClientCartContext.tsx`
+- `client/bootstrap/ClientLanguageContext.tsx`
+- `client/routes.tsx`
+
+## Development Guidance
+
+### Adding Admin API Calls
+
+1. Add or extend the endpoint in `services/api.ts`.
+2. Use `apiRequest(...)` from the page or context.
+3. Prefer page-local loading and error state unless the state is truly shared.
+
+### Adding Client API Calls
+
+1. Use `clientApiRequest(...)` from `client/api/clientApi.ts`.
+2. Pass the session token from `useClientApp()` when the endpoint requires authenticated client access.
+3. Keep client ordering state inside the existing cart/bootstrap providers unless there is a clear reason to create a new provider.
+
+### Translations
+
+- Admin translations are in `constants.ts`.
+- Client WebApp translations are in `client/bootstrap/ClientLanguageContext.tsx`.
+
+When adding translations:
+
+- provide `uz`, `ru`, and `en` values
+- avoid placeholder strings
+- prefer complete translations over transliterated labels
+
+## Known Constraints
+
+- The admin settings page is read-only until backend settings endpoints are available.
+- Some older documents referenced mocked data or `/src` folder structure; those references are obsolete.
+- Several admin pages are large and should be refactored carefully to avoid regressions.
+
+## Verification
+
+Primary verification command:
+
+```bash
+npm run build
+```
+
+If this passes, the Vite/TypeScript production bundle is currently valid.

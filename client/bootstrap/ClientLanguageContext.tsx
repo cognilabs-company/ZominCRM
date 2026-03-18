@@ -7,42 +7,42 @@ type TranslationParams = Record<string, string | number>;
 type TranslationMap = Record<string, Record<ClientUiLanguage, string>>;
 
 const translations: TranslationMap = {
-  "nav.home": { uz: "Bosh sahifa", ru: "???????", en: "Home" },
-  "nav.products": { uz: "Mahsulotlar", ru: "??????", en: "Products" },
-  "nav.cart": { uz: "Savatcha", ru: "???????", en: "Cart" },
-  "nav.checkout": { uz: "Buyurtma", ru: "??????????", en: "Checkout" },
-  "nav.preview": { uz: "Ko\'rish", ru: "????????", en: "Preview" },
-  "nav.orders": { uz: "Buyurtmalar", ru: "??????", en: "Orders" },
-  "nav.bottles": { uz: "Idishlar", ru: "??????", en: "Bottles" },
-  "nav.profile": { uz: "Profil", ru: "???????", en: "Profile" },
+  "nav.home": { uz: "Bosh sahifa", ru: "Главная", en: "Home" },
+  "nav.products": { uz: "Mahsulotlar", ru: "Товары", en: "Products" },
+  "nav.cart": { uz: "Savatcha", ru: "Корзина", en: "Cart" },
+  "nav.checkout": { uz: "Buyurtma", ru: "Оформление", en: "Checkout" },
+  "nav.preview": { uz: "Ko\'rish", ru: "Предпросмотр", en: "Preview" },
+  "nav.orders": { uz: "Buyurtmalar", ru: "Заказы", en: "Orders" },
+  "nav.bottles": { uz: "Idishlar", ru: "Бутыли", en: "Bottles" },
+  "nav.profile": { uz: "Profil", ru: "Профиль", en: "Profile" },
 
-  "layout.badge": { uz: "Mijoz sahifasi", ru: "???????? ???????", en: "Client page" },
+  "layout.badge": { uz: "Mijoz sahifasi", ru: "Страница клиента", en: "Client page" },
   "layout.title": { uz: "Zomin Suv", ru: "Zomin Suv", en: "Zomin Water" },
   "layout.telegram_verified": { uz: "Buyurtma berish uchun sahifa tayyor.", ru: "Страница заказа готова.", en: "Your order page is ready." },
   "layout.preview_shell": { uz: "To\'liq foydalanish uchun Telegram ichida oching.", ru: "Откройте внутри Telegram для полного доступа.", en: "Open inside Telegram for full access." },
-  "layout.refresh_title": { uz: "Yangilash", ru: "????????", en: "Refresh" },
-  "layout.mode": { uz: "Rejim", ru: "?????", en: "Mode" },
-  "layout.session": { uz: "Sessiya", ru: "??????", en: "Session" },
+  "layout.refresh_title": { uz: "Yangilash", ru: "Обновить", en: "Refresh" },
+  "layout.mode": { uz: "Rejim", ru: "Режим", en: "Mode" },
+  "layout.session": { uz: "Sessiya", ru: "Сессия", en: "Session" },
   "layout.deposit_held": { uz: "Ushlab turilgan depozit", ru: "Депозит удержан", en: "Deposit held" },
   "layout.active_session": { uz: "Faol sessiya", ru: "Активная сессия", en: "Active session" },
   "layout.telegram_detected": { uz: "Telegram orqali ochildi.", ru: "Открыт через Telegram.", en: "Opened through Telegram." },
   "layout.telegram_missing": { uz: "To\'liq ishlashi uchun Telegram ichida oching.", ru: "Откройте в Telegram для полного доступа.", en: "Open in Telegram for full access." },
-  "layout.profile": { uz: "Profil", ru: "???????", en: "Profile" },
-  "layout.language_label": { uz: "Til", ru: "????", en: "Language" },
+  "layout.profile": { uz: "Profil", ru: "Профиль", en: "Profile" },
+  "layout.language_label": { uz: "Til", ru: "Язык", en: "Language" },
   "layout.active_order": { uz: "Faol buyurtma", ru: "Активный заказ", en: "Active order" },
   "layout.awaiting_delivery": { uz: "Yetkazib berish manzili kutilmoqda", ru: "Ждем подробностей о доставке", en: "Awaiting delivery details" },
   "layout.session_valid_until": { uz: "Sessiya amal qilish muddati:", ru: "Сессия действительна до", en: "Session valid until" },
   "layout.mode.telegram": { uz: "telegram", ru: "telegram", en: "telegram" },
-  "layout.mode.preview": { uz: "sinov", ru: "????????????", en: "preview" },
-  "layout.status.loading": { uz: "yuklanmoqda", ru: "????????", en: "loading" },
-  "layout.status.ready": { uz: "tayyor", ru: "??????", en: "ready" },
-  "layout.status.error": { uz: "xato", ru: "??????", en: "error" },
+  "layout.mode.preview": { uz: "sinov", ru: "предпросмотр", en: "preview" },
+  "layout.status.loading": { uz: "yuklanmoqda", ru: "загрузка", en: "loading" },
+  "layout.status.ready": { uz: "tayyor", ru: "готово", en: "ready" },
+  "layout.status.error": { uz: "xato", ru: "ошибка", en: "error" },
   "layout.telegram_client": { uz: "Telegram mijozi", ru: "Телеграм клиент", en: "Telegram client" },
 
   "home.title": { uz: "Bosh sahifa", ru: "Дом", en: "Home" },
   "home.subtitle": { uz: "Buyurtma qilish, mahsulotlarni ko\'rish va holatni kuzatish uchun qulay sahifa.", ru: "Простое место для заказа воды, просмотра продуктов и отслеживания статуса.", en: "A simple place to order water, browse products, and track status." },
   "home.open_in_telegram": { uz: "Buni Telegram ichida oching", ru: "Откройте это внутри Telegram", en: "Open this inside Telegram" },
-  "home.open_in_telegram_cta": { uz: "Telegramda ochish", ru: "??????? ? Telegram", en: "Open in Telegram" },
+  "home.open_in_telegram_cta": { uz: "Telegramda ochish", ru: "Открыть в Telegram", en: "Open in Telegram" },
   "home.preview_mode": { uz: "To\'liq foydalanish uchun ilovani Telegram ichida oching.", ru: "Откройте приложение внутри Telegram, чтобы использовать все.", en: "Open the app inside Telegram to use everything." },
   "home.verifying": { uz: "Ma\'lumotlar tayyorlanmoqda.", ru: "Подготовка ваших данных.", en: "Preparing your data." },
   "home.cart_items": { uz: "Savatchadagi mahsulotlar", ru: "Товары в корзине", en: "Cart items" },
@@ -216,7 +216,9 @@ const translations: TranslationMap = {
   "bottles.error_load": { uz: "Idish balansini yuklab bo\'lmadi.", ru: "Не удалось загрузить остатки бутылей.", en: "Failed to load bottle balances." },
 
   "profile.title": { uz: "Profil", ru: "Профиль", en: "Profile" },
-  "profile.subtitle": { uz: "Shaxsiy ma\'lumotlar va aloqa holati.", ru: "Личные данные и статус контакта.", en: "Personal details and contact status." },
+  "profile.subtitle": { uz: "Asosiy ma\'lumotlar.", ru: "Основные данные.", en: "Basic details." },
+  "profile.edit_title": { uz: "Ma\'lumotlarni yangilash", ru: "Обновить данные", en: "Update details" },
+  "profile.full_name": { uz: "To\'liq ism", ru: "Полное имя", en: "Full name" },
   "profile.context_detected": { uz: "Telegram WebApp muhiti aniqlandi.", ru: "Обнаружен контекст Telegram WebApp.", en: "Telegram WebApp context detected." },
   "profile.context_preview": { uz: "Telegram WebApp tashqarisidagi sinov rejimi.", ru: "Режим предварительного просмотра вне Telegram WebApp.", en: "Preview mode outside Telegram WebApp." },
   "profile.username": { uz: "Username", ru: "Имя пользователя", en: "Username" },
@@ -234,12 +236,20 @@ const translations: TranslationMap = {
   "profile.token_expires_at": { uz: "Token amal qilish muddati", ru: "Срок действия токена истекает в", en: "Token expires at" },
   "profile.initdata_missing": { uz: "Telegram initData sinov rejimida mavjud emas.", ru: "Telegram initData недоступен в режиме предварительного просмотра.", en: "Telegram initData is not available in preview mode." },
   "profile.error_load": { uz: "Profilni yuklab bo\'lmadi.", ru: "Не удалось загрузить профиль.", en: "Failed to load profile." },
+  "profile.error_save": { uz: "Profilni saqlab bo\'lmadi.", ru: "Не удалось сохранить профиль.", en: "Failed to save profile." },
   "profile.has_phone": { uz: "Telefon mavjud", ru: "Телефон в файле", en: "Phone on file" },
   "profile.identity_verified": { uz: "Platforma identifikatsiyasi tasdiqlangan", ru: "Идентичность платформы подтверждена", en: "Platform identity verified" },
   "profile.can_receive_telegram": { uz: "Telegram qabul qila oladi", ru: "Можно получить Telegram", en: "Can receive Telegram" },
   "profile.session_status": { uz: "Sessiya holati", ru: "Статус сеанса", en: "Session status" },
   "profile.telegram_language": { uz: "Telegram tili", ru: "Язык телеграммы", en: "Telegram language" },
   "profile.platform": { uz: "Platforma", ru: "Платформа", en: "Platform" },
+  "profile.edit": { uz: "Tahrirlash", ru: "Редактировать", en: "Edit" },
+  "profile.cancel": { uz: "Bekor qilish", ru: "Отмена", en: "Cancel" },
+  "profile.save": { uz: "Saqlash", ru: "Сохранить", en: "Save" },
+  "profile.saving": { uz: "Saqlanmoqda...", ru: "Сохранение...", en: "Saving..." },
+  "profile.saved": { uz: "Profil yangilandi.", ru: "Профиль обновлен.", en: "Profile updated." },
+  "profile.details_title": { uz: "Hisob ma\'lumotlari", ru: "Данные аккаунта", en: "Account details" },
+  "profile.status_title": { uz: "Holat", ru: "Статус", en: "Status" },
 
   "payment.CASH": { uz: "Naqd pul", ru: "Наличные", en: "Cash" },
   "payment.TRANSFER": { uz: "O\'tkazma", ru: "Передача", en: "Transfer" },
@@ -268,6 +278,22 @@ const normalizeClientLanguage = (value?: string | null): ClientUiLanguage => {
 const interpolate = (template: string, params?: TranslationParams) => {
   if (!params) return template;
   return template.replace(/\{(\w+)\}/g, (_, key: string) => String(params[key] ?? ''));
+};
+
+const isBrokenTranslation = (value?: string) => {
+  const trimmed = (value || '').trim();
+  if (!trimmed) return true;
+  const compact = trimmed.replace(/\s/g, '');
+  if (!compact) return true;
+  const questionMarkCount = Array.from(compact).filter((char) => char === '?').length;
+  return questionMarkCount > 0 && questionMarkCount >= Math.ceil(compact.length / 2);
+};
+
+const resolveTemplate = (key: string, language: ClientUiLanguage) => {
+  const entry = translations[key];
+  if (!entry) return key;
+  const candidates = [entry[language], entry.en, entry.uz];
+  return candidates.find((candidate) => !isBrokenTranslation(candidate)) || key;
 };
 
 interface ClientLanguageContextValue {
@@ -303,7 +329,7 @@ export const ClientLanguageProvider: React.FC<{ children: React.ReactNode }> = (
       }
     },
     t: (key, params) => {
-      const template = translations[key]?.[language] || translations[key]?.uz || key;
+      const template = resolveTemplate(key, language);
       return interpolate(template, params);
     },
   }), [language]);

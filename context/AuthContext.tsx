@@ -37,8 +37,36 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const TOKEN_KEY = 'auth_token';
 const EXPIRES_KEY = 'auth_token_expires_at';
 
+const parseExpiresAt = (value?: string | null) => {
+  if (!value) return null;
+  const timestamp = new Date(value).getTime();
+  return Number.isFinite(timestamp) ? timestamp : null;
+};
+
+const isExpired = (value?: string | null) => {
+  const timestamp = parseExpiresAt(value);
+  return timestamp !== null && timestamp <= Date.now();
+};
+
+const readStoredToken = () => {
+  const token = localStorage.getItem(TOKEN_KEY);
+  const expiresAt = localStorage.getItem(EXPIRES_KEY);
+  if (token && isExpired(expiresAt)) {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(EXPIRES_KEY);
+    return null;
+  }
+  return token;
+};
+
+const readStoredExpiry = () => {
+  const expiresAt = localStorage.getItem(EXPIRES_KEY);
+  return isExpired(expiresAt) ? null : expiresAt;
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem(TOKEN_KEY));
+  const [token, setToken] = useState<string | null>(() => readStoredToken());
+  const [expiresAt, setExpiresAt] = useState<string | null>(() => readStoredExpiry());
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -46,12 +74,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(EXPIRES_KEY);
     setToken(null);
+    setExpiresAt(null);
     setUser(null);
   };
 
   const refreshMe = async () => {
     const currentToken = localStorage.getItem(TOKEN_KEY);
-    if (!currentToken) {
+    const currentExpiry = localStorage.getItem(EXPIRES_KEY);
+    if (!currentToken || isExpired(currentExpiry)) {
+      clearAuth();
       setUser(null);
       return;
     }
@@ -71,6 +102,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem(TOKEN_KEY, payload.token);
     localStorage.setItem(EXPIRES_KEY, payload.expires_at);
     setToken(payload.token);
+    setExpiresAt(payload.expires_at);
     setUser(payload.user);
   };
 
@@ -95,6 +127,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setLoading(false);
           return;
         }
+        if (isExpired(expiresAt)) {
+          clearAuth();
+          setLoading(false);
+          return;
+        }
         await refreshMe();
       } catch {
         clearAuth();
@@ -103,6 +140,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     })();
   }, [token]);
+
+  useEffect(() => {
+    if (!token || !expiresAt) return;
+    const expiryTimestamp = parseExpiresAt(expiresAt);
+    if (expiryTimestamp === null) return;
+    const remaining = expiryTimestamp - Date.now();
+    if (remaining <= 0) {
+      clearAuth();
+      return;
+    }
+    const timeoutId = window.setTimeout(() => {
+      clearAuth();
+    }, remaining);
+    return () => window.clearTimeout(timeoutId);
+  }, [expiresAt, token]);
 
   const hasPermission = (permission: string) => {
     if (!user) return false;

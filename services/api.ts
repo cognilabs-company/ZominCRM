@@ -108,6 +108,7 @@ export const ENDPOINTS = {
   CLIENTS: {
     LIST: `${API_BASE_URL}/clients/`,
     UPSERT: `${API_BASE_URL}/clients/upsert/`,
+    DETAIL: (id: string) => `${API_BASE_URL}/clients/${id}/`,
     BOTTLE_BALANCES: (id: string) => `${API_BASE_URL}/clients/${id}/bottle-balances/`,
     BOTTLE_INCREMENTS: (id: string) => `${API_BASE_URL}/clients/${id}/bottle-increments/`,
     BOTTLE_RETURNS: (id: string) => `${API_BASE_URL}/clients/${id}/bottle-returns/`,
@@ -259,7 +260,7 @@ const extractApiErrorMessage = (payload: unknown, fallback: string): string => {
 export async function apiRequest<T = unknown>(url: string, init?: RequestInit): Promise<T> {
   const hasBody = init?.body !== undefined && init?.body !== null;
   const isFormDataBody = typeof FormData !== 'undefined' && init?.body instanceof FormData;
-  const isPublicAuthEndpoint = url.includes('/auth/login/') || url.includes('/auth/register/');
+  const isPublicAuthEndpoint = url.includes('/auth/login/');
   const res = await fetch(url, {
     ...init,
     headers: {

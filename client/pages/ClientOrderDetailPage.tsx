@@ -102,10 +102,10 @@ export const ClientOrderDetailPage: React.FC = () => {
   if (!isAuthenticated) {
     return (
       <ClientPage title={t('orders.detail.title')} subtitle={t('orders.unauth_subtitle')}>
-        <ClientPanel className="p-5 text-sm text-[#5b6770]">
+        <ClientPanel className="p-5 text-sm text-slate-500">
           <p>{t('orders.unauth_description')}</p>
           {openInTelegramUrl ? (
-            <a href={openInTelegramUrl} className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#f59e0b_0%,#e76f51_100%)] px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(231,111,81,0.24)] transition hover:brightness-105">
+            <a href={openInTelegramUrl} className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(15,23,42,0.18)] transition hover:bg-slate-800">
               {t('home.open_in_telegram_cta')}
             </a>
           ) : null}
@@ -117,12 +117,11 @@ export const ClientOrderDetailPage: React.FC = () => {
   return (
     <ClientPage
       title={t('orders.detail.title')}
-      subtitle={t('orders.detail.subtitle')}
       action={
         <button
           type="button"
           onClick={() => navigate('/app/orders')}
-          className="inline-flex items-center gap-2 rounded-2xl border border-[#d9cdbd] bg-[rgba(255,248,240,0.94)] px-4 py-3 text-sm font-semibold text-[#31424d] transition hover:bg-white"
+          className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
         >
           <ArrowLeft size={15} />
           {t('orders.detail.back')}
@@ -150,7 +149,7 @@ export const ClientOrderDetailPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => navigate('/app/orders')}
-                className="inline-flex items-center gap-2 rounded-2xl bg-[#21404d] px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(33,64,77,0.18)] transition hover:brightness-105"
+                className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(15,23,42,0.18)] transition hover:bg-slate-800"
               >
                 <ArrowLeft size={15} />
                 {t('orders.detail.back')}
@@ -165,41 +164,41 @@ export const ClientOrderDetailPage: React.FC = () => {
           <ClientPanel className="p-5">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-[#9a6b3a]">{t('orders.detail.reference')}</p>
-                <h2 className="mt-2 text-lg font-semibold text-[#1f2933]">{formatOrderRef(order.id)}</h2>
-                <p className="mt-2 text-sm text-[#5b6770]">{order.location_text || t('orders.delivery_pending')}</p>
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{t('orders.detail.reference')}</p>
+                <h2 className="mt-2 text-lg font-semibold text-slate-950">{formatOrderRef(order.id)}</h2>
+                <p className="mt-2 text-sm text-slate-500">{order.location_text || t('orders.delivery_pending')}</p>
               </div>
               <div className="text-right">
                 <div className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${getOrderStatusClasses(order.status)}`}>
                   {getOrderStatusLabel(order.status, language)}
                 </div>
-                <p className="mt-3 text-lg font-semibold text-[#1f2933]">{formatAmount(order.total_amount_uzs, language)}</p>
+                <p className="mt-3 text-lg font-semibold text-slate-950">{formatAmount(order.total_amount_uzs, language)}</p>
               </div>
             </div>
 
             <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <div className="rounded-[24px] bg-[rgba(255,248,240,0.94)] px-4 py-3">
-                <p className="text-xs uppercase tracking-[0.2em] text-[#9a6b3a]">{t('orders.product_subtotal')}</p>
-                <p className="mt-2 text-base font-semibold text-[#1f2933]">{formatAmount(order.product_subtotal_uzs || 0, language)}</p>
+              <div className="rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-3">
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{t('orders.product_subtotal')}</p>
+                <p className="mt-2 text-base font-semibold text-slate-950">{formatAmount(order.product_subtotal_uzs || 0, language)}</p>
               </div>
-              <div className="rounded-[24px] bg-[rgba(232,241,238,0.95)] px-4 py-3">
-                <p className="text-xs uppercase tracking-[0.2em] text-[#40635b]">{t('orders.deposit')}</p>
-                <p className="mt-2 text-base font-semibold text-[#1f2933]">{formatAmount(order.bottle_deposit_total_uzs || 0, language)}</p>
+              <div className="rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-3">
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{t('orders.deposit')}</p>
+                <p className="mt-2 text-base font-semibold text-slate-950">{formatAmount(order.bottle_deposit_total_uzs || 0, language)}</p>
               </div>
-              <div className="rounded-[24px] bg-[rgba(235,240,244,0.94)] px-4 py-3">
-                <p className="text-xs uppercase tracking-[0.2em] text-[#5a6d7c]">{t('orders.payment_method')}</p>
-                <p className="mt-2 text-base font-semibold text-[#1f2933]">{getPaymentMethodLabel(order.payment_method, language)}</p>
+              <div className="rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-3">
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{t('orders.payment_method')}</p>
+                <p className="mt-2 text-base font-semibold text-slate-950">{getPaymentMethodLabel(order.payment_method, language)}</p>
               </div>
             </div>
 
             <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="rounded-[24px] bg-[rgba(255,248,240,0.8)] px-4 py-3 text-sm text-[#5b6770]">
-                <p className="text-xs uppercase tracking-[0.2em] text-[#9a6b3a]">{t('orders.detail.created_at')}</p>
-                <p className="mt-2 font-medium text-[#1f2933]">{formatDateTime(order.created_at, language)}</p>
+              <div className="rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{t('orders.detail.created_at')}</p>
+                <p className="mt-2 font-medium text-slate-950">{formatDateTime(order.created_at, language)}</p>
               </div>
-              <div className="rounded-[24px] bg-[rgba(235,240,244,0.8)] px-4 py-3 text-sm text-[#5b6770]">
-                <p className="text-xs uppercase tracking-[0.2em] text-[#5a6d7c]">{t('orders.detail.delivery_time')}</p>
-                <p className="mt-2 font-medium text-[#1f2933]">{formatDateTime(order.delivery_time_requested, language)}</p>
+              <div className="rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{t('orders.detail.delivery_time')}</p>
+                <p className="mt-2 font-medium text-slate-950">{formatDateTime(order.delivery_time_requested, language)}</p>
               </div>
             </div>
           </ClientPanel>
@@ -207,14 +206,14 @@ export const ClientOrderDetailPage: React.FC = () => {
           <ClientPanel className="p-5">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-base font-semibold text-[#1f2933]">{t('orders.detail.items_title')}</h2>
-                <p className="mt-1 text-sm text-[#5b6770]">{t('orders.detail.items_subtitle')}</p>
+                <h2 className="text-base font-semibold text-slate-950">{t('orders.detail.items_title')}</h2>
+                <p className="mt-1 text-sm text-slate-500">{t('orders.detail.items_subtitle')}</p>
               </div>
               <button
                 type="button"
                 onClick={() => void loadOrder()}
                 disabled={loading}
-                className="inline-flex items-center gap-2 rounded-2xl border border-[#d9cdbd] bg-[rgba(255,248,240,0.94)] px-4 py-3 text-sm font-semibold text-[#31424d] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
                 {t('orders.refresh')}
@@ -223,15 +222,15 @@ export const ClientOrderDetailPage: React.FC = () => {
 
             <div className="mt-4 space-y-3">
               {(order.items || []).map((item) => (
-                <div key={`${order.id}-${item.product_id}-${item.product_name}`} className="rounded-[24px] border border-[#eadfce] bg-[rgba(255,248,240,0.8)] px-4 py-3">
+                <div key={`${order.id}-${item.product_id}-${item.product_name}`} className="rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-3">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-sm font-semibold text-[#1f2933]">{item.product_name}</p>
-                      <p className="mt-1 text-sm text-[#5b6770]">{t('orders.qty', { count: item.quantity })}</p>
+                      <p className="text-sm font-semibold text-slate-950">{item.product_name}</p>
+                      <p className="mt-1 text-sm text-slate-500">{t('orders.qty', { count: item.quantity })}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-semibold text-[#1f2933]">{formatAmount(item.line_total_uzs, language)}</p>
-                      <p className="mt-1 text-xs text-[#7b8790]">{t('orders.deposit_item', { amount: formatAmount(item.bottle_deposit_total_uzs || 0, language) })}</p>
+                      <p className="text-sm font-semibold text-slate-950">{formatAmount(item.line_total_uzs, language)}</p>
+                      <p className="mt-1 text-xs text-slate-500">{t('orders.deposit_item', { amount: formatAmount(item.bottle_deposit_total_uzs || 0, language) })}</p>
                     </div>
                   </div>
                 </div>
@@ -243,14 +242,14 @@ export const ClientOrderDetailPage: React.FC = () => {
             <ClientPanel className="p-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h2 className="text-base font-semibold text-[#1f2933]">{t('orders.payment.title')}</h2>
-                  <p className="mt-1 text-sm text-[#5b6770]">{t('orders.payment.subtitle')}</p>
+                  <h2 className="text-base font-semibold text-slate-950">{t('orders.payment.title')}</h2>
+                  <p className="mt-1 text-sm text-slate-500">{t('orders.payment.subtitle')}</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => void loadPaymentOptions(Boolean(paymentOptions))}
                   disabled={paymentLoading}
-                  className="inline-flex items-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#21404d_0%,#3d6c77_100%)] px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(33,64,77,0.18)] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(15,23,42,0.18)] transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <WalletCards size={16} />
                   {paymentLoading
@@ -275,14 +274,14 @@ export const ClientOrderDetailPage: React.FC = () => {
                 <>
                   <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                     {paymentSessions.map((session) => (
-                      <div key={session.id} className="rounded-[24px] border border-[#eadfce] bg-[rgba(255,248,240,0.82)] p-4">
-                        <p className="text-xs uppercase tracking-[0.2em] text-[#9a6b3a]">{getPaymentProviderLabel(session.provider, language)}</p>
-                        <p className="mt-2 text-lg font-semibold text-[#1f2933]">{formatAmount(session.amount_uzs, language)}</p>
-                        <p className="mt-1 text-sm text-[#5b6770]">{t('orders.payment.expires_at')}: {formatDateTime(session.expires_at, language)}</p>
+                      <div key={session.id} className="rounded-[18px] border border-slate-200 bg-slate-50 p-4">
+                        <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{getPaymentProviderLabel(session.provider, language)}</p>
+                        <p className="mt-2 text-lg font-semibold text-slate-950">{formatAmount(session.amount_uzs, language)}</p>
+                        <p className="mt-1 text-sm text-slate-500">{t('orders.payment.expires_at')}: {formatDateTime(session.expires_at, language)}</p>
                         <button
                           type="button"
                           onClick={() => openPaymentLink(session.checkout_url)}
-                          className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#f59e0b_0%,#e76f51_100%)] px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(231,111,81,0.24)] transition hover:brightness-105"
+                          className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(15,23,42,0.18)] transition hover:bg-slate-800"
                         >
                           <ExternalLink size={15} />
                           {t('orders.payment.open_provider', { provider: getPaymentProviderLabel(session.provider, language) })}
@@ -292,8 +291,8 @@ export const ClientOrderDetailPage: React.FC = () => {
                   </div>
 
                   {paymentOptions.payment_attempt ? (
-                    <div className="mt-4 rounded-[24px] bg-[rgba(235,240,244,0.92)] px-4 py-4 text-sm text-[#4a5a66]">
-                      <p className="font-semibold text-[#1f2933]">{t('orders.payment.window_title')}</p>
+                    <div className="mt-4 rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-500">
+                      <p className="font-semibold text-slate-950">{t('orders.payment.window_title')}</p>
                       <p className="mt-2">{t('orders.payment.window_range', {
                         start: formatDateTime(paymentOptions.payment_attempt.window_start, language),
                         end: formatDateTime(paymentOptions.payment_attempt.window_end, language),

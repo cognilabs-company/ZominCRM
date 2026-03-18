@@ -125,6 +125,7 @@ interface BotRuntimeResponse {
 
 interface LoadMessagesOptions {
   forceScrollToBottom?: boolean;
+  silent?: boolean;
 }
 
 const FALLBACK_CLIENT_PREFIX = 'Mijoz ';
@@ -520,7 +521,7 @@ const Conversations: React.FC = () => {
     setMessages((prev) => prev.some((m) => m.id === optimistic.id) ? prev : [...prev, optimistic]);
     upsertConversationPreview(conversationId, sentMessage);
     if (shouldAutoScroll) {
-      window.setTimeout(() => scrollToBottom('smooth'), 60);
+      window.setTimeout(() => scrollToBottom('auto'), 60);
     } else {
       setShowScrollToBottom(true);
     }
@@ -548,7 +549,7 @@ const Conversations: React.FC = () => {
           return [...prev, nextMessage];
         });
         if (shouldAutoScroll) {
-          window.setTimeout(() => scrollToBottom('smooth'), 60);
+          window.setTimeout(() => scrollToBottom('auto'), 60);
         } else {
           setShowScrollToBottom(true);
         }
@@ -641,8 +642,11 @@ const Conversations: React.FC = () => {
     msgInFlightRef.current = true;
     const seq = ++messageLoadSeqRef.current;
     const shouldAutoScroll = Boolean(options?.forceScrollToBottom) || shouldStickToBottomRef.current;
+    const shouldShowLoader = !options?.silent;
     try {
-      setLoadingMessages(true);
+      if (shouldShowLoader) {
+        setLoadingMessages(true);
+      }
       const data = await apiRequest<ApiMessage[] | { results?: ApiMessage[] }>(ENDPOINTS.CONVERSATIONS.MESSAGES(conversationId));
       const rawList: ApiMessage[] = Array.isArray(data)
         ? (data as ApiMessage[])
@@ -676,7 +680,9 @@ const Conversations: React.FC = () => {
       setMessages([]);
     } finally {
       if (seq !== messageLoadSeqRef.current) return;
-      setLoadingMessages(false);
+      if (shouldShowLoader) {
+        setLoadingMessages(false);
+      }
       msgInFlightRef.current = false;
     }
   }, [normalizeMessage, scrollToBottom, toast, tr]);
@@ -914,7 +920,7 @@ const Conversations: React.FC = () => {
         loadConversations({ silent: true });
       }
       if (selectedChatId && !detailWsConnected) {
-        loadMessages(selectedChatId);
+        loadMessages(selectedChatId, { silent: true });
         loadConversationBotState(selectedChatId);
       }
     }, 15000);
@@ -1006,7 +1012,7 @@ const Conversations: React.FC = () => {
             onClick={() => {
               loadConversations({ silent: true });
               if (selectedChatId) {
-                loadMessages(selectedChatId);
+                loadMessages(selectedChatId, { silent: true });
                 loadConversationBotState(selectedChatId);
               }
             }}
@@ -1195,7 +1201,7 @@ const Conversations: React.FC = () => {
                 onClick={() => {
                   if (!selectedChatId) return;
                   loadConversations({ silent: true });
-                  loadMessages(selectedChatId);
+                  loadMessages(selectedChatId, { silent: true });
                   loadConversationBotState(selectedChatId);
                 }}
                 className="inline-flex items-center justify-center h-8 w-8 rounded-full border border-light-border dark:border-navy-600 text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-navy-700"
@@ -1476,7 +1482,6 @@ const Conversations: React.FC = () => {
 };
 
 export default Conversations;
-
 
 
 

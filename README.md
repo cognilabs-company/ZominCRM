@@ -1,20 +1,85 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Zomin CRM Frontend
 
-# Run and deploy your AI Studio app
+Zomin CRM is a Vite + React + TypeScript frontend that serves two applications from one codebase:
 
-This contains everything you need to run your app locally.
+- Admin CRM under `#/admin-app`
+- Client Telegram WebApp under `#/app`
 
-View your app in AI Studio: https://ai.studio/apps/drive/1Vr1hRyKRNI_RO5YMat7hWJZXIINKP56b
+## Stack
 
-## Run Locally
+- React 19
+- TypeScript
+- Vite
+- Tailwind CSS v4
+- React Router DOM
+- Recharts
+- Leaflet / React Leaflet
 
-**Prerequisites:**  Node.js
+## Project Areas
 
+- `App.tsx`: top-level routing and provider composition
+- `context/`: admin auth, theme, language, toast state
+- `services/api.ts`: admin API base resolution, endpoints, and request helper
+- `pages/`: admin CRM pages
+- `client/bootstrap/`: client WebApp bootstrap, cart, and language state
+- `client/api/clientApi.ts`: client WebApp API helper
+- `client/pages/`: client-facing ordering flow
+- `components/` and `components/ui/`: shared admin UI building blocks
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Local Development
+
+Prerequisites:
+
+- Node.js 20+
+
+Install and run:
+
+```bash
+npm install
+npm run dev
+```
+
+Default Vite dev server:
+
+- `http://localhost:3000`
+
+## Environment Variables
+
+The frontend can derive API URLs automatically from the current host, but these variables can override that behavior when needed:
+
+- `VITE_API_BASE_URL`
+- `VITE_CLIENT_API_BASE_URL`
+- `GEMINI_API_KEY`
+
+Notes:
+
+- Admin API defaults to `/internal` style routes.
+- Client WebApp API defaults to `/client/webapp` style routes.
+- `vite.config.ts` also exposes `GEMINI_API_KEY` through `process.env.*` compatibility keys.
+
+## Routing
+
+This project uses `HashRouter`.
+
+Examples:
+
+- Admin dashboard: `/#/admin-app`
+- Admin orders: `/#/admin-app/orders`
+- Client home: `/#/app/home`
+- Client cart: `/#/app/cart`
+
+There is also path normalization in `App.tsx` so direct non-hash paths can be redirected into hash routes.
+
+## Build
+
+```bash
+npm run build
+```
+
+The production build is emitted to `dist/`.
+
+## Notes
+
+- The admin settings page is intentionally read-only until dedicated backend settings endpoints exist.
+- The client WebApp depends on Telegram WebApp context for full authentication and ordering behavior.
+- The client app supports preview mode outside Telegram, but some actions remain unavailable without a verified client session.

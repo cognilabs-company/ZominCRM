@@ -4,15 +4,16 @@ import { Modal } from '../components/ui/Modal';
 import { Badge } from '../components/ui/Badge';
 import { useLanguage } from '../context/LanguageContext';
 import { useToast } from '../context/ToastContext';
-import { ENDPOINTS, apiRequest } from '../services/api';
+import { ApiError, ENDPOINTS, apiRequest } from '../services/api';
 import type { OrderStatus } from '../types';
-import { Edit2, Plus, Search, UserCircle2 } from 'lucide-react';
+import { AlertTriangle, Edit2, Plus, Search, Trash2, UserCircle2 } from 'lucide-react';
 
 type Platform = 'telegram' | 'instagram' | 'manual';
 
 interface ClientRow {
   id: string;
   platform: Platform;
+  platform_user_id?: string | null;
   username: string | null;
   full_name: string | null;
   phone: string | null;
@@ -102,6 +103,8 @@ const Clients: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editing, setEditing] = useState<ClientRow | null>(null);
   const [selectedClient, setSelectedClient] = useState<ClientRow | null>(null);
+  const [clientToDelete, setClientToDelete] = useState<ClientRow | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [bottleLoading, setBottleLoading] = useState(false);
   const [bottleSummary, setBottleSummary] = useState<BottleSummary | null>(null);
   const [bottleBalances, setBottleBalances] = useState<BottleBalance[]>([]);
@@ -279,27 +282,66 @@ const Clients: React.FC = () => {
   const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
-
-    const payload: Record<string, unknown> = {
-      platform: String(form.get('platform') || 'telegram'),
-      username: String(form.get('username') || '').trim() || null,
-      full_name: String(form.get('full_name') || '').trim() || null,
-      phone: String(form.get('phone') || '').trim() || null,
-      address: String(form.get('address') || '').trim() || null,
-      preferred_language: String(form.get('preferred_language') || '').trim() || null,
-    };
-
-    if (editing?.id) {
-      payload.client_id = editing.id;
-    }
+    const username = String(form.get('username') || '').trim() || null;
+    const fullName = String(form.get('full_name') || '').trim() || null;
+    const phone = String(form.get('phone') || '').trim() || null;
+    const address = String(form.get('address') || '').trim() || null;
+    const preferredLanguage = String(form.get('preferred_language') || '').trim() || null;
 
     try {
       setSaving(true);
       setError(null);
-      await apiRequest(ENDPOINTS.CLIENTS.UPSERT, {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      });
+      if (editing?.id) {
+        try {
+          await apiRequest(ENDPOINTS.CLIENTS.DETAIL(editing.id), {
+            method: 'PATCH',
+            body: JSON.stringify({
+              username,
+              full_name: fullName,
+              phone,
+              address,
+              preferred_language: preferredLanguage,
+            }),
+          });
+        } catch (saveError) {
+          if (!(saveError instanceof ApiError) || (saveError.status !== 404 && saveError.status !== 405)) {
+            throw saveError;
+          }
+          await apiRequest(ENDPOINTS.CLIENTS.UPSERT, {
+            method: 'POST',
+            body: JSON.stringify({
+              client_id: editing.id,
+              platform: editing.platform,
+              platform_user_id: editing.platform_user_id || null,
+              username,
+              full_name: fullName,
+              phone,
+              address,
+            }),
+          });
+        }
+      } else {
+        const platform = String(form.get('platform') || 'telegram');
+        const platformUserId = String(form.get('platform_user_id') || '').trim();
+        if (!platformUserId) {
+          const message = tr('Platform user ID is required', 'Platform user ID is required', 'Platform user ID majburiy');
+          setError(message);
+          toast.error(message);
+          setSaving(false);
+          return;
+        }
+        await apiRequest(ENDPOINTS.CLIENTS.UPSERT, {
+          method: 'POST',
+          body: JSON.stringify({
+            platform,
+            platform_user_id: platformUserId,
+            username,
+            full_name: fullName,
+            phone,
+            address,
+          }),
+        });
+      }
       toast.success(editing ? tr('Client updated', 'Client updated', 'Mijoz yangilandi') : tr('Client created', 'Client created', 'Mijoz yaratildi'));
       setIsModalOpen(false);
       setEditing(null);
@@ -351,6 +393,34 @@ const Clients: React.FC = () => {
       toast.error(message);
     } finally {
       setRefundSaving(false);
+    }
+  };
+
+  const handleDeleteClient = async () => {
+    if (!clientToDelete) return;
+
+    try {
+      setDeleting(true);
+      setError(null);
+      await apiRequest(ENDPOINTS.CLIENTS.DETAIL(clientToDelete.id), {
+        method: 'DELETE',
+      });
+      toast.success(tr('Client deleted', 'Client deleted', "Mijoz o'chirildi"));
+      if (selectedClient?.id === clientToDelete.id) {
+        setSelectedClient(null);
+      }
+      if (editing?.id === clientToDelete.id) {
+        setEditing(null);
+        setIsModalOpen(false);
+      }
+      setClientToDelete(null);
+      await loadClients();
+    } catch (deleteError) {
+      const message = deleteError instanceof Error ? deleteError.message : tr('Failed to delete client', 'Failed to delete client', "Mijozni o'chirib bo'lmadi");
+      setError(message);
+      toast.error(message);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -434,13 +504,22 @@ const Clients: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{c.updated_at ? new Date(c.updated_at).toLocaleDateString() : '-'}</td>
                     <td className="px-6 py-4 text-right">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setEditing(c); setIsModalOpen(true); }}
-                        className="p-1.5 text-gray-500 dark:text-gray-300 hover:text-primary-blue dark:hover:text-blue-400 transition-colors"
-                        title={tr('Edit client', 'Edit client', 'Mijozni tahrirlash')}
-                      >
-                        <Edit2 size={16} />
-                      </button>
+                      <div className="inline-flex items-center gap-1">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setEditing(c); setIsModalOpen(true); }}
+                          className="p-1.5 text-gray-500 dark:text-gray-300 hover:text-primary-blue dark:hover:text-blue-400 transition-colors"
+                          title={tr('Edit client', 'Edit client', 'Mijozni tahrirlash')}
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setClientToDelete(c); }}
+                          className="p-1.5 text-gray-500 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                          title={tr('Delete client', 'Delete client', "Mijozni o'chirish")}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -457,6 +536,14 @@ const Clients: React.FC = () => {
         footer={
           selectedClient ? (
             <div className="flex justify-end gap-3 w-full">
+              <button
+                type="button"
+                onClick={() => setClientToDelete(selectedClient)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border border-red-200 text-red-600 hover:bg-red-50 transition-colors mr-auto"
+              >
+                <Trash2 size={16} />
+                {tr('Delete client', 'Delete client', "Mijozni o'chirish")}
+              </button>
               <button
                 type="button"
                 onClick={() => setSelectedClient(null)}
@@ -689,6 +776,53 @@ const Clients: React.FC = () => {
       </Modal>
 
       <Modal
+        isOpen={!!clientToDelete}
+        onClose={() => { if (!deleting) setClientToDelete(null); }}
+        title={tr('Delete client', 'Delete client', "Mijozni o'chirish")}
+        footer={null}
+      >
+        {clientToDelete ? (
+          <div className="space-y-5">
+            <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-4 text-red-700">
+              <AlertTriangle size={18} className="mt-0.5 shrink-0" />
+              <div>
+                <p className="text-sm font-semibold">{tr('This action will permanently remove the client.', 'This action will permanently remove the client.', "Bu amal mijozni butunlay o'chiradi.")}</p>
+                <p className="mt-1 text-sm">
+                  {tr('Deleted clients cannot be restored from this screen.', 'Deleted clients cannot be restored from this screen.', "O'chirilgan mijozni bu sahifadan qayta tiklab bo'lmaydi.")}
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-light-border dark:border-navy-700 p-4">
+              <p className="text-xs text-gray-500">{tr('Client', 'Client', 'Mijoz')}</p>
+              <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">{clientToDelete.full_name || clientToDelete.username || clientToDelete.id}</p>
+              <p className="mt-1 text-xs text-gray-500">{clientToDelete.phone || clientToDelete.id}</p>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() => setClientToDelete(null)}
+                className="px-4 py-2 rounded-lg text-sm border border-light-border dark:border-navy-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-navy-700 transition-colors disabled:opacity-50"
+              >
+                {t('cancel')}
+              </button>
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() => void handleDeleteClient()}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-50"
+              >
+                <Trash2 size={16} />
+                {deleting ? tr('Deleting...', 'Deleting...', "O'chirilmoqda...") : tr('Delete client', 'Delete client', "Mijozni o'chirish")}
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </Modal>
+
+      <Modal
         isOpen={isRefundOpen}
         onClose={() => setIsRefundOpen(false)}
         title={tr('Manual bottle refund', 'Manual bottle refund', "Qo'lda idish qaytarish")}
@@ -766,12 +900,15 @@ const Clients: React.FC = () => {
               <select
                 name="platform"
                 required
-                defaultValue={editing?.platform || 'manual'}
-                className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white"
+                defaultValue={editing?.platform || 'telegram'}
+                disabled={!!editing}
+                className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white disabled:opacity-60"
               >
-                <option value="manual">{tr('Manual', 'Manual', "Qo'lda")}</option>
                 <option value="telegram">{tr('Telegram', 'Telegram', 'Telegram')}</option>
                 <option value="instagram">{tr('Instagram', 'Instagram', 'Instagram')}</option>
+                {editing?.platform === 'manual' ? (
+                  <option value="manual">{tr('Manual', 'Manual', "Qo'lda")}</option>
+                ) : null}
               </select>
             </div>
             <div>
@@ -795,6 +932,16 @@ const Clients: React.FC = () => {
                 <option value="en">{tr('English', 'English', 'Inglizcha')}</option>
               </select>
             </div>
+            {!editing ? (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Platform User ID', 'Platform User ID', 'Platform User ID')}</label>
+                <input
+                  name="platform_user_id"
+                  required
+                  className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white"
+                />
+              </div>
+            ) : null}
           </div>
 
           <div>
@@ -847,4 +994,3 @@ const Clients: React.FC = () => {
 };
 
 export default Clients;
-

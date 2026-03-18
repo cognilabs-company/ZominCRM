@@ -116,7 +116,7 @@ export const ClientCheckoutPreviewPage: React.FC = () => {
   if (!isAuthenticated) {
     return (
       <ClientPage title={t('checkout.title')} subtitle={t('checkout.unauth_subtitle')}>
-        <ClientPanel className="p-5 text-sm text-[#5b6770]">{t('checkout.unauth_description')}</ClientPanel>
+        <ClientPanel className="p-5 text-sm text-slate-500">{t('checkout.unauth_description')}</ClientPanel>
       </ClientPage>
     );
   }
@@ -124,7 +124,7 @@ export const ClientCheckoutPreviewPage: React.FC = () => {
   if (!items.length) {
     return (
       <ClientPage title={t('checkout.title')} subtitle={t('checkout.empty_subtitle')}>
-        <ClientPanel className="p-5 text-sm text-[#5b6770]">{t('checkout.empty_description')}</ClientPanel>
+        <ClientPanel className="p-5 text-sm text-slate-500">{t('checkout.empty_description')}</ClientPanel>
       </ClientPage>
     );
   }
@@ -133,8 +133,12 @@ export const ClientCheckoutPreviewPage: React.FC = () => {
     return (
       <ClientPage title={t('checkout.title')} subtitle={t('checkout.address_required_subtitle')}>
         <ClientPanel className="p-5">
-          <p className="text-sm leading-6 text-[#5b6770]">{t('checkout.address_required_description')}</p>
-          <button type="button" onClick={goBackToCart} className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-[#21404d] px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(33,64,77,0.18)] transition hover:brightness-105">
+          <p className="text-sm text-slate-500">{t('checkout.address_required_description')}</p>
+          <button
+            type="button"
+            onClick={goBackToCart}
+            className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(15,23,42,0.18)] transition hover:bg-slate-800"
+          >
             <ArrowLeft size={15} />
             {t('checkout.back_to_cart')}
           </button>
@@ -146,12 +150,11 @@ export const ClientCheckoutPreviewPage: React.FC = () => {
   return (
     <ClientPage
       title={t('checkout.title')}
-      subtitle={t('checkout.subtitle')}
       action={
         <button
           type="button"
           onClick={goBackToCart}
-          className="inline-flex items-center gap-2 rounded-2xl border border-[#d9cdbd] bg-[rgba(255,248,240,0.94)] px-4 py-3 text-sm font-semibold text-[#31424d] transition hover:bg-white"
+          className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
         >
           <ArrowLeft size={15} />
           {t('checkout.back_to_cart')}
@@ -160,44 +163,48 @@ export const ClientCheckoutPreviewPage: React.FC = () => {
     >
       <div className="grid grid-cols-3 gap-2">
         <ClientPanel className="p-3 text-center opacity-70">
-          <p className="text-[11px] uppercase tracking-[0.18em] text-[#9a6b3a]">1</p>
-          <p className="mt-1 text-xs font-semibold text-[#1f2933]">{t('nav.products')}</p>
+          <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400">1</p>
+          <p className="mt-1 text-xs font-semibold text-slate-950">{t('nav.products')}</p>
         </ClientPanel>
         <ClientPanel className="p-3 text-center opacity-70">
-          <p className="text-[11px] uppercase tracking-[0.18em] text-[#40635b]">2</p>
-          <p className="mt-1 text-xs font-semibold text-[#1f2933]">{t('nav.cart')}</p>
+          <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400">2</p>
+          <p className="mt-1 text-xs font-semibold text-slate-950">{t('nav.cart')}</p>
         </ClientPanel>
-        <ClientPanel className="border-[#21404d]/20 bg-[rgba(235,240,244,0.94)] p-3 text-center">
-          <p className="text-[11px] uppercase tracking-[0.18em] text-[#5a6d7c]">3</p>
-          <p className="mt-1 text-xs font-semibold text-[#1f2933]">{t('nav.checkout')}</p>
+        <ClientPanel className="border-slate-950 bg-slate-950 p-3 text-center">
+          <p className="text-[11px] uppercase tracking-[0.16em] text-white/55">3</p>
+          <p className="mt-1 text-xs font-semibold text-white">{t('nav.checkout')}</p>
         </ClientPanel>
       </div>
 
       {error ? (
-        <ClientPanel className="border-rose-200 bg-[rgba(255,241,240,0.95)] p-4 text-sm text-rose-700">{error}</ClientPanel>
+        <ClientPanel className="border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{error}</ClientPanel>
       ) : null}
 
       {loading ? (
-        <ClientPanel className="p-5 text-sm text-[#5b6770]">{t('checkout.loading')}</ClientPanel>
+        <ClientPanel className="p-5 text-sm text-slate-500">{t('checkout.loading')}</ClientPanel>
       ) : null}
 
       {preview?.blocked_by_active_order && preview.active_order ? (
         <ClientPanel className="p-5">
           <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[rgba(251,191,36,0.18)] text-[#b45309]">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
               <AlertTriangle size={20} />
             </div>
             <div className="min-w-0 flex-1">
-              <h2 className="text-base font-semibold text-[#1f2933]">{t('checkout.blocked_title')}</h2>
-              <p className="mt-2 text-sm leading-6 text-[#5b6770]">{t('checkout.blocked_description')}</p>
-              <div className="mt-4 rounded-[24px] bg-[rgba(255,248,240,0.94)] p-4">
-                <p className="text-sm font-semibold text-[#1f2933]">{formatOrderRef(preview.active_order.id)}</p>
-                <p className="mt-1 text-sm text-[#5b6770]">{preview.active_order.location_text || t('checkout.delivery_pending')}</p>
+              <h2 className="text-base font-semibold text-slate-950">{t('checkout.blocked_title')}</h2>
+              <p className="mt-2 text-sm text-slate-500">{t('checkout.blocked_description')}</p>
+              <div className="mt-4 rounded-[20px] border border-slate-200 bg-slate-50 p-4">
+                <p className="text-sm font-semibold text-slate-950">{formatOrderRef(preview.active_order.id)}</p>
+                <p className="mt-1 text-sm text-slate-500">{preview.active_order.location_text || t('checkout.delivery_pending')}</p>
                 <div className={`mt-3 inline-flex rounded-full px-3 py-1 text-xs font-medium ${getOrderStatusClasses(preview.active_order.status)}`}>
                   {getOrderStatusLabel(preview.active_order.status, language)}
                 </div>
               </div>
-              <button type="button" onClick={() => navigate(`/app/orders/${preview.active_order!.id}`)} className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-[#21404d] px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(33,64,77,0.18)] transition hover:brightness-105">
+              <button
+                type="button"
+                onClick={() => navigate(`/app/orders/${preview.active_order!.id}`)}
+                className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(15,23,42,0.18)] transition hover:bg-slate-800"
+              >
                 {t('checkout.open_orders')}
               </button>
             </div>
@@ -208,17 +215,17 @@ export const ClientCheckoutPreviewPage: React.FC = () => {
       {preview?.preview ? (
         <>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <ClientPanel className="bg-[linear-gradient(135deg,rgba(255,248,238,0.96)_0%,rgba(247,237,224,0.92)_100%)] p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-[#9a6b3a]">{t('checkout.product_subtotal')}</p>
-              <p className="mt-2 text-xl font-semibold text-[#1f2933]">{formatAmount(preview.preview.product_subtotal_uzs, language)}</p>
+            <ClientPanel className="p-4">
+              <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{t('checkout.product_subtotal')}</p>
+              <p className="mt-2 text-xl font-semibold text-slate-950">{formatAmount(preview.preview.product_subtotal_uzs, language)}</p>
             </ClientPanel>
-            <ClientPanel className="bg-[linear-gradient(135deg,rgba(233,243,239,0.96)_0%,rgba(224,236,233,0.92)_100%)] p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-[#40635b]">{t('checkout.deposit')}</p>
-              <p className="mt-2 text-xl font-semibold text-[#1f2933]">{formatAmount(preview.preview.bottle_deposit_total_uzs, language)}</p>
+            <ClientPanel className="p-4">
+              <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{t('checkout.deposit')}</p>
+              <p className="mt-2 text-xl font-semibold text-slate-950">{formatAmount(preview.preview.bottle_deposit_total_uzs, language)}</p>
             </ClientPanel>
-            <ClientPanel className="bg-[linear-gradient(135deg,rgba(235,240,244,0.94)_0%,rgba(226,232,240,0.92)_100%)] p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-[#5a6d7c]">{t('checkout.total_payable')}</p>
-              <p className="mt-2 text-xl font-semibold text-[#1f2933]">{formatAmount(preview.preview.total_amount_uzs, language)}</p>
+            <ClientPanel className="p-4">
+              <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{t('checkout.total_payable')}</p>
+              <p className="mt-2 text-xl font-semibold text-slate-950">{formatAmount(preview.preview.total_amount_uzs, language)}</p>
             </ClientPanel>
           </div>
 
@@ -227,16 +234,16 @@ export const ClientCheckoutPreviewPage: React.FC = () => {
               <ClientPanel key={`${item.product_id}-${item.product_name}`} className="p-4">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <h2 className="text-sm font-semibold text-[#1f2933]">{item.product_name}</h2>
-                    <p className="mt-1 text-sm text-[#5b6770]">{item.product_size_liters || '-'}L / {t('orders.qty', { count: item.quantity })}</p>
+                    <h2 className="text-sm font-semibold text-slate-950">{item.product_name}</h2>
+                    <p className="mt-1 text-sm text-slate-500">{item.product_size_liters || '-'}L / {t('orders.qty', { count: item.quantity })}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-semibold text-[#1f2933]">{formatAmount(item.line_total_uzs, language)}</p>
-                    <p className="mt-1 text-xs text-[#7b8790]">{t('orders.deposit_item', { amount: formatAmount(item.bottle_deposit_total_uzs || 0, language) })}</p>
+                    <p className="text-sm font-semibold text-slate-950">{formatAmount(item.line_total_uzs, language)}</p>
+                    <p className="mt-1 text-xs text-slate-500">{t('orders.deposit_item', { amount: formatAmount(item.bottle_deposit_total_uzs || 0, language) })}</p>
                   </div>
                 </div>
                 {item.requires_returnable_bottle ? (
-                  <div className="mt-4 rounded-[24px] bg-[rgba(255,248,240,0.94)] px-4 py-3 text-sm text-[#5b6770]">
+                  <div className="mt-4 rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
                     {t('checkout.covered_bottles', { count: item.already_covered_bottle_count || 0 })} / {t('checkout.deposit_charge_qty', { count: item.bottle_deposit_charge_quantity || 0 })}
                   </div>
                 ) : null}
@@ -246,30 +253,26 @@ export const ClientCheckoutPreviewPage: React.FC = () => {
 
           <ClientPanel className="p-5">
             <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[rgba(232,241,238,0.95)] text-[#2f6b5f]">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
                 <ReceiptText size={20} />
               </div>
               <div className="min-w-0 flex-1">
-                <h2 className="text-base font-semibold text-[#1f2933]">{t('checkout.delivery_payment')}</h2>
-                <p className="mt-2 text-sm leading-6 text-[#5b6770]">{orderDraft.location_text}</p>
-                <p className="mt-2 text-sm text-[#5b6770]">{t('checkout.payment_method')}: {getPaymentMethodLabel(orderDraft.payment_method, language)}</p>
-                <p className="mt-1 text-sm text-[#5b6770]">{t('checkout.requested_delivery')}: {formatDateTime(orderDraft.delivery_time_requested ? new Date(orderDraft.delivery_time_requested).toISOString() : null, language)}</p>
+                <h2 className="text-base font-semibold text-slate-950">{t('checkout.delivery_payment')}</h2>
+                <p className="mt-2 text-sm text-slate-500">{orderDraft.location_text}</p>
+                <p className="mt-2 text-sm text-slate-500">{t('checkout.payment_method')}: {getPaymentMethodLabel(orderDraft.payment_method, language)}</p>
+                <p className="mt-1 text-sm text-slate-500">{t('checkout.requested_delivery')}: {formatDateTime(orderDraft.delivery_time_requested ? new Date(orderDraft.delivery_time_requested).toISOString() : null, language)}</p>
               </div>
             </div>
 
             <div className="mt-5 flex justify-end">
               <button
                 type="button"
-                onClick={handleCreateOrder}
-                disabled={submitting || !canRequestPreview}
-                className={`inline-flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-medium transition ${
-                  submitting || !canRequestPreview
-                    ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
-                    : 'bg-[linear-gradient(135deg,#f59e0b_0%,#e76f51_100%)] text-white shadow-[0_12px_24px_rgba(231,111,81,0.24)] hover:brightness-105'
-                }`}
+                onClick={() => void handleCreateOrder()}
+                disabled={submitting}
+                className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(15,23,42,0.18)] transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                <CheckCircle2 size={18} />
-                {submitting ? t('checkout.creating_order') : t('checkout.create_order')}
+                <CheckCircle2 size={16} />
+                {submitting ? t('checkout.submitting') : t('checkout.confirm')}
               </button>
             </div>
           </ClientPanel>
