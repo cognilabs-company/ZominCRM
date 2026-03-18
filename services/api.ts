@@ -183,6 +183,7 @@ export const ENDPOINTS = {
   },
   BOTTLES: {
     MOVEMENTS: `${API_BASE_URL}/bottles/movements/`,
+    BALANCES: `${API_BASE_URL}/bottle-balances/`,
   },
 };
 

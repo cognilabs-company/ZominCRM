@@ -168,7 +168,7 @@ export const ClientCartPage: React.FC = () => {
             }`}
           >
             <Banknote size={16} />
-            {t('payment.cash') || 'Cash'}
+            {t('payment.CASH')}
           </button>
           <button
             type="button"
@@ -180,7 +180,7 @@ export const ClientCartPage: React.FC = () => {
             }`}
           >
             <CreditCard size={16} />
-            {t('payment.transfer') || 'Transfer'}
+            {t('payment.TRANSFER')}
           </button>
         </div>
       </div>

@@ -13,6 +13,11 @@ import {
   Wallet,
   X,
   CheckCircle2,
+  Users,
+  Package,
+  TrendingUp,
+  TrendingDown,
+  Activity,
 } from 'lucide-react';
 import { Badge } from '../components/ui/Badge';
 import { Card } from '../components/ui/Card';
@@ -45,6 +50,23 @@ interface BottleSummary {
   deposit_held_total_uzs: number;
   total_deposit_charged_uzs: number;
   total_deposit_refunded_uzs: number;
+}
+
+interface GlobalBottleSummary {
+  balance_rows_count: number;
+  client_count: number;
+  product_count: number;
+  open_balance_rows_count: number;
+  total_outstanding_bottles_count: number;
+  total_deposit_held_uzs: number;
+  total_deposit_charged_uzs: number;
+  total_deposit_refunded_uzs: number;
+}
+
+interface GlobalMovementSummary {
+  total_movements_count: number;
+  total_bottles_delta: number;
+  total_deposit_delta_uzs: number;
 }
 
 interface BottleBalance {
@@ -131,6 +153,31 @@ const StatCard: React.FC<StatCardProps> = ({ label, value, highlight }) => (
   </div>
 );
 
+interface GlobalStatCardProps {
+  icon: React.ReactNode;
+  label: string;
+  value: string | number;
+  sub?: string;
+  color: string;
+  iconBg: string;
+  loading?: boolean;
+}
+
+const GlobalStatCard: React.FC<GlobalStatCardProps> = ({ icon, label, value, sub, color, iconBg, loading }) => (
+  <div className="flex items-center gap-4 rounded-2xl border border-light-border bg-white px-5 py-4 dark:border-white/10 dark:bg-navy-800">
+    <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${iconBg}`}>
+      {loading ? <Loader2 size={18} className="animate-spin text-slate-400" /> : <span className={color}>{icon}</span>}
+    </div>
+    <div className="min-w-0 flex-1">
+      <p className="truncate text-xs font-medium uppercase tracking-widest text-slate-500 dark:text-white/40">{label}</p>
+      <p className="mt-0.5 text-xl font-bold text-slate-900 dark:text-white">
+        {loading ? <span className="inline-block h-5 w-16 animate-pulse rounded bg-slate-200 dark:bg-white/10" /> : value}
+      </p>
+      {sub && !loading && <p className="mt-0.5 truncate text-xs text-slate-400 dark:text-white/30">{sub}</p>}
+    </div>
+  </div>
+);
+
 interface FormFieldProps {
   label: string;
   children: React.ReactNode;
@@ -159,11 +206,14 @@ const BottleController: React.FC = () => {
   const [returnableProducts, setReturnableProducts] = useState<ReturnableProduct[]>([]);
   const [clientsLoading, setClientsLoading] = useState(true);
   const [workspaceLoading, setWorkspaceLoading] = useState(false);
+  const [globalLoading, setGlobalLoading] = useState(true);
   const [returnSaving, setReturnSaving] = useState(false);
   const [refundSaving, setRefundSaving] = useState(false);
   const [incrementSaving, setIncrementSaving] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState('');
   const [search, setSearch] = useState('');
+  const [globalSummary, setGlobalSummary] = useState<GlobalBottleSummary | null>(null);
+  const [globalMovementSummary, setGlobalMovementSummary] = useState<GlobalMovementSummary | null>(null);
   const [summary, setSummary] = useState<BottleSummary | null>(null);
   const [balances, setBalances] = useState<BottleBalance[]>([]);
   const [movements, setMovements] = useState<BottleMovement[]>([]);
@@ -298,6 +348,22 @@ const BottleController: React.FC = () => {
     return filtered;
   };
 
+  const loadGlobalStats = async () => {
+    setGlobalLoading(true);
+    try {
+      const data = await apiRequest<{
+        summary?: GlobalBottleSummary;
+        movement_summary?: GlobalMovementSummary;
+      }>(`${ENDPOINTS.BOTTLES.BALANCES}?limit=50&offset=0&only_open=1`);
+      setGlobalSummary(data.summary ?? null);
+      setGlobalMovementSummary(data.movement_summary ?? null);
+    } catch {
+      // silently fail – stats are supplementary
+    } finally {
+      setGlobalLoading(false);
+    }
+  };
+
   const loadWorkspace = async (clientId: string) => {
     setWorkspaceLoading(true);
     try {
@@ -341,16 +407,18 @@ const BottleController: React.FC = () => {
     (async () => {
       try {
         setClientsLoading(true);
-        const [loadedClients] = await Promise.all([loadClients(), loadReturnableProducts()]);
+        const [loadedClients] = await Promise.all([
+          loadClients(),
+          loadReturnableProducts(),
+          loadGlobalStats(),
+        ]);
         if (!active) return;
 
+        // Only pre-select if explicitly requested via URL param
         if (requestedClientId && loadedClients.some((c) => c.id === requestedClientId)) {
           setSelectedClientId(requestedClientId);
-        } else if (loadedClients[0]) {
-          setSelectedClientId((cur) =>
-            cur && loadedClients.some((c) => c.id === cur) ? cur : loadedClients[0].id
-          );
         }
+        // No automatic first-client selection – admin picks manually
       } catch (err) {
         if (!active) return;
         toast.error(
@@ -367,12 +435,9 @@ const BottleController: React.FC = () => {
 
   useEffect(() => {
     if (!clients.length) return;
+    // Honor URL param updates only – no auto-select
     if (requestedClientId && clients.some((c) => c.id === requestedClientId) && selectedClientId !== requestedClientId) {
       setSelectedClientId(requestedClientId);
-      return;
-    }
-    if (!selectedClientId || !clients.some((c) => c.id === selectedClientId)) {
-      setSelectedClientId(clients[0].id);
     }
   }, [clients, requestedClientId]);
 
@@ -418,7 +483,7 @@ const BottleController: React.FC = () => {
   const refreshAll = async () => {
     try {
       setClientsLoading(true);
-      await Promise.all([loadClients(), loadReturnableProducts()]);
+      await Promise.all([loadClients(), loadReturnableProducts(), loadGlobalStats()]);
       if (selectedClientId) await loadWorkspace(selectedClientId);
       toast.success(tr('Refreshed.', 'Данные обновлены.', "Ma'lumotlar yangilandi."));
     } catch (err) {
@@ -538,6 +603,84 @@ const BottleController: React.FC = () => {
           <RefreshCw size={15} className={clientsLoading || workspaceLoading ? 'animate-spin' : ''} />
           {tr('Refresh', 'Обновить', 'Yangilash')}
         </button>
+      </div>
+
+      {/* ── Global overview stats ── */}
+      <div className="space-y-3">
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-white/30">
+          {tr('System overview', 'Общая статистика', 'Umumiy statistika')}
+        </h2>
+
+        {/* Primary metrics */}
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <GlobalStatCard
+            loading={globalLoading}
+            icon={<Droplets size={20} />}
+            label={tr('Outstanding bottles', 'Бутылок на руках', 'Mijozdagi idishlar')}
+            value={globalSummary?.total_outstanding_bottles_count ?? 0}
+            sub={tr('across all clients', 'у всех клиентов', 'barcha mijozlarda')}
+            color="text-blue-600 dark:text-blue-400"
+            iconBg="bg-blue-50 dark:bg-blue-500/15"
+          />
+          <GlobalStatCard
+            loading={globalLoading}
+            icon={<Wallet size={20} />}
+            label={tr('Deposit held', 'Депозит удержан', 'Ushlab turilgan depozit')}
+            value={formatCurrency(globalSummary?.total_deposit_held_uzs ?? 0)}
+            sub={tr('total held by clients', 'у клиентов на балансе', 'mijozlarda saqlanmoqda')}
+            color="text-amber-600 dark:text-amber-400"
+            iconBg="bg-amber-50 dark:bg-amber-500/15"
+          />
+          <GlobalStatCard
+            loading={globalLoading}
+            icon={<Users size={20} />}
+            label={tr('Clients with bottles', 'Клиентов с бутылками', 'Idishli mijozlar')}
+            value={globalSummary?.client_count ?? 0}
+            sub={`${globalSummary?.open_balance_rows_count ?? 0} ${tr('open rows', 'открытых строк', 'ochiq qator')}`}
+            color="text-violet-600 dark:text-violet-400"
+            iconBg="bg-violet-50 dark:bg-violet-500/15"
+          />
+          <GlobalStatCard
+            loading={globalLoading}
+            icon={<Package size={20} />}
+            label={tr('Products tracked', 'Отслеживаемых товаров', 'Kuzatiladigan mahsulotlar')}
+            value={globalSummary?.product_count ?? 0}
+            sub={tr('returnable products', 'возвратных товаров', 'qaytariladigan mahsulot')}
+            color="text-emerald-600 dark:text-emerald-400"
+            iconBg="bg-emerald-50 dark:bg-emerald-500/15"
+          />
+        </div>
+
+        {/* Financial & movement metrics */}
+        <div className="grid gap-3 sm:grid-cols-3">
+          <GlobalStatCard
+            loading={globalLoading}
+            icon={<TrendingUp size={20} />}
+            label={tr('Total charged', 'Всего начислено', 'Jami olingan depozit')}
+            value={formatCurrency(globalSummary?.total_deposit_charged_uzs ?? 0)}
+            sub={tr('deposit ever charged', 'депозит за всё время', 'hamma vaqt depozit')}
+            color="text-rose-600 dark:text-rose-400"
+            iconBg="bg-rose-50 dark:bg-rose-500/15"
+          />
+          <GlobalStatCard
+            loading={globalLoading}
+            icon={<TrendingDown size={20} />}
+            label={tr('Total refunded', 'Всего возвращено', 'Jami qaytarilgan')}
+            value={formatCurrency(globalSummary?.total_deposit_refunded_uzs ?? 0)}
+            sub={tr('deposit returned to clients', 'депозит возвращён клиентам', 'mijozlarga qaytarilgan')}
+            color="text-teal-600 dark:text-teal-400"
+            iconBg="bg-teal-50 dark:bg-teal-500/15"
+          />
+          <GlobalStatCard
+            loading={globalLoading}
+            icon={<Activity size={20} />}
+            label={tr('Total movements', 'Всего движений', 'Jami harakatlar')}
+            value={globalMovementSummary?.total_movements_count ?? 0}
+            sub={`${(globalMovementSummary?.total_bottles_delta ?? 0) >= 0 ? '+' : ''}${globalMovementSummary?.total_bottles_delta ?? 0} ${tr('net bottles', 'нетто бутылок', 'net idish')}`}
+            color="text-indigo-600 dark:text-indigo-400"
+            iconBg="bg-indigo-50 dark:bg-indigo-500/15"
+          />
+        </div>
       </div>
 
       {/* ── Info cards ── */}
@@ -703,40 +846,28 @@ const BottleController: React.FC = () => {
 
           {/* ── Client detail card ── */}
           <Card accent="blue">
-            <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr),minmax(0,1fr)]">
-              <div className="space-y-4">
-                <div>
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant="info">{platformLabel(selectedClient.platform)}</Badge>
-                    <Badge variant="default">{languageLabel(selectedClient.preferred_language)}</Badge>
-                    {selectedClient.is_platform_identity_verified
-                      ? <Badge variant="success">{tr('Verified', 'Подтверждён', 'Tasdiqlangan')}</Badge>
-                      : <Badge variant="warning">{tr('Unverified', 'Не подтверждён', 'Tasdiqlanmagan')}</Badge>}
-                  </div>
-                  <h2 className="mt-3 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-                    {clientDisplayName(selectedClient)}
-                  </h2>
-                  <p className="mt-1.5 text-sm text-slate-500 dark:text-white/50">
-                    {selectedClient.phone ?? tr('No phone', 'Нет телефона', "Telefon yo'q")}
-                    {selectedClient.address ? ` · ${selectedClient.address}` : ''}
-                  </p>
-                </div>
-                <div className="grid grid-cols-3 gap-3">
-                  <StatCard highlight label={tr('Outstanding', 'На руках', 'Mijozdagi')} value={summary?.total_outstanding_bottles_count ?? 0} />
-                  <StatCard label={tr('Held deposit', 'Депозит', 'Depozit')} value={formatCurrency(summary?.deposit_held_total_uzs ?? 0)} />
-                  <StatCard label={tr('Refunded', 'Возвращено', 'Qaytarilgan')} value={formatCurrency(summary?.total_deposit_refunded_uzs ?? 0)} />
-                </div>
+            <div className="space-y-4">
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="info">{platformLabel(selectedClient.platform)}</Badge>
+                <Badge variant="default">{languageLabel(selectedClient.preferred_language)}</Badge>
+                {selectedClient.is_platform_identity_verified
+                  ? <Badge variant="success">{tr('Verified', 'Подтверждён', 'Tasdiqlangan')}</Badge>
+                  : <Badge variant="warning">{tr('Unverified', 'Не подтверждён', 'Tasdiqlanmagan')}</Badge>}
               </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <StatCard label={tr('Balance rows', 'Строк баланса', 'Balans qatori')} value={balances.length} />
-                <StatCard label={tr('Movements', 'Движений', 'Harakatlar')} value={movements.length} />
-                <div className="col-span-2 rounded-2xl border border-light-border bg-slate-50 px-4 py-4 dark:border-white/10 dark:bg-navy-900">
-                  <p className="text-xs font-medium uppercase tracking-widest text-slate-500 dark:text-white/40">
-                    {tr('Client since', 'Klient sana', "Mijoz bo'lgan sana")}
-                  </p>
-                  <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">{formatDate(selectedClient.created_at)}</p>
-                </div>
+              <div>
+                <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                  {clientDisplayName(selectedClient)}
+                </h2>
+                <p className="mt-1.5 text-sm text-slate-500 dark:text-white/50">
+                  {selectedClient.phone ?? tr('No phone', 'Нет телефона', "Telefon yo'q")}
+                  {selectedClient.address ? ` · ${selectedClient.address}` : ''}
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <StatCard highlight label={tr('Outstanding', 'На руках', 'Mijozdagi')} value={summary?.total_outstanding_bottles_count ?? 0} />
+                <StatCard label={tr('Deposit held', 'Депозит', 'Depozit')} value={formatCurrency(summary?.deposit_held_total_uzs ?? 0)} />
+                <StatCard label={tr('Total charged', 'Начислено', 'Olingan')} value={formatCurrency(summary?.total_deposit_charged_uzs ?? 0)} />
+                <StatCard label={tr('Refunded', 'Возвращено', 'Qaytarilgan')} value={formatCurrency(summary?.total_deposit_refunded_uzs ?? 0)} />
               </div>
             </div>
           </Card>
