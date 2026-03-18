@@ -147,22 +147,22 @@ interface LinePreview {
 }
 
 const STATUS_LABELS: Record<OrderStatus, Record<Language, string>> = {
-  NEW_LEAD: { en: 'New Lead', ru: 'Novyy lid', uz: 'Yangi lid' },
-  INFO_COLLECTED: { en: 'Info Collected', ru: 'Dannye sobrany', uz: "Ma\'lumot yig\'ilgan" },
-  PAYMENT_PENDING: { en: 'Payment Pending', ru: 'Ozhidayetsya oplata', uz: "To\'lov kutilmoqda" },
-  PAYMENT_CONFIRMED: { en: 'Payment Confirmed', ru: 'Oplata podtverzhdena', uz: "To\'lov tasdiqlangan" },
-  DISPATCHED: { en: 'Dispatched', ru: 'Otpravlen', uz: 'Yuborilgan' },
-  ASSIGNED: { en: 'Assigned', ru: 'Naznachen', uz: 'Biriktirilgan' },
-  OUT_FOR_DELIVERY: { en: 'Out for Delivery', ru: 'V dostavke', uz: 'Yetkazib berishda' },
-  DELIVERED: { en: 'Delivered', ru: 'Dostavlen', uz: 'Yetkazildi' },
-  CANCELED: { en: 'Canceled', ru: 'Otmenen', uz: 'Bekor qilingan' },
-  FAILED: { en: 'Failed', ru: 'Neudachno', uz: 'Muvaffaqiyatsiz' },
+  NEW_LEAD: { en: 'New Lead', ru: 'Новая заявка', uz: 'Yangi lid' },
+  INFO_COLLECTED: { en: 'Info Collected', ru: 'Данные собраны', uz: "Ma'lumot yig'ilgan" },
+  PAYMENT_PENDING: { en: 'Payment Pending', ru: 'Ожидается оплата', uz: "To'lov kutilmoqda" },
+  PAYMENT_CONFIRMED: { en: 'Payment Confirmed', ru: 'Оплата подтверждена', uz: "To'lov tasdiqlangan" },
+  DISPATCHED: { en: 'Dispatched', ru: 'Отправлен', uz: 'Yuborilgan' },
+  ASSIGNED: { en: 'Assigned', ru: 'Назначен', uz: 'Biriktirilgan' },
+  OUT_FOR_DELIVERY: { en: 'Out for Delivery', ru: 'В доставке', uz: 'Yetkazib berishda' },
+  DELIVERED: { en: 'Delivered', ru: 'Доставлен', uz: 'Yetkazildi' },
+  CANCELED: { en: 'Canceled', ru: 'Отменён', uz: 'Bekor qilingan' },
+  FAILED: { en: 'Failed', ru: 'Ошибка', uz: 'Muvaffaqiyatsiz' },
 };
 
 const PAYMENT_LABELS: Record<'UNKNOWN' | 'CASH' | 'TRANSFER', Record<Language, string>> = {
-  UNKNOWN: { en: 'Unknown', ru: 'Neizvestno', uz: "Noma\'lum" },
-  CASH: { en: 'Cash', ru: 'Nalichnye', uz: 'Naqd' },
-  TRANSFER: { en: 'Transfer', ru: 'Perevod', uz: "O\'tkazma" },
+  UNKNOWN: { en: 'Unknown', ru: 'Неизвестно', uz: "Noma'lum" },
+  CASH: { en: 'Cash', ru: 'Наличные', uz: 'Naqd' },
+  TRANSFER: { en: 'Transfer', ru: 'Перевод', uz: "O'tkazma" },
 };
 
 const ORDER_STATUSES: OrderStatus[] = ['NEW_LEAD', 'INFO_COLLECTED', 'PAYMENT_PENDING', 'PAYMENT_CONFIRMED', 'DISPATCHED', 'ASSIGNED', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELED', 'FAILED'];
