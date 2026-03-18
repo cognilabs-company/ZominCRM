@@ -88,6 +88,7 @@ interface ApiOrder {
   created_at: string;
   updated_at: string;
   items?: ApiOrderItem[];
+  client?: { id: string; full_name?: string | null; phone?: string | null; username?: string | null } | null;
 }
 
 interface UiOrderItem {
@@ -146,22 +147,22 @@ interface LinePreview {
 }
 
 const STATUS_LABELS: Record<OrderStatus, Record<Language, string>> = {
-  NEW_LEAD: { en: 'New Lead', ru: 'Novyy lid', uz: 'Yangi lid' },
-  INFO_COLLECTED: { en: 'Info Collected', ru: 'Dannye sobrany', uz: "Ma\'lumot yig\'ilgan" },
-  PAYMENT_PENDING: { en: 'Payment Pending', ru: 'Ozhidayetsya oplata', uz: "To\'lov kutilmoqda" },
-  PAYMENT_CONFIRMED: { en: 'Payment Confirmed', ru: 'Oplata podtverzhdena', uz: "To\'lov tasdiqlangan" },
-  DISPATCHED: { en: 'Dispatched', ru: 'Otpravlen', uz: 'Yuborilgan' },
-  ASSIGNED: { en: 'Assigned', ru: 'Naznachen', uz: 'Biriktirilgan' },
-  OUT_FOR_DELIVERY: { en: 'Out for Delivery', ru: 'V dostavke', uz: 'Yetkazib berishda' },
-  DELIVERED: { en: 'Delivered', ru: 'Dostavlen', uz: 'Yetkazildi' },
-  CANCELED: { en: 'Canceled', ru: 'Otmenen', uz: 'Bekor qilingan' },
-  FAILED: { en: 'Failed', ru: 'Neudachno', uz: 'Muvaffaqiyatsiz' },
+  NEW_LEAD: { en: 'New Lead', ru: 'Новая заявка', uz: 'Yangi lid' },
+  INFO_COLLECTED: { en: 'Info Collected', ru: 'Данные собраны', uz: "Ma'lumot yig'ilgan" },
+  PAYMENT_PENDING: { en: 'Payment Pending', ru: 'Ожидается оплата', uz: "To'lov kutilmoqda" },
+  PAYMENT_CONFIRMED: { en: 'Payment Confirmed', ru: 'Оплата подтверждена', uz: "To'lov tasdiqlangan" },
+  DISPATCHED: { en: 'Dispatched', ru: 'Отправлен', uz: 'Yuborilgan' },
+  ASSIGNED: { en: 'Assigned', ru: 'Назначен', uz: 'Biriktirilgan' },
+  OUT_FOR_DELIVERY: { en: 'Out for Delivery', ru: 'В доставке', uz: 'Yetkazib berishda' },
+  DELIVERED: { en: 'Delivered', ru: 'Доставлен', uz: 'Yetkazildi' },
+  CANCELED: { en: 'Canceled', ru: 'Отменён', uz: 'Bekor qilingan' },
+  FAILED: { en: 'Failed', ru: 'Ошибка', uz: 'Muvaffaqiyatsiz' },
 };
 
 const PAYMENT_LABELS: Record<'UNKNOWN' | 'CASH' | 'TRANSFER', Record<Language, string>> = {
-  UNKNOWN: { en: 'Unknown', ru: 'Neizvestno', uz: "Noma\'lum" },
-  CASH: { en: 'Cash', ru: 'Nalichnye', uz: 'Naqd' },
-  TRANSFER: { en: 'Transfer', ru: 'Perevod', uz: "O\'tkazma" },
+  UNKNOWN: { en: 'Unknown', ru: 'Неизвестно', uz: "Noma'lum" },
+  CASH: { en: 'Cash', ru: 'Наличные', uz: 'Naqd' },
+  TRANSFER: { en: 'Transfer', ru: 'Перевод', uz: "O'tkazma" },
 };
 
 const ORDER_STATUSES: OrderStatus[] = ['NEW_LEAD', 'INFO_COLLECTED', 'PAYMENT_PENDING', 'PAYMENT_CONFIRMED', 'DISPATCHED', 'ASSIGNED', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELED', 'FAILED'];
@@ -219,7 +220,7 @@ const Orders: React.FC = () => {
   const mapOrder = useCallback((order: ApiOrder, localClientsById: Record<string, ApiClient>): UiOrder => ({
     id: order.id,
     client_id: order.client_id,
-    client_name: localClientsById[order.client_id]?.full_name || localClientsById[order.client_id]?.phone || order.client_id,
+    client_name: localClientsById[order.client_id]?.full_name || localClientsById[order.client_id]?.phone || order.client?.full_name || order.client?.phone || order.client?.username || order.client_id,
     lead_id: order.lead_id || null,
     status: order.status,
     payment_method: order.payment_method,
@@ -608,7 +609,7 @@ const Orders: React.FC = () => {
                   <td onClick={() => openOrderDetails(order)} className="px-6 py-4 text-sm text-amber-700 dark:text-amber-400 cursor-pointer">{order.bottle_deposit_total_uzs.toLocaleString()}</td>
                   <td onClick={() => openOrderDetails(order)} className="px-6 py-4 text-sm font-semibold text-gray-900 dark:text-white cursor-pointer">{order.total_uzs.toLocaleString()}</td>
                   <td onClick={() => openOrderDetails(order)} className="px-6 py-4 cursor-pointer"><Badge variant={getStatusVariant(order.status) as any}>{getStatusLabel(order.status)}</Badge></td>
-                  <td className="px-6 py-4 text-right"><div className="flex justify-end gap-2">{order.status === 'INFO_COLLECTED' || order.status === 'PAYMENT_CONFIRMED' ? <button onClick={() => handleAction('dispatch', order.id)} className="px-3 py-1.5 rounded-lg text-xs font-medium border border-light-border dark:border-navy-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-navy-700">{tr('Dispatch', 'Dispatch', 'Yuborish')}</button> : null}<button onClick={() => handleAction('cancel', order.id)} className="px-3 py-1.5 rounded-lg text-xs font-medium border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30">{tr('Cancel', 'Cancel', 'Bekor qilish')}</button></div></td>
+                  <td className="px-6 py-4 text-right"><div className="flex justify-end gap-2">{order.status === 'INFO_COLLECTED' || order.status === 'PAYMENT_CONFIRMED' ? <button onClick={() => handleAction('dispatch', order.id)} className="px-3 py-1.5 rounded-lg text-xs font-medium border border-light-border dark:border-navy-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-navy-700">{tr('Dispatch', 'Dispatch', 'Yuborish')}</button> : null}{order.status !== 'DELIVERED' && order.status !== 'CANCELED' && order.status !== 'FAILED' ? <button onClick={() => handleAction('cancel', order.id)} className="px-3 py-1.5 rounded-lg text-xs font-medium border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30">{tr('Cancel', 'Cancel', 'Bekor qilish')}</button> : null}</div></td>
                 </tr>
               ))}
             </tbody>
