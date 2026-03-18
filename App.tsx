@@ -140,13 +140,13 @@ const App: React.FC = () => {
                     </ClientAppProvider>
                   )}
                 >
-                  <Route index element={<Navigate to="home" replace />} />
+                  <Route index element={<Navigate to="products" replace />} />
                   {clientRouteDefinitions.map((route) => (
                     <React.Fragment key={route.id}>
                       <Route path={route.path} element={route.element} />
                     </React.Fragment>
                   ))}
-                  <Route path="*" element={<Navigate to="home" replace />} />
+                  <Route path="*" element={<Navigate to="products" replace />} />
                 </Route>
 
                 <Route
