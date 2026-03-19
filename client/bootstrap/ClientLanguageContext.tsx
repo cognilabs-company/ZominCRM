@@ -306,17 +306,33 @@ interface ClientLanguageContextValue {
 const ClientLanguageContext = React.createContext<ClientLanguageContextValue | undefined>(undefined);
 const CLIENT_LANGUAGE_OVERRIDE_KEY = 'client_webapp_language_override_v1';
 
-export const ClientLanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { client, telegramUser } = useClientApp();
-  const [languageOverride, setLanguageOverride] = React.useState<ClientUiLanguage | null>(() => {
-    if (typeof window === 'undefined') return null;
-    const saved = window.localStorage.getItem(CLIENT_LANGUAGE_OVERRIDE_KEY);
+const readStoredLanguage = (): ClientUiLanguage | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const saved = window.localStorage.getItem(CLIENT_LANGUAGE_OVERRIDE_KEY)
+      || window.sessionStorage.getItem(CLIENT_LANGUAGE_OVERRIDE_KEY);
     return saved ? normalizeClientLanguage(saved) : null;
-  });
+  } catch {
+    return null;
+  }
+};
 
+const writeStoredLanguage = (lang: ClientUiLanguage) => {
+  if (typeof window === 'undefined') return;
+  try { window.localStorage.setItem(CLIENT_LANGUAGE_OVERRIDE_KEY, lang); } catch {}
+  try { window.sessionStorage.setItem(CLIENT_LANGUAGE_OVERRIDE_KEY, lang); } catch {}
+};
+
+export const ClientLanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { client } = useClientApp();
+  const [languageOverride, setLanguageOverride] = React.useState<ClientUiLanguage | null>(readStoredLanguage);
+
+  // Default is always 'uz'. Only client.preferred_language (server-saved) can change it.
+  // Telegram's language_code is intentionally ignored — most users have TG in Russian/English
+  // but want the app in Uzbek.
   const language = React.useMemo(
-    () => languageOverride || normalizeClientLanguage(client?.preferred_language || telegramUser?.language_code || 'uz'),
-    [client?.preferred_language, languageOverride, telegramUser?.language_code]
+    () => languageOverride || normalizeClientLanguage(client?.preferred_language || 'uz'),
+    [client?.preferred_language, languageOverride]
   );
 
   const value = React.useMemo<ClientLanguageContextValue>(() => ({
@@ -324,9 +340,7 @@ export const ClientLanguageProvider: React.FC<{ children: React.ReactNode }> = (
     locale: localeMap[language],
     setLanguage: (nextLanguage) => {
       setLanguageOverride(nextLanguage);
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem(CLIENT_LANGUAGE_OVERRIDE_KEY, nextLanguage);
-      }
+      writeStoredLanguage(nextLanguage);
     },
     t: (key, params) => {
       const template = resolveTemplate(key, language);

@@ -74,22 +74,90 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, quantity, unavailabl
     setActiveImageIndex((i) => (i + dir + galleryCount) % galleryCount);
   };
 
+  const actions = (
+    <div className="px-4 py-3">
+        {quantity > 0 ? (
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-sm font-medium text-slate-500">
+              {t('products.cart')}: <span className="text-slate-950">{formatAmount(product.price_uzs * quantity, language)}</span>
+            </div>
+            <div className="flex items-center gap-2 rounded-2xl bg-slate-950 px-1.5 py-1.5">
+              <button
+                type="button"
+                onClick={() => updateQuantity(product.id, Math.max(0, quantity - 1))}
+                className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/12 text-white transition hover:bg-white/22 active:scale-95"
+              >
+                <Minus size={15} />
+              </button>
+              <span className="min-w-7 text-center text-sm font-bold text-white">{quantity}</span>
+              <button
+                type="button"
+                onClick={() => updateQuantity(product.id, quantity + 1)}
+                className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/12 text-white transition hover:bg-white/22 active:scale-95"
+              >
+                <Plus size={15} />
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => addProduct(product)}
+            disabled={unavailable}
+            className={`flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-sm font-semibold transition active:scale-[0.98] ${
+              unavailable
+                ? 'cursor-not-allowed bg-slate-100 text-slate-400'
+                : 'bg-slate-950 text-white shadow-[0_4px_14px_rgba(15,23,42,0.18)] hover:bg-slate-800'
+            }`}
+          >
+            <Plus size={16} />
+            {t('products.add')}
+          </button>
+        )}
+      </div>
+  );
+
+  if (!currentImageUrl) {
+    return (
+      <div className={`overflow-hidden rounded-3xl border bg-white shadow-sm transition ${unavailable ? 'border-slate-200 opacity-70' : 'border-slate-200'}`}>
+        {/* No-image layout: clean text card */}
+        <div className="relative bg-gradient-to-br from-blue-50/60 to-slate-50 px-5 pt-5 pb-4 border-b border-slate-100">
+          {unavailable ? (
+            <div className="absolute right-3 top-3 rounded-full bg-rose-600 px-2.5 py-1 text-[11px] font-semibold text-white shadow">
+              {t('products.out_of_stock') || 'Out of stock'}
+            </div>
+          ) : null}
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white shadow-[0_2px_8px_rgba(15,23,42,0.09)]">
+              <ShoppingBag size={24} className="text-blue-400" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-base font-bold text-slate-950 leading-snug">{product.name}</p>
+              <p className="mt-0.5 text-sm text-slate-400">{product.size_liters}L</p>
+            </div>
+            <div className="shrink-0 text-right">
+              <p className="text-lg font-bold text-slate-950">{formatAmount(product.price_uzs, language)}</p>
+              {product.requires_returnable_bottle ? (
+                <p className="text-xs text-slate-400">+{formatAmount(product.bottle_deposit_uzs, language)}</p>
+              ) : null}
+            </div>
+          </div>
+        </div>
+        {actions}
+      </div>
+    );
+  }
+
   return (
     <div className={`overflow-hidden rounded-3xl border bg-white shadow-sm transition ${unavailable ? 'border-slate-200 opacity-70' : 'border-slate-200'}`}>
-      {/* Image */}
+      {/* Image with gradient overlay */}
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100">
-        {currentImageUrl ? (
-          <img
-            src={currentImageUrl}
-            alt={product.name}
-            className="h-full w-full object-cover"
-            onError={() => setFailedUrls((f) => currentImageUrl ? { ...f, [currentImageUrl]: true } : f)}
-          />
-        ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-300">
-            <ShoppingBag size={40} />
-          </div>
-        )}
+        <img
+          src={currentImageUrl}
+          alt={product.name}
+          className="h-full w-full object-cover"
+          onError={() => setFailedUrls((f) => currentImageUrl ? { ...f, [currentImageUrl]: true } : f)}
+        />
 
         {/* Gradient overlay */}
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent px-4 pb-4 pt-12">
@@ -139,48 +207,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, quantity, unavailabl
           </>
         ) : null}
       </div>
-
-      {/* Actions */}
-      <div className="px-4 py-3">
-        {quantity > 0 ? (
-          <div className="flex items-center justify-between gap-3">
-            <div className="text-sm font-medium text-slate-500">
-              {t('products.cart')}: <span className="text-slate-950">{formatAmount(product.price_uzs * quantity, language)}</span>
-            </div>
-            <div className="flex items-center gap-2 rounded-2xl bg-slate-950 px-1.5 py-1.5">
-              <button
-                type="button"
-                onClick={() => updateQuantity(product.id, Math.max(0, quantity - 1))}
-                className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/12 text-white transition hover:bg-white/22 active:scale-95"
-              >
-                <Minus size={15} />
-              </button>
-              <span className="min-w-7 text-center text-sm font-bold text-white">{quantity}</span>
-              <button
-                type="button"
-                onClick={() => updateQuantity(product.id, quantity + 1)}
-                className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/12 text-white transition hover:bg-white/22 active:scale-95"
-              >
-                <Plus size={15} />
-              </button>
-            </div>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => addProduct(product)}
-            disabled={unavailable}
-            className={`flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-sm font-semibold transition active:scale-[0.98] ${
-              unavailable
-                ? 'cursor-not-allowed bg-slate-100 text-slate-400'
-                : 'bg-slate-950 text-white shadow-[0_4px_14px_rgba(15,23,42,0.18)] hover:bg-slate-800'
-            }`}
-          >
-            <Plus size={16} />
-            {t('products.add')}
-          </button>
-        )}
-      </div>
+      {actions}
     </div>
   );
 };
