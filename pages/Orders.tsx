@@ -56,39 +56,50 @@ interface ApiBottleBalance {
   total_deposit_refunded_uzs: number;
 }
 
+type ApiPaymentMethod = 'UNKNOWN' | 'CASH' | 'PAYME' | 'CLICK' | 'UZCARD' | 'HUMO';
+
 interface ApiOrderItem {
   id: string;
   order_id: string;
   product_id?: string;
   product_name: string;
   product_size_liters?: string | number | null;
+  product_available_count?: number;
   quantity: number;
   unit_price_uzs: number;
   line_total_uzs: number;
   bottle_deposit_unit_uzs?: number;
   bottle_deposit_charge_quantity?: number;
   bottle_deposit_total_uzs?: number;
+  status?: string;
 }
 
 interface ApiOrder {
   id: string;
+  short_id?: string;
   client_id: string;
   lead_id?: string | null;
   courier_id: string | null;
   status: OrderStatus;
-  payment_method: 'UNKNOWN' | 'CASH' | 'TRANSFER';
+  payment_method: ApiPaymentMethod;
   product_subtotal_uzs?: number;
   bottle_deposit_total_uzs?: number;
   total_amount_uzs: number;
   location_text: string;
   location_lat: number | null;
   location_lng: number | null;
+  has_location?: boolean;
   delivery_time_requested: string | null;
   client_confirmed_at?: string | null;
+  is_client_confirmed?: boolean;
+  items_count?: number;
+  active_items_count?: number;
   created_at: string;
   updated_at: string;
   items?: ApiOrderItem[];
-  client?: { id: string; full_name?: string | null; phone?: string | null; username?: string | null } | null;
+  client?: { id: string; full_name?: string | null; phone?: string | null; username?: string | null; platform?: string | null; address?: string | null } | null;
+  lead?: { id: string; source?: string | null; status?: string | null; notes?: string | null; created_at?: string } | null;
+  courier?: { id: string; full_name?: string | null; phone?: string | null; telegram_user_id?: string | null; telegram_username?: string | null; is_active?: boolean } | null;
 }
 
 interface UiOrderItem {
@@ -111,7 +122,7 @@ interface UiOrder {
   client_name: string;
   lead_id?: string | null;
   status: OrderStatus;
-  payment_method: 'UNKNOWN' | 'CASH' | 'TRANSFER';
+  payment_method: ApiPaymentMethod;
   product_subtotal_uzs: number;
   bottle_deposit_total_uzs: number;
   total_uzs: number;
@@ -149,23 +160,24 @@ interface LinePreview {
 const STATUS_LABELS: Record<OrderStatus, Record<Language, string>> = {
   NEW_LEAD: { en: 'New Lead', ru: 'Новая заявка', uz: 'Yangi lid' },
   INFO_COLLECTED: { en: 'Info Collected', ru: 'Данные собраны', uz: "Ma'lumot yig'ilgan" },
-  PAYMENT_PENDING: { en: 'Payment Pending', ru: 'Ожидается оплата', uz: "To'lov kutilmoqda" },
-  PAYMENT_CONFIRMED: { en: 'Payment Confirmed', ru: 'Оплата подтверждена', uz: "To'lov tasdiqlangan" },
+  CONFIRMED: { en: 'Confirmed', ru: 'Подтверждён', uz: 'Tasdiqlangan' },
   DISPATCHED: { en: 'Dispatched', ru: 'Отправлен', uz: 'Yuborilgan' },
-  ASSIGNED: { en: 'Assigned', ru: 'Назначен', uz: 'Biriktirilgan' },
   OUT_FOR_DELIVERY: { en: 'Out for Delivery', ru: 'В доставке', uz: 'Yetkazib berishda' },
   DELIVERED: { en: 'Delivered', ru: 'Доставлен', uz: 'Yetkazildi' },
-  CANCELED: { en: 'Canceled', ru: 'Отменён', uz: 'Bekor qilingan' },
-  FAILED: { en: 'Failed', ru: 'Ошибка', uz: 'Muvaffaqiyatsiz' },
+  CANCELLED: { en: 'Cancelled', ru: 'Отменён', uz: 'Bekor qilingan' },
+  PROBLEM: { en: 'Problem', ru: 'Проблема', uz: 'Muammo' },
 };
 
-const PAYMENT_LABELS: Record<'UNKNOWN' | 'CASH' | 'TRANSFER', Record<Language, string>> = {
+const PAYMENT_LABELS: Record<ApiPaymentMethod, Record<Language, string>> = {
   UNKNOWN: { en: 'Unknown', ru: 'Неизвестно', uz: "Noma'lum" },
   CASH: { en: 'Cash', ru: 'Наличные', uz: 'Naqd' },
-  TRANSFER: { en: 'Transfer', ru: 'Перевод', uz: "O'tkazma" },
+  PAYME: { en: 'Payme', ru: 'Payme', uz: 'Payme' },
+  CLICK: { en: 'Click', ru: 'Click', uz: 'Click' },
+  UZCARD: { en: 'UzCard', ru: 'UzCard', uz: 'UzCard' },
+  HUMO: { en: 'Humo', ru: 'Humo', uz: 'Humo' },
 };
 
-const ORDER_STATUSES: OrderStatus[] = ['NEW_LEAD', 'INFO_COLLECTED', 'PAYMENT_PENDING', 'PAYMENT_CONFIRMED', 'DISPATCHED', 'ASSIGNED', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELED', 'FAILED'];
+const ORDER_STATUSES: OrderStatus[] = ['NEW_LEAD', 'INFO_COLLECTED', 'CONFIRMED', 'DISPATCHED', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED', 'PROBLEM'];
 
 const createItemRow = (): CreateItemRow => ({
   id: Math.random().toString(36).slice(2, 10),
@@ -193,11 +205,15 @@ const Orders: React.FC = () => {
   const [editForm, setEditForm] = useState({ client_id: '', lead_id: '', client_confirmed_at: '' });
   const [editLoading, setEditLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || '');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState('');
 
   const [clientMode, setClientMode] = useState<'existing' | 'new'>('existing');
   const [selectedClientId, setSelectedClientId] = useState('');
   const [clientForm, setClientForm] = useState({ full_name: '', phone: '', username: '', address: '', preferred_language: 'uz' as Language });
-  const [orderForm, setOrderForm] = useState({ payment_method: 'CASH' as 'UNKNOWN' | 'CASH' | 'TRANSFER', location_text: '', location_lat: '', location_lng: '', delivery_time_requested: '' });
+  const [orderForm, setOrderForm] = useState({ payment_method: 'CASH' as ApiPaymentMethod, location_text: '', location_lat: '', location_lng: '', delivery_time_requested: '' });
   const [itemRows, setItemRows] = useState<CreateItemRow[]>([createItemRow()]);
   const [bottleSummary, setBottleSummary] = useState<ApiBottleSummary | null>(null);
   const [bottleBalances, setBottleBalances] = useState<ApiBottleBalance[]>([]);
@@ -253,9 +269,15 @@ const Orders: React.FC = () => {
     })),
   }), []);
 
-  const loadOrders = useCallback(async (localClientsById: Record<string, ApiClient>, currentStatusFilter: string) => {
-    const query = currentStatusFilter ? `?status=${encodeURIComponent(currentStatusFilter)}` : '';
-    const data = await apiRequest<{ results?: ApiOrder[] }>(`${ENDPOINTS.ORDERS.LIST}${query}`);
+  const loadOrders = useCallback(async (localClientsById: Record<string, ApiClient>, f: { status: string; q: string; dateFrom: string; dateTo: string; paymentMethod: string }) => {
+    const params = new URLSearchParams();
+    if (f.status) params.set('status', f.status);
+    if (f.q) params.set('q', f.q);
+    if (f.dateFrom) params.set('date_from', f.dateFrom);
+    if (f.dateTo) params.set('date_to', f.dateTo);
+    if (f.paymentMethod) params.set('payment_method', f.paymentMethod);
+    const query = params.toString() ? `?${params}` : '';
+    const data = await apiRequest<{ results?: ApiOrder[]; count?: number }>(`${ENDPOINTS.ORDERS.LIST}${query}`);
     setOrders((data.results || []).map((order) => mapOrder(order, localClientsById)));
   }, [mapOrder]);
 
@@ -287,7 +309,7 @@ const Orders: React.FC = () => {
         setError(null);
         const reference = await loadReferenceData();
         if (!active) return;
-        await loadOrders(reference.byId, statusFilter);
+        await loadOrders(reference.byId, { status: statusFilter, q: searchQuery, dateFrom, dateTo, paymentMethod: paymentMethodFilter });
       } catch (e) {
         if (!active) return;
         const message = e instanceof Error ? e.message : tr('Failed to load orders', 'Failed to load orders', "Buyurtmalarni yuklab bo'lmadi");
@@ -301,7 +323,7 @@ const Orders: React.FC = () => {
     return () => {
       active = false;
     };
-  }, [loadOrders, loadReferenceData, statusFilter, toast, tr]);
+  }, [loadOrders, loadReferenceData, statusFilter, searchQuery, dateFrom, dateTo, paymentMethodFilter, toast, tr]);
 
   useEffect(() => {
     if (!isCreateOpen) return;
@@ -401,19 +423,18 @@ const Orders: React.FC = () => {
   const getStatusVariant = (status: OrderStatus) => {
     switch (status) {
       case 'DELIVERED': return 'success';
-      case 'PAYMENT_PENDING':
       case 'INFO_COLLECTED': return 'warning';
-      case 'CANCELED':
-      case 'FAILED': return 'error';
+      case 'CANCELLED':
+      case 'PROBLEM': return 'error';
+      case 'CONFIRMED':
       case 'DISPATCHED':
-      case 'ASSIGNED':
       case 'OUT_FOR_DELIVERY': return 'info';
       default: return 'default';
     }
   };
 
   const getStatusLabel = (status: OrderStatus) => STATUS_LABELS[status]?.[language] || status;
-  const getPaymentLabel = (method: 'UNKNOWN' | 'CASH' | 'TRANSFER') => PAYMENT_LABELS[method]?.[language] || method;
+  const getPaymentLabel = (method: ApiPaymentMethod) => PAYMENT_LABELS[method]?.[language] || method;
 
   const resetCreateForm = () => {
     setClientMode('existing');
@@ -446,13 +467,13 @@ const Orders: React.FC = () => {
       } else {
         await apiRequest(ENDPOINTS.ORDERS.UPDATE_STATUS(orderId), {
           method: 'POST',
-          body: JSON.stringify({ to_status: 'CANCELED' }),
+          body: JSON.stringify({ to_status: 'CANCELLED' }),
         });
         toast.success(tr('Order canceled successfully.', 'Order canceled successfully.', 'Buyurtma bekor qilindi.'));
       }
-      await loadOrders(clientsById, statusFilter);
+      await loadOrders(clientsById, { status: statusFilter, q: searchQuery, dateFrom, dateTo, paymentMethod: paymentMethodFilter });
     } catch (e) {
-      let message = e instanceof Error ? e.message : tr('Action failed', 'Action failed', 'Amal bajarilmadi');
+      let message = e instanceof Error ? e.message : tr('Action failed', 'Amal bajarilmadi', 'Amal bajarilmadi');
       if (e instanceof ApiError && e.code === 'E-ORD-003') {
         message = action === 'dispatch'
           ? tr('This order cannot be dispatched from its current status.', 'This order cannot be dispatched from its current status.', "Bu buyurtmani hozirgi holatidan kuryerga yuborib bo'lmaydi.")
@@ -523,7 +544,7 @@ const Orders: React.FC = () => {
       toast.success(tr('Order created successfully.', 'Order created successfully.', 'Buyurtma yaratildi.'));
       closeCreateModal();
       const reference = await loadReferenceData();
-      await loadOrders(reference.byId, statusFilter);
+      await loadOrders(reference.byId, { status: statusFilter, q: searchQuery, dateFrom, dateTo, paymentMethod: paymentMethodFilter });
     } catch (e) {
       const message = e instanceof Error ? e.message : tr('Failed to create order', 'Failed to create order', "Buyurtma yaratib bo'lmadi");
       setError(message);
@@ -581,7 +602,7 @@ const Orders: React.FC = () => {
       toast.success(tr('Order updated successfully.', 'Заказ успешно обновлён.', 'Buyurtma yangilandi.'));
       closeEditModal();
       const reference = await loadReferenceData();
-      await loadOrders(reference.byId, statusFilter);
+      await loadOrders(reference.byId, { status: statusFilter, q: searchQuery, dateFrom, dateTo, paymentMethod: paymentMethodFilter });
     } catch (e) {
       const message = e instanceof Error ? e.message : tr('Failed to update order.', 'Не удалось обновить заказ.', "Buyurtmani yangilab bo'lmadi.");
       toast.error(message);
@@ -618,13 +639,32 @@ const Orders: React.FC = () => {
             <h3 className="font-semibold text-light-text dark:text-white text-sm">{t('filter')} {tr('Options', 'Options', 'Parametrlar')}</h3>
             <button onClick={() => setIsFilterOpen(false)} className="text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-gray-200"><X size={16} /></button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{t('status')}</label>
               <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white">
-                <option value="">{tr('All statuses', 'All statuses', 'Barcha holatlar')}</option>
+                <option value="">{tr('All statuses', 'Все статусы', 'Barcha holatlar')}</option>
                 {ORDER_STATUSES.map((status) => <option key={status} value={status}>{getStatusLabel(status)}</option>)}
               </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{tr('Payment method', 'Способ оплаты', "To'lov usuli")}</label>
+              <select value={paymentMethodFilter} onChange={(event) => setPaymentMethodFilter(event.target.value)} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white">
+                <option value="">{tr('All methods', 'Все методы', 'Barcha usullar')}</option>
+                {(['CASH', 'PAYME', 'CLICK', 'UZCARD', 'HUMO', 'UNKNOWN'] as ApiPaymentMethod[]).map((m) => <option key={m} value={m}>{getPaymentLabel(m)}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{tr('From', 'С даты', 'Sanadan')}</label>
+              <input type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{tr('To', 'По дату', 'Sanagacha')}</label>
+              <input type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" />
+            </div>
+            <div className="md:col-span-2 lg:col-span-4">
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{tr('Search', 'Поиск', 'Qidirish')}</label>
+              <input type="text" value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder={tr('Name, phone, address, order ID…', 'Имя, телефон, адрес, ID заказа…', 'Ism, telefon, manzil, buyurtma ID…')} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" />
             </div>
           </div>
         </Card>
@@ -659,7 +699,7 @@ const Orders: React.FC = () => {
                   <td onClick={() => openOrderDetails(order)} className="px-6 py-4 text-sm text-amber-700 dark:text-amber-400 cursor-pointer">{order.bottle_deposit_total_uzs.toLocaleString()}</td>
                   <td onClick={() => openOrderDetails(order)} className="px-6 py-4 text-sm font-semibold text-gray-900 dark:text-white cursor-pointer">{order.total_uzs.toLocaleString()}</td>
                   <td onClick={() => openOrderDetails(order)} className="px-6 py-4 cursor-pointer"><Badge variant={getStatusVariant(order.status) as any}>{getStatusLabel(order.status)}</Badge></td>
-                  <td className="px-6 py-4 text-right"><div className="flex justify-end gap-2">{order.status === 'INFO_COLLECTED' || order.status === 'PAYMENT_CONFIRMED' ? <button onClick={() => handleAction('dispatch', order.id)} className="px-3 py-1.5 rounded-lg text-xs font-medium border border-light-border dark:border-navy-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-navy-700">{tr('Dispatch', 'Dispatch', 'Yuborish')}</button> : null}{order.status !== 'DELIVERED' && order.status !== 'CANCELED' && order.status !== 'FAILED' ? <button onClick={() => handleAction('cancel', order.id)} className="px-3 py-1.5 rounded-lg text-xs font-medium border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30">{tr('Cancel', 'Cancel', 'Bekor qilish')}</button> : null}</div></td>
+                  <td className="px-6 py-4 text-right"><div className="flex justify-end gap-2">{order.status === 'INFO_COLLECTED' || order.status === 'CONFIRMED' ? <button onClick={() => handleAction('dispatch', order.id)} className="px-3 py-1.5 rounded-lg text-xs font-medium border border-light-border dark:border-navy-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-navy-700">{tr('Dispatch', 'Отправить', 'Yuborish')}</button> : null}{order.status !== 'DELIVERED' && order.status !== 'CANCELLED' && order.status !== 'PROBLEM' ? <button onClick={() => handleAction('cancel', order.id)} className="px-3 py-1.5 rounded-lg text-xs font-medium border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30">{tr('Cancel', 'Отменить', 'Bekor qilish')}</button> : null}</div></td>
                 </tr>
               ))}
             </tbody>
@@ -833,7 +873,7 @@ const Orders: React.FC = () => {
                   <p className="text-sm text-gray-500 dark:text-gray-400">{tr('This data will be sent inside the new create-full backend contract.', 'This data will be sent inside the new create-full backend contract.', "Bu ma'lumotlar yangi create-full kontrakti bilan yuboriladi.")}</p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Payment method', 'Payment method', "To'lov usuli")}</label><select value={orderForm.payment_method} onChange={(event) => setOrderForm((state) => ({ ...state, payment_method: event.target.value as 'UNKNOWN' | 'CASH' | 'TRANSFER' }))} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white"><option value="CASH">{getPaymentLabel('CASH')}</option><option value="TRANSFER">{getPaymentLabel('TRANSFER')}</option><option value="UNKNOWN">{getPaymentLabel('UNKNOWN')}</option></select></div>
+                  <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Payment method', 'Payment method', "To'lov usuli")}</label><select value={orderForm.payment_method} onChange={(event) => setOrderForm((state) => ({ ...state, payment_method: event.target.value as ApiPaymentMethod }))} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white"><option value="CASH">{getPaymentLabel('CASH')}</option><option value="PAYME">{getPaymentLabel('PAYME')}</option><option value="CLICK">{getPaymentLabel('CLICK')}</option><option value="UZCARD">{getPaymentLabel('UZCARD')}</option><option value="HUMO">{getPaymentLabel('HUMO')}</option><option value="UNKNOWN">{getPaymentLabel('UNKNOWN')}</option></select></div>
                   <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Requested delivery time', 'Requested delivery time', "So'ralgan yetkazish vaqti")}</label><input type="datetime-local" value={orderForm.delivery_time_requested} onChange={(event) => setOrderForm((state) => ({ ...state, delivery_time_requested: event.target.value }))} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" /></div>
                   <div className="md:col-span-2"><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Location text', 'Location text', 'Manzil matni')}</label><textarea value={orderForm.location_text} onChange={(event) => setOrderForm((state) => ({ ...state, location_text: event.target.value }))} className="w-full h-24 bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" /></div>
                   <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Latitude</label><input type="number" step="any" value={orderForm.location_lat} onChange={(event) => setOrderForm((state) => ({ ...state, location_lat: event.target.value }))} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" /></div>
