@@ -92,6 +92,7 @@ export const ENDPOINTS = {
     CREATE: `${API_BASE_URL}/orders/create/`,
     CREATE_FULL: `${API_BASE_URL}/orders/create-full/`,
     UPDATE_STATUS: (id: string) => `${API_BASE_URL}/orders/${id}/status/transition/`,
+    EDIT: (id: string) => `${API_BASE_URL}/orders/${id}/edit/`,
     ADD_ITEM: (id: string) => `${API_BASE_URL}/orders/${id}/items/upsert/`,
     REMOVE_ITEM: (id: string) => `${API_BASE_URL}/orders/${id}/items/remove/`,
     UPDATE_DELIVERY: (id: string) => `${API_BASE_URL}/orders/${id}/delivery/update/`,
