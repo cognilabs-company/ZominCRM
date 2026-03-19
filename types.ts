@@ -30,16 +30,14 @@ export type LeadStatus = 'NEW' | 'QUALIFIED' | 'CONVERTED' | 'LOST';
 export type OrderStatus =
   | 'NEW_LEAD'
   | 'INFO_COLLECTED'
-  | 'PAYMENT_PENDING'
-  | 'PAYMENT_CONFIRMED'
+  | 'CONFIRMED'
   | 'DISPATCHED'
-  | 'ASSIGNED'
   | 'OUT_FOR_DELIVERY'
   | 'DELIVERED'
-  | 'CANCELED'
-  | 'FAILED';
+  | 'CANCELLED'
+  | 'PROBLEM';
 
-export type PaymentMethod = 'UNKNOWN' | 'CASH' | 'TRANSFER';
+export type PaymentMethod = 'UNKNOWN' | 'CASH' | 'PAYME' | 'CLICK' | 'UZCARD' | 'HUMO';
 
 export type PaymentProvider = 'PAYME' | 'CLICK';
 
