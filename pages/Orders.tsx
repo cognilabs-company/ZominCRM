@@ -7,7 +7,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useToast } from '../context/ToastContext';
 import { ApiError, ENDPOINTS, apiRequest } from '../services/api';
 import { Language, OrderStatus } from '../types';
-import { CreditCard, Filter, MapPin, Minus, Package, Plus, User, X } from 'lucide-react';
+import { CreditCard, Filter, MapPin, Minus, Package, Pencil, Plus, User, X } from 'lucide-react';
 
 interface ApiClient {
   id: string;
@@ -189,6 +189,9 @@ const Orders: React.FC = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<UiOrder | null>(null);
+  const [editingOrder, setEditingOrder] = useState<UiOrder | null>(null);
+  const [editForm, setEditForm] = useState({ client_id: '', lead_id: '', client_confirmed_at: '' });
+  const [editLoading, setEditLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || '');
 
   const [clientMode, setClientMode] = useState<'existing' | 'new'>('existing');
@@ -540,6 +543,53 @@ const Orders: React.FC = () => {
     setSearchParams(nextParams, { replace: true });
   }, [searchParams, setSearchParams, targetOrderId]);
 
+  const openEditModal = (order: UiOrder) => {
+    const confirmedAt = order.client_confirmed_at
+      ? new Date(order.client_confirmed_at).toISOString().slice(0, 16)
+      : '';
+    setEditForm({ client_id: order.client_id, lead_id: order.lead_id || '', client_confirmed_at: confirmedAt });
+    setEditingOrder(order);
+  };
+
+  const closeEditModal = () => setEditingOrder(null);
+
+  const handleSaveEdit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!editingOrder) return;
+    const payload: Record<string, unknown> = {};
+    if (editForm.client_id && editForm.client_id !== editingOrder.client_id) {
+      payload.client_id = editForm.client_id;
+    }
+    if (editForm.lead_id !== (editingOrder.lead_id || '')) {
+      payload.lead_id = editForm.lead_id || null;
+    }
+    const originalConfirmedAt = editingOrder.client_confirmed_at
+      ? new Date(editingOrder.client_confirmed_at).toISOString().slice(0, 16)
+      : '';
+    if (editForm.client_confirmed_at !== originalConfirmedAt) {
+      payload.client_confirmed_at = editForm.client_confirmed_at
+        ? new Date(editForm.client_confirmed_at).toISOString()
+        : null;
+    }
+    if (!Object.keys(payload).length) {
+      closeEditModal();
+      return;
+    }
+    try {
+      setEditLoading(true);
+      await apiRequest(ENDPOINTS.ORDERS.EDIT(editingOrder.id), { method: 'PATCH', body: JSON.stringify(payload) });
+      toast.success(tr('Order updated successfully.', 'Заказ успешно обновлён.', 'Buyurtma yangilandi.'));
+      closeEditModal();
+      const reference = await loadReferenceData();
+      await loadOrders(reference.byId, statusFilter);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : tr('Failed to update order.', 'Не удалось обновить заказ.', "Buyurtmani yangilab bo'lmadi.");
+      toast.error(message);
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
   const selectedClient = selectedClientId ? clientsById[selectedClientId] : null;
 
   return (
@@ -622,7 +672,7 @@ const Orders: React.FC = () => {
         onClose={closeOrderDetails}
         title={selectedOrder ? `${tr('Order details', 'Order details', 'Buyurtma tafsilotlari')} #${selectedOrder.id.slice(0, 8)}` : tr('Order details', 'Order details', 'Buyurtma tafsilotlari')}
         maxWidthClass="max-w-5xl"
-        footer={<div className="flex gap-3 w-full justify-end"><button onClick={closeOrderDetails} className="px-4 py-2 rounded-lg text-sm border border-light-border dark:border-navy-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-navy-700 transition-colors">{t('cancel')}</button></div>}
+        footer={<div className="flex gap-3 w-full justify-end"><button onClick={() => { closeOrderDetails(); if (selectedOrder) openEditModal(selectedOrder); }} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm border border-light-border dark:border-navy-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-navy-700 transition-colors"><Pencil size={14} /> {t('edit')}</button><button onClick={closeOrderDetails} className="px-4 py-2 rounded-lg text-sm border border-light-border dark:border-navy-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-navy-700 transition-colors">{t('cancel')}</button></div>}
       >
         {selectedOrder ? (
           <div className="space-y-6">
@@ -693,6 +743,41 @@ const Orders: React.FC = () => {
             <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400"><CreditCard size={16} /> {t('payment_method')}: <span className="font-medium text-gray-900 dark:text-white">{getPaymentLabel(selectedOrder.payment_method)}</span></div>
           </div>
         ) : null}
+      </Modal>
+
+      <Modal
+        isOpen={!!editingOrder}
+        onClose={closeEditModal}
+        title={editingOrder ? `${tr('Edit order', 'Редактировать заказ', 'Buyurtmani tahrirlash')} #${editingOrder.id.slice(0, 8)}` : tr('Edit order', 'Редактировать заказ', 'Buyurtmani tahrirlash')}
+        maxWidthClass="max-w-lg"
+        footer={null}
+      >
+        <form className="space-y-5" onSubmit={handleSaveEdit}>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Client', 'Клиент', 'Mijoz')}</label>
+            <select value={editForm.client_id} onChange={(event) => setEditForm((state) => ({ ...state, client_id: event.target.value }))} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white">
+              <option value="">{tr('— no change —', '— без изменений —', '— o\'zgartirmaslik —')}</option>
+              {clients.map((client) => <option key={client.id} value={client.id}>{client.full_name || client.phone || client.id}</option>)}
+            </select>
+            <p className="mt-1 text-xs text-gray-500">{tr('Leave blank to keep the current client.', 'Оставьте пустым, чтобы не менять клиента.', "Joriy mijozni saqlash uchun bo'sh qoldiring.")}</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Lead ID', 'ID лида', 'Lid ID')} <span className="text-gray-400 font-normal">({tr('optional', 'необязательно', 'ixtiyoriy')})</span></label>
+            <input value={editForm.lead_id} onChange={(event) => setEditForm((state) => ({ ...state, lead_id: event.target.value }))} placeholder={tr('UUID or leave empty to unassign', 'UUID или оставьте пустым для отвязки', 'UUID yoki bo\'sh qoldiring')} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white font-mono" />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Client confirmed at', 'Клиент подтвердил', 'Mijoz tasdiqladi')} <span className="text-gray-400 font-normal">({tr('optional', 'необязательно', 'ixtiyoriy')})</span></label>
+            <input type="datetime-local" value={editForm.client_confirmed_at} onChange={(event) => setEditForm((state) => ({ ...state, client_confirmed_at: event.target.value }))} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" />
+            <p className="mt-1 text-xs text-gray-500">{tr('Leave empty to clear the confirmation timestamp.', 'Оставьте пустым, чтобы сбросить метку подтверждения.', "Tasdiqlash vaqtini o'chirish uchun bo'sh qoldiring.")}</p>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-2 border-t border-light-border dark:border-navy-700">
+            <button type="button" onClick={closeEditModal} className="px-4 py-2 rounded-lg text-sm border border-light-border dark:border-navy-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-navy-700 transition-colors">{t('cancel')}</button>
+            <button disabled={editLoading} type="submit" className="px-4 py-2 rounded-lg text-sm font-medium bg-primary-blue text-white hover:bg-blue-700 transition-colors disabled:opacity-50">{editLoading ? tr('Saving...', 'Сохранение...', 'Saqlanmoqda...') : t('save')}</button>
+          </div>
+        </form>
       </Modal>
 
       <Modal
