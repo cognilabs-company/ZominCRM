@@ -203,6 +203,7 @@ const Orders: React.FC = () => {
   const [selectedOrder, setSelectedOrder] = useState<UiOrder | null>(null);
   const [editingOrder, setEditingOrder] = useState<UiOrder | null>(null);
   const [editForm, setEditForm] = useState({ client_id: '', lead_id: '', client_confirmed_at: '' });
+  const [editItemRows, setEditItemRows] = useState<CreateItemRow[]>([]);
   const [editLoading, setEditLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || '');
   const [searchQuery, setSearchQuery] = useState('');
@@ -569,6 +570,15 @@ const Orders: React.FC = () => {
       ? new Date(order.client_confirmed_at).toISOString().slice(0, 16)
       : '';
     setEditForm({ client_id: order.client_id, lead_id: order.lead_id || '', client_confirmed_at: confirmedAt });
+    setEditItemRows(
+      order.items
+        .filter((item) => item.product_id)
+        .map((item) => ({
+          id: Math.random().toString(36).slice(2, 10),
+          productId: item.product_id!,
+          quantity: String(item.quantity),
+        }))
+    );
     setEditingOrder(order);
   };
 
@@ -592,6 +602,29 @@ const Orders: React.FC = () => {
         ? new Date(editForm.client_confirmed_at).toISOString()
         : null;
     }
+    // Build items payload: rows the user sees + qty=0 for items removed from the form
+    const editProductIds = new Set(editItemRows.map((r) => r.productId).filter(Boolean));
+    const itemsPayload: Array<{ product_id: string; quantity: number }> = editItemRows
+      .filter((r) => r.productId)
+      .map((r) => ({ product_id: r.productId, quantity: Math.max(0, Number(r.quantity) || 0) }));
+    for (const item of editingOrder.items) {
+      if (item.product_id && !editProductIds.has(item.product_id)) {
+        itemsPayload.push({ product_id: item.product_id, quantity: 0 });
+      }
+    }
+    // Include items only if something actually changed
+    const originalItems = editingOrder.items
+      .filter((i) => i.product_id)
+      .map((i) => ({ product_id: i.product_id!, quantity: i.quantity }))
+      .sort((a, b) => a.product_id.localeCompare(b.product_id));
+    const nextItems = itemsPayload
+      .filter((i) => i.quantity > 0)
+      .sort((a, b) => a.product_id.localeCompare(b.product_id));
+    const removals = itemsPayload.filter((i) => i.quantity === 0);
+    if (removals.length > 0 || JSON.stringify(nextItems) !== JSON.stringify(originalItems)) {
+      payload.items = itemsPayload;
+    }
+
     if (!Object.keys(payload).length) {
       closeEditModal();
       return;
@@ -789,7 +822,7 @@ const Orders: React.FC = () => {
         isOpen={!!editingOrder}
         onClose={closeEditModal}
         title={editingOrder ? `${tr('Edit order', 'Редактировать заказ', 'Buyurtmani tahrirlash')} #${editingOrder.id.slice(0, 8)}` : tr('Edit order', 'Редактировать заказ', 'Buyurtmani tahrirlash')}
-        maxWidthClass="max-w-lg"
+        maxWidthClass="max-w-2xl"
         footer={null}
       >
         <form className="space-y-5" onSubmit={handleSaveEdit}>
@@ -811,6 +844,59 @@ const Orders: React.FC = () => {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Client confirmed at', 'Клиент подтвердил', 'Mijoz tasdiqladi')} <span className="text-gray-400 font-normal">({tr('optional', 'необязательно', 'ixtiyoriy')})</span></label>
             <input type="datetime-local" value={editForm.client_confirmed_at} onChange={(event) => setEditForm((state) => ({ ...state, client_confirmed_at: event.target.value }))} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" />
             <p className="mt-1 text-xs text-gray-500">{tr('Leave empty to clear the confirmation timestamp.', 'Оставьте пустым, чтобы сбросить метку подтверждения.', "Tasdiqlash vaqtini o'chirish uchun bo'sh qoldiring.")}</p>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{tr('Items', 'Позиции', 'Mahsulotlar')} <span className="text-gray-400 font-normal">({tr('optional', 'необязательно', 'ixtiyoriy')})</span></label>
+              <button
+                type="button"
+                onClick={() => setEditItemRows((prev) => [...prev, createItemRow()])}
+                className="flex items-center gap-1 text-xs text-primary-blue hover:text-blue-700 font-medium"
+              >
+                <Plus size={14} /> {tr('Add product', 'Добавить товар', "Mahsulot qo'shish")}
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mb-3">{tr('Set quantity to 0 or remove a row to delete that item from the order.', 'Установите кол-во 0 или удалите строку, чтобы убрать позицию.', "Miqdorni 0 ga o'rnating yoki qatorni o'chirish uchun olib tashlang.")}</p>
+            <div className="space-y-2">
+              {editItemRows.map((row, idx) => {
+                const product = productsById[row.productId];
+                return (
+                  <div key={row.id} className="flex items-center gap-2">
+                    <select
+                      value={row.productId}
+                      onChange={(e) => setEditItemRows((prev) => prev.map((r, i) => i === idx ? { ...r, productId: e.target.value } : r))}
+                      className="flex-1 bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white"
+                    >
+                      <option value="">{tr('— select product —', '— выберите товар —', '— mahsulot tanlang —')}</option>
+                      {products.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.size_liters}L) — {p.price_uzs.toLocaleString()} UZS</option>)}
+                    </select>
+                    <input
+                      type="number"
+                      min="0"
+                      value={row.quantity}
+                      onChange={(e) => setEditItemRows((prev) => prev.map((r, i) => i === idx ? { ...r, quantity: e.target.value } : r))}
+                      className="w-20 bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white text-center"
+                    />
+                    {product ? (
+                      <span className="text-xs text-gray-500 w-28 text-right shrink-0">
+                        {(product.price_uzs * (Math.max(0, Number(row.quantity) || 0))).toLocaleString()} UZS
+                      </span>
+                    ) : <span className="w-28 shrink-0" />}
+                    <button
+                      type="button"
+                      onClick={() => setEditItemRows((prev) => prev.filter((_, i) => i !== idx))}
+                      className="text-gray-400 hover:text-red-500 transition-colors shrink-0"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                );
+              })}
+              {editItemRows.length === 0 && (
+                <p className="text-xs text-gray-400 italic">{tr('No items. Click "Add product" to add one.', 'Нет позиций. Нажмите «Добавить товар».', '"Mahsulot qo\'shish" tugmasini bosing.')}</p>
+              )}
+            </div>
           </div>
 
           <div className="flex justify-end gap-3 pt-2 border-t border-light-border dark:border-navy-700">
