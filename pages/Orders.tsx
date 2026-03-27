@@ -3,11 +3,13 @@ import { useSearchParams } from 'react-router-dom';
 import { Badge } from '../components/ui/Badge';
 import { Card } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
+import { useActionConfirm } from '../components/ui/useActionConfirm';
+import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useToast } from '../context/ToastContext';
 import { ApiError, ENDPOINTS, apiRequest } from '../services/api';
 import { Language, OrderStatus } from '../types';
-import { CreditCard, Filter, MapPin, Minus, Package, Pencil, Plus, User, X } from 'lucide-react';
+import { CreditCard, Filter, MapPin, Minus, Package, Plus, User, X } from 'lucide-react';
 
 interface ApiClient {
   id: string;
@@ -56,7 +58,9 @@ interface ApiBottleBalance {
   total_deposit_refunded_uzs: number;
 }
 
-type ApiPaymentMethod = 'UNKNOWN' | 'CASH' | 'PAYME' | 'CLICK' | 'UZCARD' | 'HUMO';
+type ApiPaymentMethod = 'UNKNOWN' | 'CASH' | 'TRANSFER';
+type ApiOrderSource = 'LIVE' | 'MANUAL_OFFLINE';
+type RecordedFinalStatus = 'DELIVERED' | 'CANCELED' | 'FAILED';
 
 interface ApiOrderItem {
   id: string;
@@ -82,6 +86,9 @@ interface ApiOrder {
   courier_id: string | null;
   status: OrderStatus;
   payment_method: ApiPaymentMethod;
+  order_source?: ApiOrderSource;
+  is_offline_recorded?: boolean;
+  auto_dispatch_enabled?: boolean;
   product_subtotal_uzs?: number;
   bottle_deposit_total_uzs?: number;
   total_amount_uzs: number;
@@ -123,6 +130,9 @@ interface UiOrder {
   lead_id?: string | null;
   status: OrderStatus;
   payment_method: ApiPaymentMethod;
+  order_source: ApiOrderSource;
+  is_offline_recorded: boolean;
+  auto_dispatch_enabled: boolean;
   product_subtotal_uzs: number;
   bottle_deposit_total_uzs: number;
   total_uzs: number;
@@ -160,24 +170,25 @@ interface LinePreview {
 const STATUS_LABELS: Record<OrderStatus, Record<Language, string>> = {
   NEW_LEAD: { en: 'New Lead', ru: 'Новая заявка', uz: 'Yangi lid' },
   INFO_COLLECTED: { en: 'Info Collected', ru: 'Данные собраны', uz: "Ma'lumot yig'ilgan" },
-  CONFIRMED: { en: 'Confirmed', ru: 'Подтверждён', uz: 'Tasdiqlangan' },
+  PAYMENT_PENDING: { en: 'Payment Pending', ru: 'Ожидает оплаты', uz: "To'lov kutilmoqda" },
+  PAYMENT_CONFIRMED: { en: 'Payment Confirmed', ru: 'Оплата подтверждена', uz: "To'lov tasdiqlangan" },
   DISPATCHED: { en: 'Dispatched', ru: 'Отправлен', uz: 'Yuborilgan' },
+  ASSIGNED: { en: 'Assigned', ru: 'Назначен', uz: 'Biriktirilgan' },
   OUT_FOR_DELIVERY: { en: 'Out for Delivery', ru: 'В доставке', uz: 'Yetkazib berishda' },
   DELIVERED: { en: 'Delivered', ru: 'Доставлен', uz: 'Yetkazildi' },
-  CANCELLED: { en: 'Cancelled', ru: 'Отменён', uz: 'Bekor qilingan' },
-  PROBLEM: { en: 'Problem', ru: 'Проблема', uz: 'Muammo' },
+  CANCELED: { en: 'Canceled', ru: 'Отменён', uz: 'Bekor qilingan' },
+  FAILED: { en: 'Failed', ru: 'Неуспешно', uz: 'Muvaffaqiyatsiz' },
 };
 
 const PAYMENT_LABELS: Record<ApiPaymentMethod, Record<Language, string>> = {
   UNKNOWN: { en: 'Unknown', ru: 'Неизвестно', uz: "Noma'lum" },
   CASH: { en: 'Cash', ru: 'Наличные', uz: 'Naqd' },
-  PAYME: { en: 'Payme', ru: 'Payme', uz: 'Payme' },
-  CLICK: { en: 'Click', ru: 'Click', uz: 'Click' },
-  UZCARD: { en: 'UzCard', ru: 'UzCard', uz: 'UzCard' },
-  HUMO: { en: 'Humo', ru: 'Humo', uz: 'Humo' },
+  TRANSFER: { en: 'Transfer', ru: 'Перевод', uz: "O'tkazma" },
 };
 
-const ORDER_STATUSES: OrderStatus[] = ['NEW_LEAD', 'INFO_COLLECTED', 'CONFIRMED', 'DISPATCHED', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED', 'PROBLEM'];
+const ORDER_STATUSES: OrderStatus[] = ['NEW_LEAD', 'INFO_COLLECTED', 'PAYMENT_PENDING', 'PAYMENT_CONFIRMED', 'DISPATCHED', 'ASSIGNED', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELED', 'FAILED'];
+const ITEM_EDITABLE_STATUSES: OrderStatus[] = ['NEW_LEAD', 'INFO_COLLECTED', 'PAYMENT_PENDING', 'PAYMENT_CONFIRMED'];
+const PRIVILEGED_ITEM_EDITABLE_STATUSES: OrderStatus[] = ['DISPATCHED', 'ASSIGNED', 'OUT_FOR_DELIVERY'];
 
 const createItemRow = (): CreateItemRow => ({
   id: Math.random().toString(36).slice(2, 10),
@@ -185,9 +196,32 @@ const createItemRow = (): CreateItemRow => ({
   quantity: '1',
 });
 
+const createItemRowFromValues = (productId = '', quantity = '1'): CreateItemRow => ({
+  id: Math.random().toString(36).slice(2, 10),
+  productId,
+  quantity,
+});
+
+const formatDateTimeLocal = (value?: string | null) => {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+  return date.toISOString().slice(0, 16);
+};
+
+const normalizeNumberInput = (value: string) => {
+  const trimmed = value.trim();
+  if (!trimmed) return '';
+  const numeric = Number(trimmed);
+  return Number.isFinite(numeric) ? String(numeric) : trimmed;
+};
+
 const Orders: React.FC = () => {
   const { t, language } = useLanguage();
+  const { user } = useAuth();
   const toast = useToast();
+  const { confirm, confirmationModal } = useActionConfirm();
   const tr = useCallback((en: string, ru: string, uz: string) => (language === 'ru' ? ru : language === 'uz' ? uz : en), [language]);
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -201,20 +235,27 @@ const Orders: React.FC = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<UiOrder | null>(null);
-  const [editingOrder, setEditingOrder] = useState<UiOrder | null>(null);
-  const [editForm, setEditForm] = useState({ client_id: '', lead_id: '', client_confirmed_at: '' });
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const [editLoading, setEditLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || '');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
-  const [paymentMethodFilter, setPaymentMethodFilter] = useState('');
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
+  const [dateFrom, setDateFrom] = useState(searchParams.get('date_from') || '');
+  const [dateTo, setDateTo] = useState(searchParams.get('date_to') || '');
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState(searchParams.get('payment_method') || '');
 
   const [clientMode, setClientMode] = useState<'existing' | 'new'>('existing');
   const [selectedClientId, setSelectedClientId] = useState('');
   const [clientForm, setClientForm] = useState({ full_name: '', phone: '', username: '', address: '', preferred_language: 'uz' as Language });
   const [orderForm, setOrderForm] = useState({ payment_method: 'CASH' as ApiPaymentMethod, location_text: '', location_lat: '', location_lng: '', delivery_time_requested: '' });
+  const [createMode, setCreateMode] = useState<'live' | 'recorded'>('live');
+  const [recordedFinalStatus, setRecordedFinalStatus] = useState<RecordedFinalStatus>('DELIVERED');
   const [itemRows, setItemRows] = useState<CreateItemRow[]>([createItemRow()]);
+  const [editClientId, setEditClientId] = useState('');
+  const [editClientConfirmedAt, setEditClientConfirmedAt] = useState('');
+  const [editPaymentMethod, setEditPaymentMethod] = useState<ApiPaymentMethod>('CASH');
+  const [editOrderForm, setEditOrderForm] = useState({ location_text: '', location_lat: '', location_lng: '', delivery_time_requested: '' });
+  const [editItemRows, setEditItemRows] = useState<CreateItemRow[]>([createItemRow()]);
   const [bottleSummary, setBottleSummary] = useState<ApiBottleSummary | null>(null);
   const [bottleBalances, setBottleBalances] = useState<ApiBottleBalance[]>([]);
 
@@ -236,6 +277,23 @@ const Orders: React.FC = () => {
     return byId;
   }, [products]);
 
+  const editingOrder = useMemo(() => {
+    if (!editingOrderId) return null;
+    return orders.find((order) => order.id === editingOrderId) || (selectedOrder?.id === editingOrderId ? selectedOrder : null);
+  }, [editingOrderId, orders, selectedOrder]);
+
+  const canUsePrivilegedItemEditing = user?.role === 'ADMIN' || user?.role === 'SUPERUSER';
+
+  const canEditItemsForStatus = useCallback((status: OrderStatus) => {
+    if (ITEM_EDITABLE_STATUSES.includes(status)) return true;
+    return canUsePrivilegedItemEditing && PRIVILEGED_ITEM_EDITABLE_STATUSES.includes(status);
+  }, [canUsePrivilegedItemEditing]);
+
+  const canEditItems = useMemo(
+    () => Boolean(editingOrder && canEditItemsForStatus(editingOrder.status)),
+    [canEditItemsForStatus, editingOrder]
+  );
+
   const mapOrder = useCallback((order: ApiOrder, localClientsById: Record<string, ApiClient>): UiOrder => ({
     id: order.id,
     client_id: order.client_id,
@@ -243,6 +301,9 @@ const Orders: React.FC = () => {
     lead_id: order.lead_id || null,
     status: order.status,
     payment_method: order.payment_method,
+    order_source: order.order_source || 'LIVE',
+    is_offline_recorded: !!order.is_offline_recorded,
+    auto_dispatch_enabled: order.auto_dispatch_enabled !== false,
     product_subtotal_uzs: order.product_subtotal_uzs ?? (order.items || []).reduce((sum, item) => sum + (item.line_total_uzs || 0), 0),
     bottle_deposit_total_uzs: order.bottle_deposit_total_uzs ?? (order.items || []).reduce((sum, item) => sum + (item.bottle_deposit_total_uzs || 0), 0),
     total_uzs: order.total_amount_uzs,
@@ -278,7 +339,9 @@ const Orders: React.FC = () => {
     if (f.paymentMethod) params.set('payment_method', f.paymentMethod);
     const query = params.toString() ? `?${params}` : '';
     const data = await apiRequest<{ results?: ApiOrder[]; count?: number }>(`${ENDPOINTS.ORDERS.LIST}${query}`);
-    setOrders((data.results || []).map((order) => mapOrder(order, localClientsById)));
+    const mappedOrders = (data.results || []).map((order) => mapOrder(order, localClientsById));
+    setOrders(mappedOrders);
+    return mappedOrders;
   }, [mapOrder]);
 
   const loadReferenceData = useCallback(async () => {
@@ -357,13 +420,35 @@ const Orders: React.FC = () => {
   }, [clientMode, isCreateOpen, selectedClientId]);
 
   useEffect(() => {
+    const nextStatus = searchParams.get('status') || '';
+    const nextSearch = searchParams.get('q') || '';
+    const nextDateFrom = searchParams.get('date_from') || '';
+    const nextDateTo = searchParams.get('date_to') || '';
+    const nextPaymentMethod = searchParams.get('payment_method') || '';
+
+    if (statusFilter !== nextStatus) setStatusFilter(nextStatus);
+    if (searchQuery !== nextSearch) setSearchQuery(nextSearch);
+    if (dateFrom !== nextDateFrom) setDateFrom(nextDateFrom);
+    if (dateTo !== nextDateTo) setDateTo(nextDateTo);
+    if (paymentMethodFilter !== nextPaymentMethod) setPaymentMethodFilter(nextPaymentMethod);
+  }, [dateFrom, dateTo, paymentMethodFilter, searchParams, searchQuery, statusFilter]);
+
+  useEffect(() => {
     const nextParams = new URLSearchParams(searchParams);
     if (statusFilter) nextParams.set('status', statusFilter);
     else nextParams.delete('status');
+    if (searchQuery) nextParams.set('q', searchQuery);
+    else nextParams.delete('q');
+    if (dateFrom) nextParams.set('date_from', dateFrom);
+    else nextParams.delete('date_from');
+    if (dateTo) nextParams.set('date_to', dateTo);
+    else nextParams.delete('date_to');
+    if (paymentMethodFilter) nextParams.set('payment_method', paymentMethodFilter);
+    else nextParams.delete('payment_method');
     if (nextParams.toString() !== searchParams.toString()) {
       setSearchParams(nextParams, { replace: true });
     }
-  }, [searchParams, setSearchParams, statusFilter]);
+  }, [dateFrom, dateTo, paymentMethodFilter, searchParams, searchQuery, setSearchParams, statusFilter]);
 
   useEffect(() => {
     if (!targetOrderId || !orders.length) return;
@@ -423,11 +508,15 @@ const Orders: React.FC = () => {
   const getStatusVariant = (status: OrderStatus) => {
     switch (status) {
       case 'DELIVERED': return 'success';
-      case 'INFO_COLLECTED': return 'warning';
-      case 'CANCELLED':
-      case 'PROBLEM': return 'error';
-      case 'CONFIRMED':
+      case 'INFO_COLLECTED':
+      case 'PAYMENT_PENDING':
+        return 'warning';
+      case 'CANCELED':
+      case 'FAILED':
+        return 'error';
+      case 'PAYMENT_CONFIRMED':
       case 'DISPATCHED':
+      case 'ASSIGNED':
       case 'OUT_FOR_DELIVERY': return 'info';
       default: return 'default';
     }
@@ -435,23 +524,79 @@ const Orders: React.FC = () => {
 
   const getStatusLabel = (status: OrderStatus) => STATUS_LABELS[status]?.[language] || status;
   const getPaymentLabel = (method: ApiPaymentMethod) => PAYMENT_LABELS[method]?.[language] || method;
+  const canCancelOrder = useCallback((order: UiOrder) => order.status !== 'CANCELED' && order.status !== 'DELIVERED', []);
+  const canSoftDeleteOrder = useCallback((order: UiOrder) => order.status !== 'ASSIGNED', []);
+  const getProductOptionLabel = useCallback((productId: string) => {
+    const product = productsById[productId];
+    if (product) {
+      return `${product.name} - ${product.size_liters}L - ${product.price_uzs.toLocaleString()} UZS`;
+    }
+
+    const existingItem = editingOrder?.items.find((item) => item.product_id === productId);
+    if (existingItem) {
+      return `${existingItem.product_name}${existingItem.product_size_liters ? ` - ${existingItem.product_size_liters}L` : ''}`;
+    }
+
+    return productId;
+  }, [editingOrder, productsById]);
 
   const resetCreateForm = () => {
     setClientMode('existing');
     setSelectedClientId('');
     setClientForm({ full_name: '', phone: '', username: '', address: '', preferred_language: 'uz' });
     setOrderForm({ payment_method: 'CASH', location_text: '', location_lat: '', location_lng: '', delivery_time_requested: '' });
+    setCreateMode('live');
+    setRecordedFinalStatus('DELIVERED');
     setItemRows([createItemRow()]);
     setBottleSummary(null);
     setBottleBalances([]);
   };
+
+  const resetEditForm = useCallback(() => {
+    setEditingOrderId(null);
+    setEditClientId('');
+    setEditClientConfirmedAt('');
+    setEditPaymentMethod('CASH');
+    setEditOrderForm({ location_text: '', location_lat: '', location_lng: '', delivery_time_requested: '' });
+    setEditItemRows([createItemRow()]);
+    setEditLoading(false);
+  }, []);
 
   const closeCreateModal = () => {
     setIsCreateOpen(false);
     resetCreateForm();
   };
 
-  const handleAction = async (action: 'dispatch' | 'cancel', orderId: string) => {
+  const closeEditModal = useCallback(() => {
+    setIsEditOpen(false);
+    resetEditForm();
+  }, [resetEditForm]);
+
+  const openEditModal = useCallback((order: UiOrder) => {
+    const initialRows = order.items
+      .filter((item) => Boolean(item.product_id))
+      .map((item) => createItemRowFromValues(item.product_id || '', String(item.quantity)));
+
+    setEditingOrderId(order.id);
+    setEditClientId(order.client_id);
+    setEditClientConfirmedAt(formatDateTimeLocal(order.client_confirmed_at));
+    setEditPaymentMethod(order.payment_method);
+    setEditOrderForm({
+      location_text: order.delivery_address || '',
+      location_lat: order.delivery_lat != null ? String(order.delivery_lat) : '',
+      location_lng: order.delivery_lng != null ? String(order.delivery_lng) : '',
+      delivery_time_requested: formatDateTimeLocal(order.requested_time),
+    });
+    setEditItemRows(initialRows.length ? initialRows : [createItemRow()]);
+    setIsEditOpen(true);
+  }, []);
+
+  const handleAction = async (action: 'dispatch' | 'cancel' | 'delete', orderId: string) => {
+    const targetOrder =
+      orders.find((order) => order.id === orderId) ||
+      (selectedOrder?.id === orderId ? selectedOrder : null) ||
+      (editingOrder?.id === orderId ? editingOrder : null);
+
     try {
       setError(null);
       if (action === 'dispatch') {
@@ -464,23 +609,226 @@ const Orders: React.FC = () => {
           }),
         });
         toast.success(tr('Order dispatched to courier.', 'Order dispatched to courier.', 'Buyurtma kuryerga yuborildi.'));
-      } else {
+      } else if (action === 'cancel') {
+        const confirmed = await confirm({
+          title: tr('Cancel order', 'Cancel order', 'Buyurtmani bekor qilish'),
+          message: tr(
+            `Cancel order #${orderId.slice(0, 8)}?`,
+            `Cancel order #${orderId.slice(0, 8)}?`,
+            `#${orderId.slice(0, 8)} buyurtmani bekor qilasizmi?`
+          ),
+          confirmLabel: tr('Cancel order', 'Cancel order', 'Buyurtmani bekor qilish'),
+          cancelLabel: t('cancel'),
+          tone: 'warning',
+        });
+        if (!confirmed) return;
         await apiRequest(ENDPOINTS.ORDERS.UPDATE_STATUS(orderId), {
           method: 'POST',
-          body: JSON.stringify({ to_status: 'CANCELLED' }),
+          body: JSON.stringify({ to_status: 'CANCELED', reason: 'Admin canceled order' }),
         });
         toast.success(tr('Order canceled successfully.', 'Order canceled successfully.', 'Buyurtma bekor qilindi.'));
+      } else {
+        if (targetOrder && !canSoftDeleteOrder(targetOrder)) {
+          toast.error(tr('Assigned orders cannot be deleted.', 'Assigned orders cannot be deleted.', 'Biriktirilgan buyurtmalarni o‘chirib bo‘lmaydi.'));
+          return;
+        }
+
+        const confirmed = await confirm({
+          title: tr('Delete order', 'Delete order', "Buyurtmani o'chirish"),
+          message: tr(
+            `Soft-delete order #${orderId.slice(0, 8)}?`,
+            `Soft-delete order #${orderId.slice(0, 8)}?`,
+            `#${orderId.slice(0, 8)} buyurtmani yashirib o‘chirasizmi?`
+          ),
+          confirmLabel: tr('Delete order', 'Delete order', "Buyurtmani o'chirish"),
+          cancelLabel: t('cancel'),
+          tone: 'danger',
+        });
+        if (!confirmed) return;
+
+        await apiRequest(ENDPOINTS.ORDERS.SOFT_DELETE(orderId), {
+          method: 'POST',
+          body: JSON.stringify({}),
+        });
+        toast.success(tr('Order deleted successfully.', 'Order deleted successfully.', "Buyurtma muvaffaqiyatli o'chirildi."));
       }
-      await loadOrders(clientsById, { status: statusFilter, q: searchQuery, dateFrom, dateTo, paymentMethod: paymentMethodFilter });
+      const reference = await loadReferenceData();
+      const nextOrders = await loadOrders(reference.byId, { status: statusFilter, q: searchQuery, dateFrom, dateTo, paymentMethod: paymentMethodFilter });
+      const refreshedOrder = nextOrders.find((order) => order.id === orderId) || null;
+      setSelectedOrder((current) => (current?.id === orderId ? refreshedOrder : current));
+
+      if (action === 'delete' && !refreshedOrder) {
+        if (editingOrderId === orderId) {
+          closeEditModal();
+        }
+        if (searchParams.get('order_id') === orderId) {
+          const nextParams = new URLSearchParams(searchParams);
+          nextParams.delete('order_id');
+          setSearchParams(nextParams, { replace: true });
+        }
+      }
     } catch (e) {
       let message = e instanceof Error ? e.message : tr('Action failed', 'Amal bajarilmadi', 'Amal bajarilmadi');
       if (e instanceof ApiError && e.code === 'E-ORD-003') {
         message = action === 'dispatch'
           ? tr('This order cannot be dispatched from its current status.', 'This order cannot be dispatched from its current status.', "Bu buyurtmani hozirgi holatidan kuryerga yuborib bo'lmaydi.")
-          : tr('This status change is not allowed.', 'This status change is not allowed.', "Bu status o'zgarishiga ruxsat berilmagan.");
+          : action === 'cancel'
+            ? tr('This status change is not allowed.', 'This status change is not allowed.', "Bu status o'zgarishiga ruxsat berilmagan.")
+            : tr('This order cannot be deleted from its current status.', 'This order cannot be deleted from its current status.', "Bu buyurtmani hozirgi holatida o‘chirib bo‘lmaydi.");
+      }
+      if (e instanceof ApiError && e.status === 409 && action === 'delete') {
+        message = tr('Assigned orders cannot be deleted.', 'Assigned orders cannot be deleted.', 'Biriktirilgan buyurtmalarni o‘chirib bo‘lmaydi.');
       }
       setError(message);
       toast.error(message);
+    }
+  };
+
+  const handleSaveOrderEdits = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!editingOrder) return;
+    if (!editClientId) {
+      toast.error(tr('Please select a client.', 'Please select a client.', 'Mijozni tanlang.'));
+      return;
+    }
+
+    const desiredItems = new Map<string, number>();
+    if (canEditItems) {
+      for (const row of editItemRows) {
+        const productId = row.productId;
+        const quantity = Math.max(0, Number(row.quantity) || 0);
+        if (!productId || quantity <= 0) continue;
+        desiredItems.set(productId, (desiredItems.get(productId) || 0) + quantity);
+      }
+
+      if (!desiredItems.size) {
+        toast.error(tr('Add at least one product.', 'Add at least one product.', "Kamida bitta mahsulot qo'shing."));
+        return;
+      }
+    }
+
+    const confirmed = await confirm({
+      title: tr('Save order changes', 'Save order changes', "Buyurtma o'zgarishlarini saqlash"),
+      message: tr(
+        `Save changes for order #${editingOrder.id.slice(0, 8)}?`,
+        `Save changes for order #${editingOrder.id.slice(0, 8)}?`,
+        `#${editingOrder.id.slice(0, 8)} buyurtma uchun o'zgarishlarni saqlaysizmi?`
+      ),
+      confirmLabel: tr('Save changes', 'Save changes', "O'zgarishlarni saqlash"),
+      cancelLabel: t('cancel'),
+      tone: 'primary',
+    });
+    if (!confirmed) return;
+
+    try {
+      setEditLoading(true);
+      setError(null);
+
+      let changed = false;
+      const currentConfirmedAt = formatDateTimeLocal(editingOrder.client_confirmed_at);
+
+      if (editClientId !== editingOrder.client_id || editClientConfirmedAt !== currentConfirmedAt) {
+        await apiRequest(ENDPOINTS.ORDERS.EDIT(editingOrder.id), {
+          method: 'PATCH',
+          body: JSON.stringify({
+            ...(editClientId !== editingOrder.client_id ? { client_id: editClientId } : {}),
+            ...(editClientConfirmedAt !== currentConfirmedAt
+              ? { client_confirmed_at: editClientConfirmedAt ? new Date(editClientConfirmedAt).toISOString() : null }
+              : {}),
+          }),
+        });
+        changed = true;
+      }
+
+      const currentLocationText = editingOrder.delivery_address || '';
+      const currentLocationLat = editingOrder.delivery_lat != null ? String(editingOrder.delivery_lat) : '';
+      const currentLocationLng = editingOrder.delivery_lng != null ? String(editingOrder.delivery_lng) : '';
+      const currentRequestedTime = formatDateTimeLocal(editingOrder.requested_time);
+
+      const hasDeliveryChanges =
+        editOrderForm.location_text.trim() !== currentLocationText ||
+        normalizeNumberInput(editOrderForm.location_lat) !== normalizeNumberInput(currentLocationLat) ||
+        normalizeNumberInput(editOrderForm.location_lng) !== normalizeNumberInput(currentLocationLng) ||
+        editOrderForm.delivery_time_requested !== currentRequestedTime;
+
+      if (hasDeliveryChanges) {
+        await apiRequest(ENDPOINTS.ORDERS.UPDATE_DELIVERY(editingOrder.id), {
+          method: 'POST',
+          body: JSON.stringify({
+            location_text: editOrderForm.location_text.trim(),
+            location_lat: editOrderForm.location_lat.trim() ? Number(editOrderForm.location_lat) : null,
+            location_lng: editOrderForm.location_lng.trim() ? Number(editOrderForm.location_lng) : null,
+            delivery_time_requested: editOrderForm.delivery_time_requested ? new Date(editOrderForm.delivery_time_requested).toISOString() : null,
+          }),
+        });
+        changed = true;
+      }
+
+      if (editPaymentMethod !== editingOrder.payment_method) {
+        await apiRequest(ENDPOINTS.ORDERS.SET_PAYMENT_METHOD(editingOrder.id), {
+          method: 'POST',
+          body: JSON.stringify({ payment_method: editPaymentMethod }),
+        });
+        changed = true;
+      }
+
+      if (canEditItems) {
+        const currentItems = new Map<string, number>();
+        editingOrder.items.forEach((item) => {
+          if (!item.product_id) return;
+          currentItems.set(item.product_id, (currentItems.get(item.product_id) || 0) + item.quantity);
+        });
+
+        for (const [productId, quantity] of desiredItems.entries()) {
+          if (currentItems.get(productId) === quantity) continue;
+          await apiRequest(ENDPOINTS.ORDERS.ADD_ITEM(editingOrder.id), {
+            method: 'POST',
+            body: JSON.stringify({ product_id: productId, quantity }),
+          });
+          changed = true;
+        }
+
+        for (const productId of currentItems.keys()) {
+          if (desiredItems.has(productId)) continue;
+          await apiRequest(ENDPOINTS.ORDERS.REMOVE_ITEM(editingOrder.id), {
+            method: 'POST',
+            body: JSON.stringify({ product_id: productId }),
+          });
+          changed = true;
+        }
+      }
+
+      if (!changed) {
+        toast.info(tr('No order changes detected.', 'No order changes detected.', "Buyurtmada o'zgarish topilmadi."));
+        return;
+      }
+
+      const reference = await loadReferenceData();
+      const nextOrders = await loadOrders(reference.byId, { status: statusFilter, q: searchQuery, dateFrom, dateTo, paymentMethod: paymentMethodFilter });
+      const refreshedOrder = nextOrders.find((order) => order.id === editingOrder.id) || null;
+      setSelectedOrder((current) => (current?.id === editingOrder.id ? refreshedOrder : current));
+      toast.success(tr('Order updated successfully.', 'Order updated successfully.', 'Buyurtma muvaffaqiyatli yangilandi.'));
+      closeEditModal();
+    } catch (e) {
+      let message = e instanceof Error ? e.message : tr('Failed to update order', 'Failed to update order', "Buyurtmani yangilab bo'lmadi");
+      if (e instanceof ApiError && e.code === 'E-ORD-003' && editingOrder && !canEditItemsForStatus(editingOrder.status)) {
+        message = tr(
+          canUsePrivilegedItemEditing
+            ? 'Items are locked for this terminal order status.'
+            : 'Items are only editable before courier-stage delivery statuses unless you are an admin or superuser.',
+          canUsePrivilegedItemEditing
+            ? 'Items are locked for this terminal order status.'
+            : 'Items are only editable before courier-stage delivery statuses unless you are an admin or superuser.',
+          canUsePrivilegedItemEditing
+            ? 'Bu terminal buyurtma holatida elementlar qulflangan.'
+            : 'Elementlarni admin yoki superuser bo‘lmaganda faqat kuryer bosqichidan oldingi holatlarda tahrirlash mumkin.'
+        );
+      }
+      setError(message);
+      toast.error(message);
+    } finally {
+      setEditLoading(false);
     }
   };
 
@@ -513,11 +861,7 @@ const Orders: React.FC = () => {
     const payload = {
       client: clientMode === 'existing' && selectedClient
         ? {
-            full_name: selectedClient.full_name || '',
-            phone: selectedClient.phone || '',
-            platform: selectedClient.platform || 'manual',
-            address: selectedClient.address || '',
-            preferred_language: selectedClient.preferred_language || 'uz',
+            client_id: selectedClient.id,
           }
         : {
             full_name: clientForm.full_name.trim(),
@@ -533,6 +877,7 @@ const Orders: React.FC = () => {
         location_lat: orderForm.location_lat ? Number(orderForm.location_lat) : null,
         location_lng: orderForm.location_lng ? Number(orderForm.location_lng) : null,
         delivery_time_requested: orderForm.delivery_time_requested || null,
+        ...(createMode === 'recorded' ? { recorded_final_status: recordedFinalStatus } : {}),
       },
       items: validItems,
     };
@@ -540,8 +885,12 @@ const Orders: React.FC = () => {
     try {
       setCreateLoading(true);
       setError(null);
-      await apiRequest(ENDPOINTS.ORDERS.CREATE_FULL, { method: 'POST', body: JSON.stringify(payload) });
-      toast.success(tr('Order created successfully.', 'Order created successfully.', 'Buyurtma yaratildi.'));
+      await apiRequest(createMode === 'recorded' ? ENDPOINTS.ORDERS.CREATE_RECORDED : ENDPOINTS.ORDERS.CREATE_FULL, { method: 'POST', body: JSON.stringify(payload) });
+      toast.success(
+        createMode === 'recorded'
+          ? tr('Recorded order saved successfully.', 'Recorded order saved successfully.', 'Qayd etilgan buyurtma saqlandi.')
+          : tr('Order created successfully.', 'Order created successfully.', 'Buyurtma yaratildi.')
+      );
       closeCreateModal();
       const reference = await loadReferenceData();
       await loadOrders(reference.byId, { status: statusFilter, q: searchQuery, dateFrom, dateTo, paymentMethod: paymentMethodFilter });
@@ -563,53 +912,6 @@ const Orders: React.FC = () => {
     nextParams.delete('order_id');
     setSearchParams(nextParams, { replace: true });
   }, [searchParams, setSearchParams, targetOrderId]);
-
-  const openEditModal = (order: UiOrder) => {
-    const confirmedAt = order.client_confirmed_at
-      ? new Date(order.client_confirmed_at).toISOString().slice(0, 16)
-      : '';
-    setEditForm({ client_id: order.client_id, lead_id: order.lead_id || '', client_confirmed_at: confirmedAt });
-    setEditingOrder(order);
-  };
-
-  const closeEditModal = () => setEditingOrder(null);
-
-  const handleSaveEdit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!editingOrder) return;
-    const payload: Record<string, unknown> = {};
-    if (editForm.client_id && editForm.client_id !== editingOrder.client_id) {
-      payload.client_id = editForm.client_id;
-    }
-    if (editForm.lead_id !== (editingOrder.lead_id || '')) {
-      payload.lead_id = editForm.lead_id || null;
-    }
-    const originalConfirmedAt = editingOrder.client_confirmed_at
-      ? new Date(editingOrder.client_confirmed_at).toISOString().slice(0, 16)
-      : '';
-    if (editForm.client_confirmed_at !== originalConfirmedAt) {
-      payload.client_confirmed_at = editForm.client_confirmed_at
-        ? new Date(editForm.client_confirmed_at).toISOString()
-        : null;
-    }
-    if (!Object.keys(payload).length) {
-      closeEditModal();
-      return;
-    }
-    try {
-      setEditLoading(true);
-      await apiRequest(ENDPOINTS.ORDERS.EDIT(editingOrder.id), { method: 'PATCH', body: JSON.stringify(payload) });
-      toast.success(tr('Order updated successfully.', 'Заказ успешно обновлён.', 'Buyurtma yangilandi.'));
-      closeEditModal();
-      const reference = await loadReferenceData();
-      await loadOrders(reference.byId, { status: statusFilter, q: searchQuery, dateFrom, dateTo, paymentMethod: paymentMethodFilter });
-    } catch (e) {
-      const message = e instanceof Error ? e.message : tr('Failed to update order.', 'Не удалось обновить заказ.', "Buyurtmani yangilab bo'lmadi.");
-      toast.error(message);
-    } finally {
-      setEditLoading(false);
-    }
-  };
 
   const selectedClient = selectedClientId ? clientsById[selectedClientId] : null;
 
@@ -651,7 +953,7 @@ const Orders: React.FC = () => {
               <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{tr('Payment method', 'Способ оплаты', "To'lov usuli")}</label>
               <select value={paymentMethodFilter} onChange={(event) => setPaymentMethodFilter(event.target.value)} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white">
                 <option value="">{tr('All methods', 'Все методы', 'Barcha usullar')}</option>
-                {(['CASH', 'PAYME', 'CLICK', 'UZCARD', 'HUMO', 'UNKNOWN'] as ApiPaymentMethod[]).map((m) => <option key={m} value={m}>{getPaymentLabel(m)}</option>)}
+                {(['CASH', 'TRANSFER', 'UNKNOWN'] as ApiPaymentMethod[]).map((m) => <option key={m} value={m}>{getPaymentLabel(m)}</option>)}
               </select>
             </div>
             <div>
@@ -692,14 +994,38 @@ const Orders: React.FC = () => {
                 <tr><td colSpan={8} className="px-6 py-8 text-center text-gray-500">{tr('No orders found.', 'No orders found.', 'Buyurtmalar topilmadi.')}</td></tr>
               ) : orders.map((order) => (
                 <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-navy-700/50 transition-colors">
-                  <td onClick={() => openOrderDetails(order)} className="px-6 py-4 cursor-pointer"><p className="text-sm font-semibold text-primary-blue dark:text-blue-400">#{order.id.slice(0, 8)}</p><p className="text-xs text-gray-500 font-mono mt-1">{order.id}</p></td>
+                  <td onClick={() => openOrderDetails(order)} className="px-6 py-4 cursor-pointer">
+                    <p className="text-sm font-semibold text-primary-blue dark:text-blue-400">#{order.id.slice(0, 8)}</p>
+                    <p className="text-xs text-gray-500 font-mono mt-1">{order.id}</p>
+                    <div className="mt-2 flex items-center gap-2">
+                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${order.order_source === 'MANUAL_OFFLINE' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'}`}>
+                        {order.order_source === 'MANUAL_OFFLINE' ? tr('Recorded offline', 'Recorded offline', 'Qayd etilgan savdo') : tr('Live', 'Live', 'Jonli')}
+                      </span>
+                    </div>
+                  </td>
                   <td onClick={() => openOrderDetails(order)} className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">{order.client_name || '-'}</td>
                   <td onClick={() => openOrderDetails(order)} className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 cursor-pointer">{new Date(order.created_at).toLocaleDateString()}</td>
                   <td onClick={() => openOrderDetails(order)} className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white cursor-pointer">{order.product_subtotal_uzs.toLocaleString()}</td>
                   <td onClick={() => openOrderDetails(order)} className="px-6 py-4 text-sm text-amber-700 dark:text-amber-400 cursor-pointer">{order.bottle_deposit_total_uzs.toLocaleString()}</td>
                   <td onClick={() => openOrderDetails(order)} className="px-6 py-4 text-sm font-semibold text-gray-900 dark:text-white cursor-pointer">{order.total_uzs.toLocaleString()}</td>
                   <td onClick={() => openOrderDetails(order)} className="px-6 py-4 cursor-pointer"><Badge variant={getStatusVariant(order.status) as any}>{getStatusLabel(order.status)}</Badge></td>
-                  <td className="px-6 py-4 text-right"><div className="flex justify-end gap-2">{order.status === 'INFO_COLLECTED' || order.status === 'CONFIRMED' ? <button onClick={() => handleAction('dispatch', order.id)} className="px-3 py-1.5 rounded-lg text-xs font-medium border border-light-border dark:border-navy-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-navy-700">{tr('Dispatch', 'Отправить', 'Yuborish')}</button> : null}{order.status !== 'DELIVERED' && order.status !== 'CANCELLED' && order.status !== 'PROBLEM' ? <button onClick={() => handleAction('cancel', order.id)} className="px-3 py-1.5 rounded-lg text-xs font-medium border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30">{tr('Cancel', 'Отменить', 'Bekor qilish')}</button> : null}</div></td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex justify-end gap-2">
+                      <button onClick={() => openEditModal(order)} className="px-3 py-1.5 rounded-lg text-xs font-medium border border-light-border dark:border-navy-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-navy-700">
+                        {tr('Edit', 'Изменить', 'Tahrirlash')}
+                      </button>
+                      {(order.status === 'INFO_COLLECTED' || order.status === 'PAYMENT_CONFIRMED') && order.order_source === 'LIVE' ? (
+                        <button onClick={() => handleAction('dispatch', order.id)} className="px-3 py-1.5 rounded-lg text-xs font-medium border border-light-border dark:border-navy-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-navy-700">
+                          {tr('Dispatch', 'Отправить', 'Yuborish')}
+                        </button>
+                      ) : null}
+                      {canCancelOrder(order) ? (
+                        <button onClick={() => handleAction('cancel', order.id)} className="px-3 py-1.5 rounded-lg text-xs font-medium border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30">
+                          {tr('Cancel', 'Отменить', 'Bekor qilish')}
+                        </button>
+                      ) : null}
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -712,7 +1038,28 @@ const Orders: React.FC = () => {
         onClose={closeOrderDetails}
         title={selectedOrder ? `${tr('Order details', 'Order details', 'Buyurtma tafsilotlari')} #${selectedOrder.id.slice(0, 8)}` : tr('Order details', 'Order details', 'Buyurtma tafsilotlari')}
         maxWidthClass="max-w-5xl"
-        footer={<div className="flex gap-3 w-full justify-end"><button onClick={() => { closeOrderDetails(); if (selectedOrder) openEditModal(selectedOrder); }} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm border border-light-border dark:border-navy-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-navy-700 transition-colors"><Pencil size={14} /> {t('edit')}</button><button onClick={closeOrderDetails} className="px-4 py-2 rounded-lg text-sm border border-light-border dark:border-navy-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-navy-700 transition-colors">{t('cancel')}</button></div>}
+        footer={selectedOrder ? (
+          <div className="flex gap-3 w-full justify-end">
+            <button onClick={() => openEditModal(selectedOrder)} className="px-4 py-2 rounded-lg text-sm border border-light-border dark:border-navy-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-navy-700 transition-colors">
+              {tr('Edit order', 'Edit order', 'Buyurtmani tahrirlash')}
+            </button>
+            {canCancelOrder(selectedOrder) ? (
+              <button onClick={() => void handleAction('cancel', selectedOrder.id)} className="px-4 py-2 rounded-lg text-sm border border-red-200 text-red-600 hover:bg-red-50 transition-colors">
+                {tr('Cancel order', 'Cancel order', 'Buyurtmani bekor qilish')}
+              </button>
+            ) : null}
+            {canSoftDeleteOrder(selectedOrder) ? (
+              <button onClick={() => void handleAction('delete', selectedOrder.id)} className="px-4 py-2 rounded-lg text-sm border border-red-200 text-red-600 hover:bg-red-50 transition-colors">
+                {tr('Delete order', 'Delete order', "Buyurtmani o'chirish")}
+              </button>
+            ) : (
+              <div className="flex items-center px-1 text-sm text-gray-500 dark:text-gray-400">
+                {tr('Assigned orders cannot be deleted.', 'Assigned orders cannot be deleted.', 'Biriktirilgan buyurtmalarni o‘chirib bo‘lmaydi.')}
+              </div>
+            )}
+            <button onClick={closeOrderDetails} className="px-4 py-2 rounded-lg text-sm border border-light-border dark:border-navy-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-navy-700 transition-colors">{t('cancel')}</button>
+          </div>
+        ) : null}
       >
         {selectedOrder ? (
           <div className="space-y-6">
@@ -730,6 +1077,8 @@ const Orders: React.FC = () => {
                   <p><span className="text-gray-500">ID:</span> <span className="font-mono">{selectedOrder.client_id}</span></p>
                   <p><span className="text-gray-500">{tr('Payment', 'Payment', "To'lov")}:</span> <span className="font-medium text-gray-900 dark:text-white">{getPaymentLabel(selectedOrder.payment_method)}</span></p>
                   <p><span className="text-gray-500">{tr('Status', 'Status', 'Holat')}:</span> <Badge variant={getStatusVariant(selectedOrder.status) as any} className="ml-2">{getStatusLabel(selectedOrder.status)}</Badge></p>
+                  <p><span className="text-gray-500">{tr('Order source', 'Order source', 'Manba')}:</span> <span className="font-medium text-gray-900 dark:text-white">{selectedOrder.order_source === 'MANUAL_OFFLINE' ? tr('Recorded offline', 'Recorded offline', 'Qayd etilgan savdo') : tr('Live', 'Live', 'Jonli')}</span></p>
+                  <p><span className="text-gray-500">{tr('Auto dispatch', 'Auto dispatch', 'Avto taqsimlash')}:</span> <span className="font-medium text-gray-900 dark:text-white">{selectedOrder.auto_dispatch_enabled ? tr('Enabled', 'Enabled', 'Yoqilgan') : tr('Disabled', 'Disabled', 'O‘chirilgan')}</span></p>
                   <p><span className="text-gray-500">{tr('Courier ID', 'Courier ID', 'Kuryer ID')}:</span> <span className="font-mono">{selectedOrder.courier_id || '-'}</span></p>
                   <p><span className="text-gray-500">{tr('Client confirmed', 'Client confirmed', 'Mijoz tasdiqlagan')}:</span> <span className="font-medium text-gray-900 dark:text-white">{selectedOrder.client_confirmed_at ? new Date(selectedOrder.client_confirmed_at).toLocaleString() : tr('Not yet', 'Not yet', "Hali yo'q")}</span></p>
                 </div>
@@ -786,38 +1135,277 @@ const Orders: React.FC = () => {
       </Modal>
 
       <Modal
-        isOpen={!!editingOrder}
+        isOpen={isEditOpen}
         onClose={closeEditModal}
-        title={editingOrder ? `${tr('Edit order', 'Редактировать заказ', 'Buyurtmani tahrirlash')} #${editingOrder.id.slice(0, 8)}` : tr('Edit order', 'Редактировать заказ', 'Buyurtmani tahrirlash')}
-        maxWidthClass="max-w-lg"
+        title={editingOrder ? `${tr('Edit order', 'Edit order', 'Buyurtmani tahrirlash')} #${editingOrder.id.slice(0, 8)}` : tr('Edit order', 'Edit order', 'Buyurtmani tahrirlash')}
+        maxWidthClass="max-w-6xl"
         footer={null}
       >
-        <form className="space-y-5" onSubmit={handleSaveEdit}>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Client', 'Клиент', 'Mijoz')}</label>
-            <select value={editForm.client_id} onChange={(event) => setEditForm((state) => ({ ...state, client_id: event.target.value }))} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white">
-              <option value="">{tr('— no change —', '— без изменений —', '— o\'zgartirmaslik —')}</option>
-              {clients.map((client) => <option key={client.id} value={client.id}>{client.full_name || client.phone || client.id}</option>)}
-            </select>
-            <p className="mt-1 text-xs text-gray-500">{tr('Leave blank to keep the current client.', 'Оставьте пустым, чтобы не менять клиента.', "Joriy mijozni saqlash uchun bo'sh qoldiring.")}</p>
-          </div>
+        {editingOrder ? (
+          <form className="space-y-6" onSubmit={handleSaveOrderEdits}>
+            <div className="grid grid-cols-1 xl:grid-cols-[1.05fr_1.2fr] gap-6">
+              <div className="space-y-6">
+                <div className="rounded-xl border border-light-border dark:border-navy-700 p-5 space-y-4">
+                  <div>
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-white">{tr('Client binding', 'Client binding', 'Mijozni biriktirish')}</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {tr(
+                        'Change the attached client or update confirmation timing from one place.',
+                        'Change the attached client or update confirmation timing from one place.',
+                        'Biriktirilgan mijozni o‘zgartiring yoki tasdiqlash vaqtini shu yerda yangilang.'
+                      )}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Client', 'Client', 'Mijoz')}</label>
+                      <select
+                        value={editClientId}
+                        onChange={(event) => setEditClientId(event.target.value)}
+                        className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white"
+                      >
+                        <option value="">{tr('Select client', 'Select client', 'Mijozni tanlang')}</option>
+                        {clients.map((client) => (
+                          <option key={client.id} value={client.id}>
+                            {client.full_name || client.phone || client.id}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Client confirmed at', 'Client confirmed at', 'Mijoz tasdiqlagan vaqt')}</label>
+                      <input
+                        type="datetime-local"
+                        value={editClientConfirmedAt}
+                        onChange={(event) => setEditClientConfirmedAt(event.target.value)}
+                        className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white"
+                      />
+                    </div>
+                    <div className="flex items-end">
+                      <button
+                        type="button"
+                        onClick={() => setEditClientConfirmedAt('')}
+                        className="w-full rounded-lg border border-light-border dark:border-navy-600 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-navy-700 transition-colors"
+                      >
+                        {tr('Clear confirmation', 'Clear confirmation', 'Tasdiqni tozalash')}
+                      </button>
+                    </div>
+                  </div>
+                </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Lead ID', 'ID лида', 'Lid ID')} <span className="text-gray-400 font-normal">({tr('optional', 'необязательно', 'ixtiyoriy')})</span></label>
-            <input value={editForm.lead_id} onChange={(event) => setEditForm((state) => ({ ...state, lead_id: event.target.value }))} placeholder={tr('UUID or leave empty to unassign', 'UUID или оставьте пустым для отвязки', 'UUID yoki bo\'sh qoldiring')} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white font-mono" />
-          </div>
+                <div className="rounded-xl border border-light-border dark:border-navy-700 p-5 space-y-4">
+                  <div>
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-white">{tr('Delivery and payment', 'Delivery and payment', "Yetkazib berish va to'lov")}</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {tr(
+                        'Use the dedicated backend edit endpoints for address, requested time, and payment method.',
+                        'Use the dedicated backend edit endpoints for address, requested time, and payment method.',
+                        'Manzil, vaqt va to‘lov usuli uchun maxsus backend tahrirlash endpointlaridan foydalaniladi.'
+                      )}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Payment method', 'Payment method', "To'lov usuli")}</label>
+                      <select
+                        value={editPaymentMethod}
+                        onChange={(event) => setEditPaymentMethod(event.target.value as ApiPaymentMethod)}
+                        className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white"
+                      >
+                        <option value="CASH">{getPaymentLabel('CASH')}</option>
+                        <option value="TRANSFER">{getPaymentLabel('TRANSFER')}</option>
+                        <option value="UNKNOWN">{getPaymentLabel('UNKNOWN')}</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Requested delivery time', 'Requested delivery time', "So'ralgan yetkazish vaqti")}</label>
+                      <input
+                        type="datetime-local"
+                        value={editOrderForm.delivery_time_requested}
+                        onChange={(event) => setEditOrderForm((state) => ({ ...state, delivery_time_requested: event.target.value }))}
+                        className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Location text', 'Location text', 'Manzil matni')}</label>
+                      <textarea
+                        value={editOrderForm.location_text}
+                        onChange={(event) => setEditOrderForm((state) => ({ ...state, location_text: event.target.value }))}
+                        className="w-full h-24 bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Latitude</label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={editOrderForm.location_lat}
+                        onChange={(event) => setEditOrderForm((state) => ({ ...state, location_lat: event.target.value }))}
+                        className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Longitude</label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={editOrderForm.location_lng}
+                        onChange={(event) => setEditOrderForm((state) => ({ ...state, location_lng: event.target.value }))}
+                        className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Client confirmed at', 'Клиент подтвердил', 'Mijoz tasdiqladi')} <span className="text-gray-400 font-normal">({tr('optional', 'необязательно', 'ixtiyoriy')})</span></label>
-            <input type="datetime-local" value={editForm.client_confirmed_at} onChange={(event) => setEditForm((state) => ({ ...state, client_confirmed_at: event.target.value }))} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" />
-            <p className="mt-1 text-xs text-gray-500">{tr('Leave empty to clear the confirmation timestamp.', 'Оставьте пустым, чтобы сбросить метку подтверждения.', "Tasdiqlash vaqtini o'chirish uchun bo'sh qoldiring.")}</p>
-          </div>
+              <div className="space-y-6">
+                <div className="rounded-xl border border-light-border dark:border-navy-700 p-5 space-y-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h3 className="text-base font-semibold text-gray-900 dark:text-white">{tr('Order items', 'Order items', 'Buyurtma elementlari')}</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {canEditItems
+                          ? tr(
+                              PRIVILEGED_ITEM_EDITABLE_STATUSES.includes(editingOrder.status) && canUsePrivilegedItemEditing
+                                ? 'Privileged item editing is active for this courier-stage order. Dispatched unassigned live orders will refresh the courier group card automatically.'
+                                : 'Items are editable in this status. Quantity changes use upsert and removals use remove.',
+                              PRIVILEGED_ITEM_EDITABLE_STATUSES.includes(editingOrder.status) && canUsePrivilegedItemEditing
+                                ? 'Privileged item editing is active for this courier-stage order. Dispatched unassigned live orders will refresh the courier group card automatically.'
+                                : 'Items are editable in this status. Quantity changes use upsert and removals use remove.',
+                              PRIVILEGED_ITEM_EDITABLE_STATUSES.includes(editingOrder.status) && canUsePrivilegedItemEditing
+                                ? 'Bu kuryer bosqichidagi buyurtma uchun imtiyozli element tahriri yoqilgan. Agar buyurtma hali biriktirilmagan bo‘lsa, kuryer guruhi kartasi avtomatik yangilanadi.'
+                                : 'Bu statusda elementlarni tahrirlash mumkin. Soni upsert orqali, olib tashlash remove orqali ishlaydi.'
+                            )
+                          : tr(
+                              canUsePrivilegedItemEditing
+                                ? 'Items are locked for this terminal order status. You can still review them here.'
+                                : 'Items become restricted once courier-stage delivery starts unless you are an admin or superuser. You can still review them here.',
+                              canUsePrivilegedItemEditing
+                                ? 'Items are locked for this terminal order status. You can still review them here.'
+                                : 'Items become restricted once courier-stage delivery starts unless you are an admin or superuser. You can still review them here.',
+                              canUsePrivilegedItemEditing
+                                ? 'Bu terminal buyurtma holatida elementlar qulflangan. Bu yerda ularni ko‘rish mumkin.'
+                                : 'Admin yoki superuser bo‘lmaganda elementlar kuryer bosqichi boshlangach cheklanadi. Bu yerda ularni ko‘rish mumkin.'
+                            )}
+                      </p>
+                    </div>
+                    {canEditItems ? (
+                      <button
+                        type="button"
+                        onClick={() => setEditItemRows((rows) => [...rows, createItemRow()])}
+                        className="inline-flex items-center gap-2 rounded-lg bg-primary-blue px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+                      >
+                        <Plus size={16} />
+                        {tr('Add line', 'Add line', "Qator qo'shish")}
+                      </button>
+                    ) : null}
+                  </div>
 
-          <div className="flex justify-end gap-3 pt-2 border-t border-light-border dark:border-navy-700">
-            <button type="button" onClick={closeEditModal} className="px-4 py-2 rounded-lg text-sm border border-light-border dark:border-navy-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-navy-700 transition-colors">{t('cancel')}</button>
-            <button disabled={editLoading} type="submit" className="px-4 py-2 rounded-lg text-sm font-medium bg-primary-blue text-white hover:bg-blue-700 transition-colors disabled:opacity-50">{editLoading ? tr('Saving...', 'Сохранение...', 'Saqlanmoqda...') : t('save')}</button>
-          </div>
-        </form>
+                  {!canEditItems ? (
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/40 dark:bg-amber-900/10 dark:text-amber-300">
+                      {tr(
+                        canUsePrivilegedItemEditing
+                          ? `Current status: ${getStatusLabel(editingOrder.status)}. This order is beyond the backend item-edit window.`
+                          : `Current status: ${getStatusLabel(editingOrder.status)}. Backend limits courier-stage item edits to admins and superusers only.`,
+                        canUsePrivilegedItemEditing
+                          ? `Current status: ${getStatusLabel(editingOrder.status)}. This order is beyond the backend item-edit window.`
+                          : `Current status: ${getStatusLabel(editingOrder.status)}. Backend limits courier-stage item edits to admins and superusers only.`,
+                        canUsePrivilegedItemEditing
+                          ? `Joriy holat: ${getStatusLabel(editingOrder.status)}. Bu buyurtma backend element tahriri oynasidan chiqib ketgan.`
+                          : `Joriy holat: ${getStatusLabel(editingOrder.status)}. Backend kuryer bosqichidagi element tahririni faqat admin va superuserlarga ruxsat beradi.`
+                      )}
+                    </div>
+                  ) : null}
+
+                  <div className="space-y-3">
+                    {editItemRows.map((row, index) => (
+                      <div key={row.id} className="grid grid-cols-1 md:grid-cols-[1.6fr_0.55fr_auto] gap-3 items-end rounded-lg border border-light-border dark:border-navy-700 p-3 bg-gray-50 dark:bg-navy-900/30">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{tr('Product', 'Product', 'Mahsulot')} #{index + 1}</label>
+                          <select
+                            value={row.productId}
+                            onChange={(event) => setEditItemRows((rows) => rows.map((current) => current.id === row.id ? { ...current, productId: event.target.value } : current))}
+                            disabled={!canEditItems}
+                            className="w-full bg-white dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue disabled:opacity-70 dark:text-white"
+                          >
+                            <option value="">{tr('Select product', 'Select product', 'Mahsulotni tanlang')}</option>
+                            {row.productId && !productsById[row.productId] ? (
+                              <option value={row.productId}>{getProductOptionLabel(row.productId)}</option>
+                            ) : null}
+                            {products.map((product) => (
+                              <option key={product.id} value={product.id}>
+                                {product.name} - {product.size_liters}L - {product.price_uzs.toLocaleString()} UZS
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{tr('Quantity', 'Quantity', 'Soni')}</label>
+                          <input
+                            type="number"
+                            min="1"
+                            value={row.quantity}
+                            onChange={(event) => setEditItemRows((rows) => rows.map((current) => current.id === row.id ? { ...current, quantity: event.target.value } : current))}
+                            disabled={!canEditItems}
+                            className="w-full bg-white dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue disabled:opacity-70 dark:text-white"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setEditItemRows((rows) => rows.length > 1 ? rows.filter((current) => current.id !== row.id) : rows)}
+                          disabled={!canEditItems}
+                          className="inline-flex items-center justify-center rounded-lg border border-light-border dark:border-navy-600 px-3 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-navy-700 transition-colors disabled:opacity-60"
+                        >
+                          <Minus size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-light-border dark:border-navy-700 p-5 bg-gray-50 dark:bg-navy-900/30">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <p className="text-xs text-gray-500 uppercase">{tr('Status', 'Status', 'Holat')}</p>
+                      <div className="mt-2">
+                        <Badge variant={getStatusVariant(editingOrder.status) as any}>{getStatusLabel(editingOrder.status)}</Badge>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 uppercase">{tr('Order source', 'Order source', 'Manba')}</p>
+                      <p className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
+                        {editingOrder.order_source === 'MANUAL_OFFLINE' ? tr('Recorded offline', 'Recorded offline', 'Qayd etilgan savdo') : tr('Live', 'Live', 'Jonli')}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 uppercase">{tr('Current total', 'Current total', 'Joriy jami')}</p>
+                      <p className="mt-2 text-sm font-medium text-gray-900 dark:text-white">{editingOrder.total_uzs.toLocaleString()} UZS</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-light-border dark:border-navy-700">
+              <button
+                type="button"
+                onClick={closeEditModal}
+                className="px-4 py-2 rounded-lg text-sm border border-light-border dark:border-navy-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-navy-700 transition-colors"
+              >
+                {t('cancel')}
+              </button>
+              <button
+                disabled={editLoading}
+                type="submit"
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-primary-blue text-white hover:bg-blue-700 transition-colors disabled:opacity-50"
+              >
+                {editLoading
+                  ? tr('Saving changes...', 'Saving changes...', 'O‘zgarishlar saqlanmoqda...')
+                  : tr('Save changes', 'Save changes', 'O‘zgarishlarni saqlash')}
+              </button>
+            </div>
+          </form>
+        ) : null}
       </Modal>
 
       <Modal
@@ -850,6 +1438,15 @@ const Orders: React.FC = () => {
                         <option value="">{tr('Select client', 'Select client', 'Mijozni tanlang')}</option>
                         {clients.map((client) => <option key={client.id} value={client.id}>{client.full_name || client.phone || client.id}</option>)}
                       </select>
+                      {selectedClient ? (
+                        <p className="mt-2 text-xs text-blue-700 dark:text-blue-300">
+                          {tr(
+                            'This order will attach to the selected CRM client by client ID.',
+                            'This order will attach to the selected CRM client by client ID.',
+                            'Bu buyurtma tanlangan CRM mijoziga client ID orqali biriktiriladi.'
+                          )}
+                        </p>
+                      ) : null}
                     </div>
                     <div className="rounded-lg border border-light-border dark:border-navy-700 p-4 bg-gray-50 dark:bg-navy-900/40"><p className="text-xs text-gray-500">{tr('Phone', 'Phone', 'Telefon')}</p><p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">{selectedClient?.phone || '-'}</p></div>
                     <div className="rounded-lg border border-light-border dark:border-navy-700 p-4 bg-gray-50 dark:bg-navy-900/40"><p className="text-xs text-gray-500">{tr('Preferred language', 'Preferred language', 'Afzal til')}</p><p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">{selectedClient?.preferred_language || '-'}</p></div>
@@ -870,11 +1467,25 @@ const Orders: React.FC = () => {
               <div className="rounded-xl border border-light-border dark:border-navy-700 p-5 space-y-4">
                 <div>
                   <h3 className="text-base font-semibold text-gray-900 dark:text-white">{tr('Delivery and payment', 'Delivery and payment', "Yetkazib berish va to'lov")}</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{tr('This data will be sent inside the new create-full backend contract.', 'This data will be sent inside the new create-full backend contract.', "Bu ma'lumotlar yangi create-full kontrakti bilan yuboriladi.")}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{tr('Choose between a live operational order and a recorded offline sale.', 'Choose between a live operational order and a recorded offline sale.', 'Jonli buyurtma yoki qayd etilgan offline savdoni tanlang.')}</p>
+                </div>
+                <div className="flex rounded-lg border border-light-border dark:border-navy-700 overflow-hidden">
+                  <button type="button" onClick={() => setCreateMode('live')} className={`px-3 py-2 text-sm ${createMode === 'live' ? 'bg-primary-blue text-white' : 'bg-white dark:bg-navy-900 text-gray-700 dark:text-gray-200'}`}>{tr('Live order', 'Live order', 'Jonli buyurtma')}</button>
+                  <button type="button" onClick={() => setCreateMode('recorded')} className={`px-3 py-2 text-sm ${createMode === 'recorded' ? 'bg-primary-blue text-white' : 'bg-white dark:bg-navy-900 text-gray-700 dark:text-gray-200'}`}>{tr('Recorded sale', 'Recorded sale', 'Qayd etilgan savdo')}</button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Payment method', 'Payment method', "To'lov usuli")}</label><select value={orderForm.payment_method} onChange={(event) => setOrderForm((state) => ({ ...state, payment_method: event.target.value as ApiPaymentMethod }))} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white"><option value="CASH">{getPaymentLabel('CASH')}</option><option value="PAYME">{getPaymentLabel('PAYME')}</option><option value="CLICK">{getPaymentLabel('CLICK')}</option><option value="UZCARD">{getPaymentLabel('UZCARD')}</option><option value="HUMO">{getPaymentLabel('HUMO')}</option><option value="UNKNOWN">{getPaymentLabel('UNKNOWN')}</option></select></div>
+                  <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Payment method', 'Payment method', "To'lov usuli")}</label><select value={orderForm.payment_method} onChange={(event) => setOrderForm((state) => ({ ...state, payment_method: event.target.value as ApiPaymentMethod }))} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white"><option value="CASH">{getPaymentLabel('CASH')}</option><option value="TRANSFER">{getPaymentLabel('TRANSFER')}</option><option value="UNKNOWN">{getPaymentLabel('UNKNOWN')}</option></select></div>
                   <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Requested delivery time', 'Requested delivery time', "So'ralgan yetkazish vaqti")}</label><input type="datetime-local" value={orderForm.delivery_time_requested} onChange={(event) => setOrderForm((state) => ({ ...state, delivery_time_requested: event.target.value }))} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" /></div>
+                  {createMode === 'recorded' ? (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Recorded final status', 'Recorded final status', 'Yakuniy holat')}</label>
+                      <select value={recordedFinalStatus} onChange={(event) => setRecordedFinalStatus(event.target.value as RecordedFinalStatus)} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white">
+                        <option value="DELIVERED">{getStatusLabel('DELIVERED')}</option>
+                        <option value="CANCELED">{getStatusLabel('CANCELED')}</option>
+                        <option value="FAILED">{getStatusLabel('FAILED')}</option>
+                      </select>
+                    </div>
+                  ) : null}
                   <div className="md:col-span-2"><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Location text', 'Location text', 'Manzil matni')}</label><textarea value={orderForm.location_text} onChange={(event) => setOrderForm((state) => ({ ...state, location_text: event.target.value }))} className="w-full h-24 bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" /></div>
                   <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Latitude</label><input type="number" step="any" value={orderForm.location_lat} onChange={(event) => setOrderForm((state) => ({ ...state, location_lat: event.target.value }))} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" /></div>
                   <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Longitude</label><input type="number" step="any" value={orderForm.location_lng} onChange={(event) => setOrderForm((state) => ({ ...state, location_lng: event.target.value }))} className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white" /></div>
@@ -962,10 +1573,17 @@ const Orders: React.FC = () => {
 
           <div className="flex justify-end gap-3 pt-4 border-t border-light-border dark:border-navy-700">
             <button type="button" onClick={closeCreateModal} className="px-4 py-2 rounded-lg text-sm border border-light-border dark:border-navy-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-navy-700 transition-colors">{t('cancel')}</button>
-            <button disabled={createLoading} type="submit" className="px-4 py-2 rounded-lg text-sm font-medium bg-primary-blue text-white hover:bg-blue-700 transition-colors disabled:opacity-50">{createLoading ? tr('Saving...', 'Saving...', 'Saqlanmoqda...') : tr('Create order', 'Create order', 'Buyurtma yaratish')}</button>
+            <button disabled={createLoading} type="submit" className="px-4 py-2 rounded-lg text-sm font-medium bg-primary-blue text-white hover:bg-blue-700 transition-colors disabled:opacity-50">
+              {createLoading
+                ? tr('Saving...', 'Saving...', 'Saqlanmoqda...')
+                : createMode === 'recorded'
+                  ? tr('Save recorded sale', 'Save recorded sale', 'Qayd etilgan savdoni saqlash')
+                  : tr('Create order', 'Create order', 'Buyurtma yaratish')}
+            </button>
           </div>
         </form>
       </Modal>
+      {confirmationModal}
     </div>
   );
 };

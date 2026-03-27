@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Card } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
+import { useActionConfirm } from '../components/ui/useActionConfirm';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { ApiError, ENDPOINTS, apiRequest } from '../services/api';
 import { useToast } from '../context/ToastContext';
-import { Edit2, Plus } from 'lucide-react';
+import { Edit2, Plus, Trash2 } from 'lucide-react';
 
 interface PermissionItem {
   code: string;
@@ -30,6 +31,7 @@ const Users: React.FC = () => {
   const { user, isAdmin } = useAuth();
   const { language } = useLanguage();
   const toast = useToast();
+  const { confirm, confirmationModal } = useActionConfirm();
   const tr = (en: string, ru: string, uz: string) => (language === 'ru' ? ru : language === 'uz' ? uz : en);
 
   const [users, setUsers] = useState<DashboardUser[]>([]);
@@ -47,6 +49,7 @@ const Users: React.FC = () => {
   const [editingUser, setEditingUser] = useState<DashboardUser | null>(null);
   const [editPerms, setEditPerms] = useState<string[]>([]);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
 
   const fullName = (u: DashboardUser) => {
     const joined = `${u.first_name || ''} ${u.last_name || ''}`.trim();
@@ -122,7 +125,7 @@ const Users: React.FC = () => {
     try {
       setSaving(true);
       setError(null);
-      await apiRequest(ENDPOINTS.AUTH.REGISTER, {
+      await apiRequest(ENDPOINTS.DASHBOARD.USERS, {
         method: 'POST',
         body: JSON.stringify({
           username: String(form.get('username') || ''),
@@ -145,6 +148,45 @@ const Users: React.FC = () => {
       toast.error(message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDeleteUser = async (target: DashboardUser) => {
+    const confirmed = await confirm({
+      title: tr('Delete user', 'Delete user', "Foydalanuvchini o'chirish"),
+      message: tr(
+        `Delete user "${target.username}"? This action cannot be undone.`,
+        `Delete user "${target.username}"? This action cannot be undone.`,
+        `"${target.username}" foydalanuvchisini o'chirasizmi? Bu amalni bekor qilib bo'lmaydi.`
+      ),
+      confirmLabel: tr('Delete user', 'Delete user', "Foydalanuvchini o'chirish"),
+      cancelLabel: tr('Cancel', 'Cancel', 'Bekor qilish'),
+      tone: 'danger',
+    });
+    if (!confirmed) return;
+
+    try {
+      setDeletingUserId(target.id);
+      setError(null);
+      await apiRequest(ENDPOINTS.DASHBOARD.USER_DETAIL(target.id), {
+        method: 'DELETE',
+      });
+      toast.success(tr('User deleted successfully.', 'User deleted successfully.', 'Foydalanuvchi o‘chirildi.'));
+      setUsers((prev) => prev.filter((row) => row.id !== target.id));
+      if (selectedUser?.id === target.id) {
+        setSelectedUser(null);
+        setIsDetailOpen(false);
+      }
+      if (editingUser?.id === target.id) {
+        setEditingUser(null);
+        setIsEditOpen(false);
+      }
+    } catch (e) {
+      const message = e instanceof Error ? e.message : tr('Failed to delete user', 'Failed to delete user', 'Foydalanuvchini o‘chirib bo‘lmadi');
+      setError(message);
+      toast.error(message);
+    } finally {
+      setDeletingUserId(null);
     }
   };
 
@@ -175,6 +217,19 @@ const Users: React.FC = () => {
     if (password) {
       payload.password = password;
     }
+
+    const confirmed = await confirm({
+      title: tr('Save user changes', 'Save user changes', "Foydalanuvchi o'zgarishlarini saqlash"),
+      message: tr(
+        `Save changes for "${editingUser.username}"?`,
+        `Save changes for "${editingUser.username}"?`,
+        `"${editingUser.username}" uchun o'zgarishlarni saqlaysizmi?`
+      ),
+      confirmLabel: tr('Save changes', 'Save changes', "O'zgarishlarni saqlash"),
+      cancelLabel: tr('Cancel', 'Cancel', 'Bekor qilish'),
+      tone: 'primary',
+    });
+    if (!confirmed) return;
 
     try {
       setSaving(true);
@@ -279,6 +334,17 @@ const Users: React.FC = () => {
                         title={tr('Edit user', 'Edit user', 'Foydalanuvchini tahrirlash')}
                       >
                         <Edit2 size={16} />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void handleDeleteUser(u);
+                        }}
+                        disabled={deletingUserId === u.id}
+                        className="p-1.5 text-gray-500 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 transition-colors disabled:opacity-50"
+                        title={tr('Delete user', 'Delete user', 'Foydalanuvchini o‘chirish')}
+                      >
+                        <Trash2 size={16} />
                       </button>
                     </div>
                   </td>
@@ -446,7 +512,14 @@ const Users: React.FC = () => {
         onClose={() => { setIsDetailOpen(false); setSelectedUser(null); }}
         title={selectedUser ? `${tr('User', 'User', 'Foydalanuvchi')}: ${selectedUser.username}` : tr('User Details', 'User Details', 'Foydalanuvchi tafsilotlari')}
         footer={selectedUser ? (
-          <div className="flex justify-end w-full">
+          <div className="flex justify-end gap-3 w-full">
+            <button
+              onClick={() => void handleDeleteUser(selectedUser)}
+              disabled={deletingUserId === selectedUser.id}
+              className="px-4 py-2 rounded-lg text-sm font-medium border border-red-200 text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+            >
+              {deletingUserId === selectedUser.id ? tr('Deleting...', 'Deleting...', 'O‘chirilmoqda...') : tr('Delete', 'Delete', 'O‘chirish')}
+            </button>
             <button
               onClick={() => {
                 setIsDetailOpen(false);
@@ -489,9 +562,9 @@ const Users: React.FC = () => {
           </div>
         )}
       </Modal>
+      {confirmationModal}
     </div>
   );
 };
 
 export default Users;
-

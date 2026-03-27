@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Card } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
 import { Badge } from '../components/ui/Badge';
+import { useActionConfirm } from '../components/ui/useActionConfirm';
 import { useLanguage } from '../context/LanguageContext';
 import { useToast } from '../context/ToastContext';
 import { ENDPOINTS, apiRequest } from '../services/api';
@@ -27,6 +28,7 @@ const maskToken = (token?: string | null) => {
 const InstagramPages: React.FC = () => {
   const { t, language } = useLanguage();
   const toast = useToast();
+  const { confirm, confirmationModal } = useActionConfirm();
   const tr = (en: string, ru: string, uz: string) => (language === 'ru' ? ru : language === 'uz' ? uz : en);
 
   const [rows, setRows] = useState<InstagramPageCredential[]>([]);
@@ -88,6 +90,21 @@ const InstagramPages: React.FC = () => {
       is_active: form.get('is_active') === 'on',
     };
 
+    if (editing) {
+      const confirmed = await confirm({
+        title: tr('Save page changes', 'Save page changes', 'Sahifa o‘zgarishlarini saqlash'),
+        message: tr(
+          `Save changes for "${editing.page_name || editing.page_id}"?`,
+          `Save changes for "${editing.page_name || editing.page_id}"?`,
+          `"${editing.page_name || editing.page_id}" uchun o‘zgarishlarni saqlaysizmi?`
+        ),
+        confirmLabel: tr('Save changes', 'Save changes', "O'zgarishlarni saqlash"),
+        cancelLabel: t('cancel'),
+        tone: 'primary',
+      });
+      if (!confirmed) return;
+    }
+
     try {
       setSaving(true);
       setError(null);
@@ -121,7 +138,17 @@ const InstagramPages: React.FC = () => {
   };
 
   const onDelete = async (row: InstagramPageCredential) => {
-    const ok = window.confirm(tr('Delete this Instagram page credential?', 'Delete this Instagram page credential?', 'Instagram credential ochirilsinmi?'));
+    const ok = await confirm({
+      title: tr('Delete Instagram page', 'Delete Instagram page', 'Instagram sahifani o‘chirish'),
+      message: tr(
+        `Delete "${row.page_name || row.page_id}"?`,
+        `Delete "${row.page_name || row.page_id}"?`,
+        `"${row.page_name || row.page_id}" sahifasini o‘chirasizmi?`
+      ),
+      confirmLabel: tr('Delete page', 'Delete page', 'Sahifani o‘chirish'),
+      cancelLabel: t('cancel'),
+      tone: 'danger',
+    });
     if (!ok) return;
     try {
       setDeletingId(row.id);
@@ -279,9 +306,9 @@ const InstagramPages: React.FC = () => {
           </div>
         </form>
       </Modal>
+      {confirmationModal}
     </div>
   );
 };
 
 export default InstagramPages;
-

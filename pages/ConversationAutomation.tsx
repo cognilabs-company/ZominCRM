@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Card } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
 import { Switch } from '../components/ui/Switch';
+import { useActionConfirm } from '../components/ui/useActionConfirm';
 import { useToast } from '../context/ToastContext';
 import { useLanguage } from '../context/LanguageContext';
 import { ApiError, ENDPOINTS, apiRequest } from '../services/api';
@@ -80,6 +81,7 @@ const ConversationAutomation: React.FC = () => {
   const { conversationId } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
+  const { confirm, confirmationModal } = useActionConfirm();
   const { language } = useLanguage();
   const tr = useCallback(
     (en: string, ru: string, uz: string) => (language === 'ru' ? ru : language === 'uz' ? uz : en),
@@ -265,6 +267,21 @@ const ConversationAutomation: React.FC = () => {
       llm_instruction_enabled: ruleLlmEnabled,
     };
 
+    if (editingRule) {
+      const confirmed = await confirm({
+        title: tr('Save follow-up changes', 'Save follow-up changes', "Follow-up o'zgarishlarini saqlash"),
+        message: tr(
+          `Save changes for "${editingRule.name || editingRule.id}"?`,
+          `Save changes for "${editingRule.name || editingRule.id}"?`,
+          `"${editingRule.name || editingRule.id}" uchun o'zgarishlarni saqlaysizmi?`
+        ),
+        confirmLabel: tr('Save changes', 'Save changes', "O'zgarishlarni saqlash"),
+        cancelLabel: tr('Cancel', 'Cancel', 'Bekor qilish'),
+        tone: 'primary',
+      });
+      if (!confirmed) return;
+    }
+
     try {
       setRuleSaving(true);
       if (editingRule) {
@@ -296,7 +313,18 @@ const ConversationAutomation: React.FC = () => {
 
   const deleteRule = async (ruleId: string) => {
     if (!conversationId) return;
-    if (!window.confirm(tr('Delete this follow-up rule?', 'Delete this follow-up rule?', "Bu follow-up qoidasi ochirilsinmi?"))) return;
+    const confirmed = await confirm({
+      title: tr('Delete follow-up rule', 'Delete follow-up rule', "Follow-up qoidani o'chirish"),
+      message: tr(
+        'Delete this follow-up rule?',
+        'Delete this follow-up rule?',
+        'Bu follow-up qoidani o‘chirasizmi?'
+      ),
+      confirmLabel: tr('Delete rule', 'Delete rule', "Qoidani o'chirish"),
+      cancelLabel: tr('Cancel', 'Cancel', 'Bekor qilish'),
+      tone: 'danger',
+    });
+    if (!confirmed) return;
     try {
       await apiRequest(ENDPOINTS.CONVERSATIONS.AUTOMATION_FOLLOW_UP_DETAIL(conversationId, ruleId), { method: 'DELETE' });
       toast.success(tr('Follow-up deleted', 'Follow-up deleted', "Follow-up ochirildi"));
@@ -664,6 +692,7 @@ const ConversationAutomation: React.FC = () => {
           </div>
         </form>
       </Modal>
+      {confirmationModal}
     </div>
   );
 };

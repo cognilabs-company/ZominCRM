@@ -9,6 +9,7 @@ import { Save, RefreshCw } from 'lucide-react';
 
 interface CredentialsData {
   id: string;
+  name?: string;
   status: boolean;
   ai_key: string;
   ai_user_prompt: string;
@@ -35,6 +36,10 @@ interface CredentialsResponse {
   prompt_file?: PromptFileSnapshot;
 }
 
+interface CredentialHistoryResponse {
+  results?: CredentialsData[];
+}
+
 const normalizePromptText = (value?: string | null) =>
   String(value || '')
     .replace(/\r\n/g, '\n')
@@ -57,14 +62,19 @@ const AICredentials: React.FC = () => {
   const [aiUserPrompt, setAiUserPrompt] = useState('');
   const [aiSystemPrompt, setAiSystemPrompt] = useState('');
   const [promptFile, setPromptFile] = useState<PromptFileSnapshot | null>(null);
+  const [history, setHistory] = useState<CredentialsData[]>([]);
 
   const loadCredentials = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await apiRequest<CredentialsResponse>(ENDPOINTS.AI.CREDENTIALS);
+      const [data, historyData] = await Promise.all([
+        apiRequest<CredentialsResponse>(ENDPOINTS.AI.CREDENTIALS),
+        apiRequest<CredentialHistoryResponse>(ENDPOINTS.AI.CREDENTIALS_HISTORY),
+      ]);
       const cred = data.credential;
       setPromptFile(data.prompt_file || null);
+      setHistory(historyData.results || []);
       if (cred) {
         setStatus(!!cred.status);
         setAiKey(cred.ai_key || '');
@@ -233,6 +243,32 @@ const AICredentials: React.FC = () => {
                 {tr('Backend currently supports only `source=file` for prompt sync.', "Backend hozircha prompt sinxroni uchun faqat `source=file` ni qo\'llaydi.", "Backend hozircha prompt sinxroni uchun faqat `source=file` ni qo\'llaydi.")}
               </p>
             </div>
+          </div>
+        )}
+      </Card>
+
+      <Card title={tr('Credential History', 'Credential History', 'Credential tarixi')}>
+        {loading ? (
+          <p className="text-sm text-gray-500">{tr('Loading...', 'Loading...', 'Yuklanmoqda...')}</p>
+        ) : history.length === 0 ? (
+          <p className="text-sm text-gray-500">{tr('No archived versions yet.', 'No archived versions yet.', 'Hozircha arxiv versiyalar yo‘q.')}</p>
+        ) : (
+          <div className="space-y-3">
+            {history.map((item) => (
+              <div key={item.id} className="rounded-xl border border-light-border dark:border-navy-700 bg-gray-50/70 dark:bg-navy-900/40 p-4">
+                <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{item.name || item.id}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {tr('Updated', 'Updated', 'Yangilangan')}: {item.updated_at || '-'}
+                    </p>
+                  </div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    {tr('Status', 'Status', 'Holat')}: {item.status ? tr('Active', 'Active', 'Faol') : tr('Archived', 'Archived', 'Arxiv')}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </Card>

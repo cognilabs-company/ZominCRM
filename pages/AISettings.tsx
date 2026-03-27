@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
 import { Switch } from '../components/ui/Switch';
+import { useActionConfirm } from '../components/ui/useActionConfirm';
 import { useToast } from '../context/ToastContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
@@ -82,6 +83,7 @@ const defaultFollowUpForm: FollowUpForm = {
 const AISettings: React.FC = () => {
   const navigate = useNavigate();
   const toast = useToast();
+  const { confirm, confirmationModal } = useActionConfirm();
   const { language } = useLanguage();
   const { isAdmin } = useAuth();
   const tr = useCallback((en: string, ru: string, uz: string) => (language === 'ru' ? ru : language === 'uz' ? uz : en), [language]);
@@ -179,6 +181,19 @@ const AISettings: React.FC = () => {
   useEffect(() => { loadFollowUps().catch(() => {}); }, [loadFollowUps]);
 
   const saveGlobal = async () => {
+    const confirmed = await confirm({
+      title: tr('Save global settings', 'Save global settings', 'Global sozlamalarni saqlash'),
+      message: tr(
+        'Apply these global automation changes?',
+        'Apply these global automation changes?',
+        'Bu global avtomatika o‘zgarishlarini qo‘llaysizmi?'
+      ),
+      confirmLabel: tr('Apply changes', 'Apply changes', "O'zgarishlarni qo'llash"),
+      cancelLabel: tr('Cancel', 'Cancel', 'Bekor'),
+      tone: 'primary',
+    });
+    if (!confirmed) return;
+
     try {
       setSavingGlobal(true);
       const res = await apiRequest<{ settings?: GlobalSettings }>(ENDPOINTS.AUTOMATION.SETTINGS, {
@@ -221,6 +236,20 @@ const AISettings: React.FC = () => {
     if ((triggerForm.duration_minutes || 0) <= 0 && (triggerForm.customer_message_count || 0) <= 0) {
       return toast.warning(tr('Set duration or message count', 'Set duration or message count', 'Davomiylik yoki xabar soni kiriting'));
     }
+    if (editingTrigger) {
+      const confirmed = await confirm({
+        title: tr('Save trigger changes', 'Save trigger changes', 'Trigger o‘zgarishlarini saqlash'),
+        message: tr(
+          `Save changes for "${editingTrigger.name}"?`,
+          `Save changes for "${editingTrigger.name}"?`,
+          `"${editingTrigger.name}" uchun o'zgarishlarni saqlaysizmi?`
+        ),
+        confirmLabel: tr('Save changes', 'Save changes', "O'zgarishlarni saqlash"),
+        cancelLabel: tr('Cancel', 'Cancel', 'Bekor'),
+        tone: 'primary',
+      });
+      if (!confirmed) return;
+    }
     try {
       setTriggerSaving(true);
       const payload = { ...triggerForm, name: triggerForm.name.trim() || triggerForm.phrase.trim() };
@@ -240,7 +269,14 @@ const AISettings: React.FC = () => {
   };
 
   const deleteTrigger = async (id: string) => {
-    if (!window.confirm(tr('Delete trigger rule?', 'Delete trigger rule?', "Trigger qoidasini o\'chirish kerakmi?"))) return;
+    const confirmed = await confirm({
+      title: tr('Delete trigger rule', 'Delete trigger rule', "Trigger qoidasini o'chirish"),
+      message: tr('Delete trigger rule?', 'Delete trigger rule?', "Trigger qoidasini o'chirasizmi?"),
+      confirmLabel: tr('Delete rule', 'Delete rule', "Qoidani o'chirish"),
+      cancelLabel: tr('Cancel', 'Cancel', 'Bekor'),
+      tone: 'danger',
+    });
+    if (!confirmed) return;
     try {
       await apiRequest(ENDPOINTS.AUTOMATION.TRIGGER_DETAIL(id), { method: 'DELETE' });
       await loadTriggers();
@@ -255,6 +291,20 @@ const AISettings: React.FC = () => {
     if (!followUpForm.name.trim()) return toast.warning(tr('Rule name is required', 'Rule name is required', 'Qoida nomi kerak'));
     if (followUpForm.message_mode === 'MANUAL' && !followUpForm.manual_text.trim()) return toast.warning(tr('Manual text is required', 'Manual text is required', 'Manual matn kerak'));
     if (followUpForm.message_mode === 'AI' && !followUpForm.ai_instruction.trim()) return toast.warning(tr('AI instruction is required', 'AI instruction is required', 'AI instruktsiya kerak'));
+    if (editingFollowUp) {
+      const confirmed = await confirm({
+        title: tr('Save follow-up changes', 'Save follow-up changes', "Follow-up o'zgarishlarini saqlash"),
+        message: tr(
+          `Save changes for "${editingFollowUp.name}"?`,
+          `Save changes for "${editingFollowUp.name}"?`,
+          `"${editingFollowUp.name}" uchun o'zgarishlarni saqlaysizmi?`
+        ),
+        confirmLabel: tr('Save changes', 'Save changes', "O'zgarishlarni saqlash"),
+        cancelLabel: tr('Cancel', 'Cancel', 'Bekor'),
+        tone: 'primary',
+      });
+      if (!confirmed) return;
+    }
     try {
       setFollowUpSaving(true);
       if (editingFollowUp) {
@@ -273,7 +323,14 @@ const AISettings: React.FC = () => {
   };
 
   const deleteFollowUp = async (id: string) => {
-    if (!window.confirm(tr('Delete follow-up rule?', 'Delete follow-up rule?', "Follow-up qoidasini o\'chirish kerakmi?"))) return;
+    const confirmed = await confirm({
+      title: tr('Delete follow-up rule', 'Delete follow-up rule', "Follow-up qoidasini o'chirish"),
+      message: tr('Delete follow-up rule?', 'Delete follow-up rule?', "Follow-up qoidasini o'chirasizmi?"),
+      confirmLabel: tr('Delete rule', 'Delete rule', "Qoidani o'chirish"),
+      cancelLabel: tr('Cancel', 'Cancel', 'Bekor'),
+      tone: 'danger',
+    });
+    if (!confirmed) return;
     try {
       await apiRequest(ENDPOINTS.AUTOMATION.FOLLOW_UP_DETAIL(id), { method: 'DELETE' });
       await loadFollowUps();
@@ -572,6 +629,7 @@ const AISettings: React.FC = () => {
           </div>
         </form>
       </Modal>
+      {confirmationModal}
     </div>
   );
 };

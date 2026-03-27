@@ -28,7 +28,7 @@ import { ENDPOINTS, apiRequest } from '../services/api';
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type Platform = 'telegram' | 'instagram' | 'manual';
-type ActionType = 'return' | 'refund' | 'increment';
+type ActionType = 'return' | 'increment';
 
 interface ClientRow {
   id: string;
@@ -118,13 +118,6 @@ interface ReturnFormState {
   note: string;
 }
 
-interface RefundFormState {
-  product_id: string;
-  quantity: string;
-  refund_all: boolean;
-  note: string;
-}
-
 interface IncrementFormState {
   product_id: string;
   quantity: string;
@@ -208,7 +201,6 @@ const BottleController: React.FC = () => {
   const [workspaceLoading, setWorkspaceLoading] = useState(false);
   const [globalLoading, setGlobalLoading] = useState(true);
   const [returnSaving, setReturnSaving] = useState(false);
-  const [refundSaving, setRefundSaving] = useState(false);
   const [incrementSaving, setIncrementSaving] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState('');
   const [search, setSearch] = useState('');
@@ -218,7 +210,6 @@ const BottleController: React.FC = () => {
   const [balances, setBalances] = useState<BottleBalance[]>([]);
   const [movements, setMovements] = useState<BottleMovement[]>([]);
   const [returnForm, setReturnForm] = useState<ReturnFormState>({ product_id: '', quantity: '1', note: '' });
-  const [refundForm, setRefundForm] = useState<RefundFormState>({ product_id: '', quantity: '1', refund_all: false, note: '' });
   const [incrementForm, setIncrementForm] = useState<IncrementFormState>({ product_id: '', quantity: '1', note: '' });
 
   // ── Derived ────────────────────────────────────────────────────────────────
@@ -253,11 +244,6 @@ const BottleController: React.FC = () => {
   const selectedReturnBalance = useMemo(
     () => (returnForm.product_id ? balanceByProductId.get(returnForm.product_id) ?? null : null),
     [balanceByProductId, returnForm.product_id]
-  );
-
-  const selectedRefundBalance = useMemo(
-    () => (refundForm.product_id ? balanceByProductId.get(refundForm.product_id) ?? null : null),
-    [balanceByProductId, refundForm.product_id]
   );
 
   const selectedIncrementProduct = useMemo(
@@ -313,14 +299,6 @@ const BottleController: React.FC = () => {
   const returnPreviewQty = selectedReturnBalance
     ? Math.min(parseQuantity(returnForm.quantity), selectedReturnBalance.outstanding_bottles_count)
     : 0;
-
-  const refundPreviewQty = selectedRefundBalance
-    ? refundForm.refund_all
-      ? selectedRefundBalance.outstanding_bottles_count
-      : Math.min(parseQuantity(refundForm.quantity), selectedRefundBalance.outstanding_bottles_count)
-    : 0;
-
-  const refundPreviewAmount = refundPreviewQty * Number(selectedRefundBalance?.bottle_deposit_uzs ?? 0);
 
   const incrementPreviewQty = parseQuantity(incrementForm.quantity);
   const incrementPreviewAmount =
@@ -384,7 +362,6 @@ const BottleController: React.FC = () => {
       const firstId = nextBalances[0]?.product_id ?? '';
       const firstProductId = returnableProducts[0]?.id ?? '';
       setReturnForm({ product_id: firstId, quantity: '1', note: '' });
-      setRefundForm({ product_id: firstId, quantity: '1', refund_all: false, note: '' });
       setIncrementForm({ product_id: firstId || firstProductId, quantity: '1', note: '' });
     } catch (err) {
       toast.error(
@@ -456,8 +433,6 @@ const BottleController: React.FC = () => {
     const firstId = balances[0].product_id;
     if (!returnForm.product_id || !balanceByProductId.has(returnForm.product_id))
       setReturnForm((s) => ({ ...s, product_id: firstId }));
-    if (!refundForm.product_id || !balanceByProductId.has(refundForm.product_id))
-      setRefundForm((s) => ({ ...s, product_id: firstId, refund_all: false }));
   }, [balances]);
 
   useEffect(() => {
@@ -514,32 +489,6 @@ const BottleController: React.FC = () => {
     }
   };
 
-  const handleRefundSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedClient) return;
-    const qty = parseQuantity(refundForm.quantity);
-    if (!refundForm.product_id) return toast.warning(tr('Select a product.', 'Выберите товар.', 'Mahsulotni tanlang.'));
-    if (!refundForm.refund_all && qty <= 0) return toast.warning(tr('Quantity must be > 0.', 'Количество должно быть > 0.', "Soni 0 dan katta bo'lishi kerak."));
-    try {
-      setRefundSaving(true);
-      await apiRequest(ENDPOINTS.CLIENTS.BOTTLE_REFUNDS(selectedClient.id), {
-        method: 'POST',
-        body: JSON.stringify({
-          product_id: refundForm.product_id,
-          quantity: refundForm.refund_all ? (selectedRefundBalance?.outstanding_bottles_count ?? 0) : qty,
-          refund_all: refundForm.refund_all,
-          note: refundForm.note.trim(),
-        }),
-      });
-      toast.success(tr('Deposit refund saved.', 'Возврат депозита сохранён.', 'Depozit qaytimi saqlandi.'));
-      await loadWorkspace(selectedClient.id);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : tr('Failed to save refund.', 'Ошибка сохранения.', "Saqlab bo'lmadi."));
-    } finally {
-      setRefundSaving(false);
-    }
-  };
-
   const handleIncrementSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedClient) return;
@@ -563,7 +512,6 @@ const BottleController: React.FC = () => {
 
   const selectBalanceForAction = (productId: string, action: ActionType) => {
     if (action === 'return') setReturnForm({ product_id: productId, quantity: '1', note: '' });
-    else if (action === 'refund') setRefundForm({ product_id: productId, quantity: '1', refund_all: false, note: '' });
     else setIncrementForm({ product_id: productId, quantity: '1', note: '' });
   };
 
@@ -588,9 +536,9 @@ const BottleController: React.FC = () => {
           </h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-white/50">
             {tr(
-              'Manage bottle adds, returns and deposit refunds in one place.',
-              'Добавление бутылок, возвраты и депозиты в одном окне.',
-              "Idish qo'shish, qaytarish va depozitni bitta joyda boshqaring."
+              'Manage bottle adds and bottle returns in one place.',
+              'Добавление бутылок и возвраты в одном окне.',
+              "Idish qo'shish va idish qaytarishni bitta joyda boshqaring."
             )}
           </p>
         </div>
@@ -683,200 +631,203 @@ const BottleController: React.FC = () => {
         </div>
       </div>
 
-      {/* ── Info cards ── */}
-      <div className="grid gap-4 md:grid-cols-3">
-        {[
-          {
-            icon: <Plus size={18} />,
-            color: 'text-blue-600 bg-blue-50 dark:bg-blue-500/15 dark:text-blue-300',
-            title: tr('Add bottles', 'Добавить бутылки', "Idish qo'shish"),
-            desc: tr(
-              'Client received bottles outside a normal order.',
-              'Клиент получил бутылки вне обычного заказа.',
-              "Mijoz buyurtmadan tashqari idish olganida ishlating."
-            ),
-          },
-          {
-            icon: <ArrowRightLeft size={18} />,
-            color: 'text-amber-600 bg-amber-50 dark:bg-amber-500/15 dark:text-amber-300',
-            title: tr('Return bottles', 'Принять бутылки', 'Idish qaytimi'),
-            desc: tr(
-              'Record empty bottles returned by the client.',
-              'Фиксируйте пустые бутылки, вернувшиеся от клиента.',
-              "Bo'sh idish mijozdan qaytganda qayd qiling."
-            ),
-          },
-          {
-            icon: <Wallet size={18} />,
-            color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/15 dark:text-emerald-300',
-            title: tr('Refund deposit', 'Вернуть депозит', 'Depozit qaytarish'),
-            desc: tr(
-              'Return money to client after bottles are accepted.',
-              'Верните деньги клиенту после приёма бутылок.',
-              "Idish qabul qilinib pul qaytarilishi kerak bo'lsa ishlating."
-            ),
-          },
-        ].map(({ icon, color, title, desc }, i) => (
-          <Card key={i} className="h-full">
-            <div className="flex items-start gap-4">
-              <div className={`rounded-2xl p-3 ${color}`}>{icon}</div>
-              <div>
-                <h3 className="font-semibold text-slate-900 dark:text-white">{title}</h3>
-                <p className="mt-1 text-sm text-slate-500 dark:text-white/50">{desc}</p>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
-
-      {/* ── Client selector ── */}
-      <Card title={tr('Select client', 'Выбор клиента', 'Mijoz tanlash')}>
-        {/* Search input */}
-        <div className="relative">
-          <Search size={15} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/30" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={tr('Search by name, phone, username\u2026', 'Poisk po imeni, telefonu, niku\u2026', "Ism, telefon yoki login bo'yicha\u2026")}
-            className="w-full rounded-xl border border-light-border bg-slate-50 py-2.5 pl-9 pr-9 text-sm text-slate-800 outline-none transition focus:border-primary-blue focus:bg-white focus:ring-2 focus:ring-primary-blue/10 dark:border-white/10 dark:bg-navy-900 dark:text-white dark:placeholder:text-white/30 dark:focus:border-blue-500"
-          />
-          {search && (
-            <button
-              type="button"
-              onClick={() => setSearch('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-0.5 text-slate-400 transition hover:text-slate-600 dark:text-white/30 dark:hover:text-white/70"
-            >
-              <X size={14} />
-            </button>
-          )}
-        </div>
-
-        {/* Client list */}
-        <div className="mt-3 overflow-hidden rounded-xl border border-light-border dark:border-white/10">
-          {clientsLoading ? (
-            <div className="flex items-center gap-2.5 px-4 py-4 text-sm text-slate-500 dark:text-white/40">
-              <Loader2 size={14} className="animate-spin" />
-              {tr('Loading clients…', 'Загрузка клиентов…', 'Mijozlar yuklanmoqda…')}
-            </div>
-          ) : filteredClients.length === 0 ? (
-            <div className="px-4 py-5 text-center text-sm text-slate-400 dark:text-white/30">
-              {tr('No clients found.', 'Клиенты не найдены.', 'Mijoz topilmadi.')}
-            </div>
-          ) : (
-            <div className="max-h-72 divide-y divide-light-border overflow-y-auto dark:divide-white/10">
-              {filteredClients.map((client) => {
-                const name = clientDisplayName(client);
-                const sub = [client.phone, client.address, platformLabel(client.platform)].filter(Boolean).join(' · ');
-                const active = client.id === selectedClientId;
-                return (
-                  <button
-                    key={client.id}
-                    type="button"
-                    onClick={() => setSelectedClientId(client.id)}
-                    className={`flex w-full items-center gap-3.5 px-4 py-3 text-left transition ${active ? 'bg-blue-50 dark:bg-blue-500/10' : 'hover:bg-slate-50 dark:hover:bg-white/[0.03]'}`}
-                  >
-                    {/* Avatar */}
-                    <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${active ? 'bg-primary-blue text-white' : 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-white/60'}`}>
-                      {name.charAt(0).toUpperCase()}
-                    </div>
-
-                    {/* Name + sub */}
-                    <div className="min-w-0 flex-1">
-                      <p className={`truncate text-sm font-semibold ${active ? 'text-primary-blue dark:text-blue-400' : 'text-slate-900 dark:text-white'}`}>
-                        {name}
-                      </p>
-                      <p className="truncate text-xs text-slate-400 dark:text-white/35">{sub}</p>
-                    </div>
-
-                    {/* Platform + check */}
-                    <div className="flex shrink-0 items-center gap-2">
-                      <span className="hidden rounded-md bg-slate-100 px-2 py-0.5 text-xs text-slate-500 dark:bg-white/10 dark:text-white/40 sm:block">
-                        {platformLabel(client.platform)}
-                      </span>
-                      {active && <CheckCircle2 size={16} className="text-primary-blue dark:text-blue-400" />}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Footer: count + badges */}
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-          <p className="text-xs text-slate-400 dark:text-white/30">
-            {filteredClients.length} {tr('clients', 'клиентов', 'mijoz')}
-            {search ? ` ${tr('found', 'найдено', 'topildi')}` : ''}
-          </p>
-          {selectedClient && (
-            <div className="flex flex-wrap items-center gap-1.5">
-              <Badge variant="info">{platformLabel(selectedClient.platform)}</Badge>
-              <Badge variant="default">{languageLabel(selectedClient.preferred_language)}</Badge>
-              {selectedClient.has_phone
-                ? <Badge variant="success">{tr('Phone', 'Телефон', 'Telefon')}</Badge>
-                : <Badge variant="warning">{tr('No phone', 'Нет телефона', "Telefon yo'q")}</Badge>}
-              {selectedClient.can_receive_telegram && (
-                <Badge variant="purple">Telegram</Badge>
-              )}
-            </div>
-          )}
-        </div>
-      </Card>
-
-      {/* ── No client selected ── */}
-      {!selectedClient ? (
-        <Card>
-          <div className="flex flex-col items-center justify-center gap-3 py-14 text-center">
-            <ShieldAlert size={32} className="text-slate-300 dark:text-white/20" />
-            <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-              {tr('No client selected', 'Клиент не выбран', 'Mijoz tanlanmagan')}
-            </h2>
-            <p className="max-w-sm text-sm text-slate-400 dark:text-white/40">
-              {tr(
-                'Choose a client above to manage their bottle balances and deposits.',
-                'Выберите клиента выше для управления балансом бутылок и депозитами.',
-                "Idish balansi va depozitni boshqarish uchun yuqoridan mijozni tanlang."
-              )}
-            </p>
+      <div className="grid gap-6 xl:grid-cols-[0.96fr_1.04fr]">
+        <Card title={tr('Select client', 'Выбор клиента', 'Mijoz tanlash')} className="h-full">
+          <div className="relative">
+            <Search size={15} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/30" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={tr('Search by name, phone, username…', 'Poisk po imeni, telefonu, niku…', "Ism, telefon yoki login bo'yicha…")}
+              className="w-full rounded-xl border border-light-border bg-slate-50 py-2.5 pl-9 pr-9 text-sm text-slate-800 outline-none transition focus:border-primary-blue focus:bg-white focus:ring-2 focus:ring-primary-blue/10 dark:border-white/10 dark:bg-navy-900 dark:text-white dark:placeholder:text-white/30 dark:focus:border-blue-500"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-0.5 text-slate-400 transition hover:text-slate-600 dark:text-white/30 dark:hover:text-white/70"
+              >
+                <X size={14} />
+              </button>
+            )}
           </div>
-        </Card>
-      ) : (
-        <div className="space-y-6">
 
-          {/* ── Client detail card ── */}
-          <Card accent="blue">
-            <div className="space-y-4">
-              <div className="flex flex-wrap gap-2">
+          <div className="mt-3 overflow-hidden rounded-xl border border-light-border dark:border-white/10">
+            {clientsLoading ? (
+              <div className="flex items-center gap-2.5 px-4 py-4 text-sm text-slate-500 dark:text-white/40">
+                <Loader2 size={14} className="animate-spin" />
+                {tr('Loading clients…', 'Загрузка клиентов…', 'Mijozlar yuklanmoqda…')}
+              </div>
+            ) : filteredClients.length === 0 ? (
+              <div className="px-4 py-5 text-center text-sm text-slate-400 dark:text-white/30">
+                {tr('No clients found.', 'Клиенты не найдены.', 'Mijoz topilmadi.')}
+              </div>
+            ) : (
+              <div className="max-h-80 divide-y divide-light-border overflow-y-auto dark:divide-white/10">
+                {filteredClients.map((client) => {
+                  const name = clientDisplayName(client);
+                  const sub = [client.phone, client.address, platformLabel(client.platform)].filter(Boolean).join(' · ');
+                  const active = client.id === selectedClientId;
+                  return (
+                    <button
+                      key={client.id}
+                      type="button"
+                      onClick={() => setSelectedClientId(client.id)}
+                      className={`flex w-full items-center gap-3.5 px-4 py-3 text-left transition ${active ? 'bg-blue-50 dark:bg-blue-500/10' : 'hover:bg-slate-50 dark:hover:bg-white/[0.03]'}`}
+                    >
+                      <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${active ? 'bg-primary-blue text-white' : 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-white/60'}`}>
+                        {name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className={`truncate text-sm font-semibold ${active ? 'text-primary-blue dark:text-blue-400' : 'text-slate-900 dark:text-white'}`}>
+                          {name}
+                        </p>
+                        <p className="truncate text-xs text-slate-400 dark:text-white/35">{sub}</p>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-2">
+                        <span className="hidden rounded-md bg-slate-100 px-2 py-0.5 text-xs text-slate-500 dark:bg-white/10 dark:text-white/40 sm:block">
+                          {platformLabel(client.platform)}
+                        </span>
+                        {active && <CheckCircle2 size={16} className="text-primary-blue dark:text-blue-400" />}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs text-slate-400 dark:text-white/30">
+              {filteredClients.length} {tr('clients', 'клиентов', 'mijoz')}
+              {search ? ` ${tr('found', 'найдено', 'topildi')}` : ''}
+            </p>
+            {selectedClient && (
+              <div className="flex flex-wrap items-center gap-1.5">
                 <Badge variant="info">{platformLabel(selectedClient.platform)}</Badge>
                 <Badge variant="default">{languageLabel(selectedClient.preferred_language)}</Badge>
-                {selectedClient.is_platform_identity_verified
-                  ? <Badge variant="success">{tr('Verified', 'Подтверждён', 'Tasdiqlangan')}</Badge>
-                  : <Badge variant="warning">{tr('Unverified', 'Не подтверждён', 'Tasdiqlanmagan')}</Badge>}
+                {selectedClient.has_phone
+                  ? <Badge variant="success">{tr('Phone', 'Телефон', 'Telefon')}</Badge>
+                  : <Badge variant="warning">{tr('No phone', 'Нет телефона', "Telefon yo'q")}</Badge>}
+                {selectedClient.can_receive_telegram && <Badge variant="purple">Telegram</Badge>}
               </div>
-              <div>
-                <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-                  {clientDisplayName(selectedClient)}
-                </h2>
-                <p className="mt-1.5 text-sm text-slate-500 dark:text-white/50">
-                  {selectedClient.phone ?? tr('No phone', 'Нет телефона', "Telefon yo'q")}
-                  {selectedClient.address ? ` · ${selectedClient.address}` : ''}
-                </p>
+            )}
+          </div>
+        </Card>
+
+        {!selectedClient ? (
+          <Card className="h-full" accent="blue">
+            <div className="flex h-full min-h-[320px] flex-col justify-between gap-6">
+              <div className="space-y-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-300">
+                  <ShieldAlert size={22} />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+                    {tr('Select a client to open the bottle workspace', 'Выберите клиента, чтобы открыть рабочую зону бутылок', 'Idish ish oynasini ochish uchun mijozni tanlang')}
+                  </h2>
+                  <p className="mt-2 max-w-xl text-sm text-slate-500 dark:text-white/50">
+                    {tr(
+                      'After selection, the page shows bottle add and bottle return tools, plus current balances and recent movements.',
+                      'После выбора откроются действия по добавлению и возврату бутылок, текущие балансы и последние движения.',
+                      "Tanlangandan keyin sahifada idish qo'shish, idish qaytarish, joriy balans va so'nggi harakatlar ko'rinadi."
+                    )}
+                  </p>
+                </div>
               </div>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <StatCard highlight label={tr('Outstanding', 'На руках', 'Mijozdagi')} value={summary?.total_outstanding_bottles_count ?? 0} />
-                <StatCard label={tr('Deposit held', 'Депозит', 'Depozit')} value={formatCurrency(summary?.deposit_held_total_uzs ?? 0)} />
-                <StatCard label={tr('Total charged', 'Начислено', 'Olingan')} value={formatCurrency(summary?.total_deposit_charged_uzs ?? 0)} />
-                <StatCard label={tr('Refunded', 'Возвращено', 'Qaytarilgan')} value={formatCurrency(summary?.total_deposit_refunded_uzs ?? 0)} />
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-4 dark:border-blue-500/20 dark:bg-blue-500/10">
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-xl bg-white/80 p-2 text-blue-600 dark:bg-white/10 dark:text-blue-300">
+                      <Plus size={16} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white">{tr('Add bottles', 'Добавить бутылки', "Idish qo'shish")}</p>
+                      <p className="mt-1 text-xs text-slate-500 dark:text-white/50">{tr('For bottles handed over outside a normal order.', 'Для бутылок, переданных вне обычного заказа.', "Oddiy buyurtmadan tashqari berilgan idishlar uchun.")}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-amber-100 bg-amber-50/70 p-4 dark:border-amber-500/20 dark:bg-amber-500/10">
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-xl bg-white/80 p-2 text-amber-600 dark:bg-white/10 dark:text-amber-300">
+                      <ArrowRightLeft size={16} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white">{tr('Return bottles', 'Принять бутылки', 'Idish qaytimi')}</p>
+                      <p className="mt-1 text-xs text-slate-500 dark:text-white/50">{tr('For empty bottles physically returned by the client.', 'Для пустых бутылок, фактически возвращённых клиентом.', "Mijoz jismonan qaytargan bo'sh idishlar uchun.")}</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </Card>
+        ) : (
+          <Card accent="blue" className="h-full">
+            <div className="flex h-full flex-col justify-between gap-6">
+              <div className="space-y-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="info">{platformLabel(selectedClient.platform)}</Badge>
+                  <Badge variant="default">{languageLabel(selectedClient.preferred_language)}</Badge>
+                  {selectedClient.is_platform_identity_verified
+                    ? <Badge variant="success">{tr('Verified', 'Подтверждён', 'Tasdiqlangan')}</Badge>
+                    : <Badge variant="warning">{tr('Unverified', 'Не подтверждён', 'Tasdiqlanmagan')}</Badge>}
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                    {clientDisplayName(selectedClient)}
+                  </h2>
+                  <p className="mt-1.5 text-sm text-slate-500 dark:text-white/50">
+                    {selectedClient.phone ?? tr('No phone', 'Нет телефона', "Telefon yo'q")}
+                    {selectedClient.address ? ` · ${selectedClient.address}` : ''}
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <StatCard highlight label={tr('Outstanding', 'На руках', 'Mijozdagi')} value={summary?.total_outstanding_bottles_count ?? 0} />
+                  <StatCard label={tr('Deposit held', 'Депозит', 'Depozit')} value={formatCurrency(summary?.deposit_held_total_uzs ?? 0)} />
+                  <StatCard label={tr('Total charged', 'Начислено', 'Olingan')} value={formatCurrency(summary?.total_deposit_charged_uzs ?? 0)} />
+                  <StatCard label={tr('Refunded', 'Возвращено', 'Qaytarilgan')} value={formatCurrency(summary?.total_deposit_refunded_uzs ?? 0)} />
+                </div>
+              </div>
 
-          {/* ── Action forms ── */}
-          <div className="grid gap-6 2xl:grid-cols-3">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-4 dark:border-blue-500/20 dark:bg-blue-500/10">
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-xl bg-white/80 p-2 text-blue-600 dark:bg-white/10 dark:text-blue-300">
+                      <Plus size={16} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white">{tr('Bottle add flow', 'Добавление бутылок', "Idish qo'shish oqimi")}</p>
+                      <p className="mt-1 text-xs text-slate-500 dark:text-white/50">{tr('Use when bottles were handed over outside a tracked order.', 'Используйте, когда бутылки переданы вне отслеживаемого заказа.', "Idishlar kuzatiladigan buyurtmadan tashqari berilganda ishlating.")}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-amber-100 bg-amber-50/70 p-4 dark:border-amber-500/20 dark:bg-amber-500/10">
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-xl bg-white/80 p-2 text-amber-600 dark:bg-white/10 dark:text-amber-300">
+                      <ArrowRightLeft size={16} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white">{tr('Bottle return flow', 'Возврат бутылок', 'Idish qaytarish oqimi')}</p>
+                      <p className="mt-1 text-xs text-slate-500 dark:text-white/50">{tr('Use when the client physically returns empty bottles.', 'Используйте, когда клиент физически возвращает пустые бутылки.', "Mijoz bo'sh idishlarni jismonan qaytarganda ishlating.")}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
+        )}
+      </div>
 
-            {/* Add bottles */}
-            <Card title={tr('Add bottles', 'Добавить бутылки', "Idish qo'shish")} action={<Droplets size={16} className="text-blue-500" />}>
+      {selectedClient ? (
+        <div className="space-y-6">
+          <div className="grid gap-6 xl:grid-cols-2">
+            <Card
+              title={tr('Add bottles', 'Добавить бутылки', "Idish qo'shish")}
+              action={<Droplets size={16} className="text-blue-500" />}
+              className="h-full"
+            >
               <form onSubmit={handleIncrementSubmit} className="space-y-4">
                 <FormField label={tr('Product', 'Товар', 'Mahsulot')}>
                   <select
@@ -930,8 +881,11 @@ const BottleController: React.FC = () => {
               </form>
             </Card>
 
-            {/* Return bottles */}
-            <Card title={tr('Return bottles', 'Принять бутылки', 'Idish qaytimi')} action={<Undo2 size={16} className="text-amber-500" />}>
+            <Card
+              title={tr('Return bottles', 'Принять бутылки', 'Idish qaytimi')}
+              action={<Undo2 size={16} className="text-amber-500" />}
+              className="h-full"
+            >
               <form onSubmit={handleReturnSubmit} className="space-y-4">
                 <FormField label={tr('Product', 'Товар', 'Mahsulot')}>
                   <select
@@ -984,195 +938,126 @@ const BottleController: React.FC = () => {
                 </button>
               </form>
             </Card>
-
-            {/* Refund deposit */}
-            <Card title={tr('Refund deposit', 'Вернуть депозит', 'Depozit qaytarish')} action={<Wallet size={16} className="text-emerald-500" />}>
-              <form onSubmit={handleRefundSubmit} className="space-y-4">
-                <FormField label={tr('Product', 'Товар', 'Mahsulot')}>
-                  <select
-                    value={refundForm.product_id}
-                    onChange={(e) => setRefundForm((s) => ({ ...s, product_id: e.target.value }))}
-                    className={inputCls}
-                  >
-                    <option value="">{tr('Choose product', 'Выберите товар', 'Mahsulotni tanlang')}</option>
-                    {balances.map((b) => (
-                      <option key={b.id} value={b.product_id}>
-                        {b.product_name}{b.product_size_liters ? ` · ${b.product_size_liters}L` : ''}
-                      </option>
-                    ))}
-                  </select>
-                </FormField>
-
-                <div className="grid grid-cols-[1fr,auto] items-end gap-3">
-                  <FormField label={tr('Quantity', 'Количество', 'Soni')}>
-                    <input
-                      type="number" min="1" step="1"
-                      value={refundForm.quantity}
-                      onChange={(e) => setRefundForm((s) => ({ ...s, quantity: e.target.value }))}
-                      disabled={refundForm.refund_all}
-                      className={inputCls}
-                    />
-                  </FormField>
-                  <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-light-border px-3 py-2.5 text-sm text-slate-700 transition hover:bg-slate-50 dark:border-white/10 dark:text-white/70 dark:hover:bg-white/5">
-                    <input
-                      type="checkbox"
-                      checked={refundForm.refund_all}
-                      onChange={(e) => setRefundForm((s) => ({ ...s, refund_all: e.target.checked }))}
-                      className="h-4 w-4 rounded accent-primary-blue"
-                    />
-                    {tr('All', 'Все', 'Hammasi')}
-                  </label>
-                </div>
-
-                <FormField label={tr('Note', 'Примечание', 'Izoh')}>
-                  <textarea
-                    rows={2}
-                    value={refundForm.note}
-                    onChange={(e) => setRefundForm((s) => ({ ...s, note: e.target.value }))}
-                    placeholder={tr('Optional refund note…', 'Примечание к возврату…', 'Qaytim izohi…')}
-                    className={inputCls}
-                  />
-                </FormField>
-
-                <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm dark:border-emerald-500/20 dark:bg-emerald-500/10">
-                  <p className="font-semibold text-emerald-900 dark:text-emerald-200">{tr('Preview', 'Предпросмотр', "Ko'rinish")}</p>
-                  <p className="mt-0.5 text-emerald-700 dark:text-emerald-300">
-                    {refundPreviewQty} {tr('bottles', 'бутылок', 'idish')} · {formatCurrency(refundPreviewAmount)}
-                  </p>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={refundSaving || workspaceLoading || !refundForm.product_id}
-                  className={btnCls('bg-emerald-600 hover:bg-emerald-700')}
-                >
-                  {refundSaving ? <Loader2 size={15} className="animate-spin" /> : <Wallet size={15} />}
-                  {tr('Save refund', 'Сохранить возврат', 'Qaytimni saqlash')}
-                </button>
-              </form>
-            </Card>
           </div>
 
-          {/* ── Bottle balances table ── */}
-          <Card title={tr('Bottle balances', 'Баланс бутылок', 'Idish balansi')} action={<ClipboardList size={16} className="text-slate-400" />}>
-            {workspaceLoading ? (
-              <div className="flex items-center justify-center gap-2.5 rounded-xl border border-dashed border-light-border py-12 text-sm text-slate-400 dark:border-white/10 dark:text-white/30">
-                <Loader2 size={15} className="animate-spin" />
-                {tr('Loading…', 'Загрузка…', 'Yuklanmoqda…')}
-              </div>
-            ) : balances.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-light-border py-12 text-center text-sm text-slate-400 dark:border-white/10 dark:text-white/30">
-                {tr('No bottle balances for this client yet.', 'У этого клиента нет баланса бутылок.', "Bu mijozda idish balansi yo'q.")}
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full">
-                  <thead>
-                    <tr className="border-b border-light-border text-left dark:border-white/10">
-                      {[
-                        tr('Product', 'Товар', 'Mahsulot'),
-                        tr('Outstanding', 'На руках', 'Mijozdagi'),
-                        tr('Deposit held', 'Депозит', 'Depozit'),
-                        tr('Updated', 'Обновлено', 'Yangilangan'),
-                        tr('Actions', 'Действия', 'Amallar'),
-                      ].map((h, i) => (
-                        <th key={i} className={`pb-3 pr-4 text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-white/30 ${i === 4 ? 'text-right' : ''}`}>
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-light-border dark:divide-white/10">
-                    {balances.map((b) => (
-                      <tr key={b.id} className="align-middle">
-                        <td className="py-4 pr-4">
-                          <p className="font-semibold text-slate-900 dark:text-white">{b.product_name}</p>
-                          <p className="mt-0.5 text-xs text-slate-400 dark:text-white/35">
-                            {b.product_size_liters ? `${b.product_size_liters}L` : '—'}
-                            {b.product_sku ? ` · ${b.product_sku}` : ''}
-                          </p>
-                        </td>
-                        <td className="py-4 pr-4 text-sm font-bold text-slate-900 dark:text-white">
-                          {b.outstanding_bottles_count}
-                        </td>
-                        <td className="py-4 pr-4 text-sm text-slate-600 dark:text-white/70">
-                          {formatCurrency(b.deposit_held_uzs)}
-                        </td>
-                        <td className="py-4 pr-4 text-sm text-slate-400 dark:text-white/35">
-                          {formatDate(b.updated_at)}
-                        </td>
-                        <td className="py-4 text-right">
-                          <div className="inline-flex gap-2">
-                            {(
-                              [
-                                { action: 'increment' as ActionType, label: tr('Add', 'Добавить', "Qo'shish"), cls: 'border-blue-200 text-blue-700 hover:bg-blue-50 dark:border-blue-500/30 dark:text-blue-400 dark:hover:bg-blue-500/10' },
-                                { action: 'return' as ActionType, label: tr('Return', 'Принять', 'Qaytim'), cls: 'border-amber-200 text-amber-700 hover:bg-amber-50 dark:border-amber-500/30 dark:text-amber-400 dark:hover:bg-amber-500/10' },
-                                { action: 'refund' as ActionType, label: tr('Refund', 'Вернуть', 'Qaytarish'), cls: 'border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-500/30 dark:text-emerald-400 dark:hover:bg-emerald-500/10' },
-                              ] as const
-                            ).map(({ action, label, cls }) => (
-                              <button
-                                key={action}
-                                type="button"
-                                onClick={() => selectBalanceForAction(b.product_id, action)}
-                                className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${cls}`}
-                              >
-                                {label}
-                              </button>
-                            ))}
-                          </div>
-                        </td>
+          <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+            <Card title={tr('Bottle balances', 'Баланс бутылок', 'Idish balansi')} action={<ClipboardList size={16} className="text-slate-400" />}>
+              {workspaceLoading ? (
+                <div className="flex items-center justify-center gap-2.5 rounded-xl border border-dashed border-light-border py-12 text-sm text-slate-400 dark:border-white/10 dark:text-white/30">
+                  <Loader2 size={15} className="animate-spin" />
+                  {tr('Loading…', 'Загрузка…', 'Yuklanmoqda…')}
+                </div>
+              ) : balances.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-light-border py-12 text-center text-sm text-slate-400 dark:border-white/10 dark:text-white/30">
+                  {tr('No bottle balances for this client yet.', 'У этого клиента нет баланса бутылок.', "Bu mijozda idish balansi yo'q.")}
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full">
+                    <thead>
+                      <tr className="border-b border-light-border text-left dark:border-white/10">
+                        {[
+                          tr('Product', 'Товар', 'Mahsulot'),
+                          tr('Outstanding', 'На руках', 'Mijozdagi'),
+                          tr('Deposit held', 'Депозит', 'Depozit'),
+                          tr('Updated', 'Обновлено', 'Yangilangan'),
+                          tr('Actions', 'Действия', 'Amallar'),
+                        ].map((h, i) => (
+                          <th key={i} className={`pb-3 pr-4 text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-white/30 ${i === 4 ? 'text-right' : ''}`}>
+                            {h}
+                          </th>
+                        ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </Card>
+                    </thead>
+                    <tbody className="divide-y divide-light-border dark:divide-white/10">
+                      {balances.map((b) => (
+                        <tr key={b.id} className="align-middle">
+                          <td className="py-4 pr-4">
+                            <p className="font-semibold text-slate-900 dark:text-white">{b.product_name}</p>
+                            <p className="mt-0.5 text-xs text-slate-400 dark:text-white/35">
+                              {b.product_size_liters ? `${b.product_size_liters}L` : '—'}
+                              {b.product_sku ? ` · ${b.product_sku}` : ''}
+                            </p>
+                          </td>
+                          <td className="py-4 pr-4 text-sm font-bold text-slate-900 dark:text-white">
+                            {b.outstanding_bottles_count}
+                          </td>
+                          <td className="py-4 pr-4 text-sm text-slate-600 dark:text-white/70">
+                            {formatCurrency(b.deposit_held_uzs)}
+                          </td>
+                          <td className="py-4 pr-4 text-sm text-slate-400 dark:text-white/35">
+                            {formatDate(b.updated_at)}
+                          </td>
+                          <td className="py-4 text-right">
+                            <div className="inline-flex gap-2">
+                              {(
+                                [
+                                  { action: 'increment' as ActionType, label: tr('Add', 'Добавить', "Qo'shish"), cls: 'border-blue-200 text-blue-700 hover:bg-blue-50 dark:border-blue-500/30 dark:text-blue-400 dark:hover:bg-blue-500/10' },
+                                  { action: 'return' as ActionType, label: tr('Return', 'Принять', 'Qaytim'), cls: 'border-amber-200 text-amber-700 hover:bg-amber-50 dark:border-amber-500/30 dark:text-amber-400 dark:hover:bg-amber-500/10' },
+                                ] as const
+                              ).map(({ action, label, cls }) => (
+                                <button
+                                  key={action}
+                                  type="button"
+                                  onClick={() => selectBalanceForAction(b.product_id, action)}
+                                  className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${cls}`}
+                                >
+                                  {label}
+                                </button>
+                              ))}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Card>
 
-          {/* ── Movements feed ── */}
-          <Card title={tr('Recent movements', 'Последние движения', "So'nggi harakatlar")} action={<ShieldAlert size={16} className="text-slate-400" />}>
-            {workspaceLoading ? (
-              <div className="flex items-center justify-center gap-2.5 rounded-xl border border-dashed border-light-border py-12 text-sm text-slate-400 dark:border-white/10 dark:text-white/30">
-                <Loader2 size={15} className="animate-spin" />
-                {tr('Loading…', 'Загрузка…', 'Yuklanmoqda…')}
-              </div>
-            ) : movements.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-light-border py-12 text-center text-sm text-slate-400 dark:border-white/10 dark:text-white/30">
-                {tr('No movement history yet.', 'История движений пуста.', "Harakatlar tarixi yo'q.")}
-              </div>
-            ) : (
-              <div className="space-y-2.5">
-                {movements.slice(0, 20).map((m) => {
-                  const delta = typeof m.bottles_delta === 'number' ? m.bottles_delta : (m.quantity ?? 0);
-                  return (
-                    <div key={m.id} className="flex flex-col gap-3 rounded-xl border border-light-border bg-white px-4 py-4 sm:flex-row sm:items-start sm:justify-between dark:border-white/10 dark:bg-navy-900">
-                      <div className="min-w-0 space-y-1.5">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Badge variant={movementVariant(m.movement_type)}>{movementLabel(m.movement_type)}</Badge>
-                          <span className={`text-sm font-bold ${delta >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                            {delta >= 0 ? '+' : ''}{delta}
-                          </span>
+            <Card title={tr('Recent movements', 'Последние движения', "So'nggi harakatlar")} action={<ShieldAlert size={16} className="text-slate-400" />}>
+              {workspaceLoading ? (
+                <div className="flex items-center justify-center gap-2.5 rounded-xl border border-dashed border-light-border py-12 text-sm text-slate-400 dark:border-white/10 dark:text-white/30">
+                  <Loader2 size={15} className="animate-spin" />
+                  {tr('Loading…', 'Загрузка…', 'Yuklanmoqda…')}
+                </div>
+              ) : movements.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-light-border py-12 text-center text-sm text-slate-400 dark:border-white/10 dark:text-white/30">
+                  {tr('No movement history yet.', 'История движений пуста.', "Harakatlar tarixi yo'q.")}
+                </div>
+              ) : (
+                <div className="space-y-2.5">
+                  {movements.slice(0, 20).map((m) => {
+                    const delta = typeof m.bottles_delta === 'number' ? m.bottles_delta : (m.quantity ?? 0);
+                    return (
+                      <div key={m.id} className="flex flex-col gap-3 rounded-xl border border-light-border bg-white px-4 py-4 sm:flex-row sm:items-start sm:justify-between dark:border-white/10 dark:bg-navy-900">
+                        <div className="min-w-0 space-y-1.5">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Badge variant={movementVariant(m.movement_type)}>{movementLabel(m.movement_type)}</Badge>
+                            <span className={`text-sm font-bold ${delta >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                              {delta >= 0 ? '+' : ''}{delta}
+                            </span>
+                          </div>
+                          <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                            {m.product_name ?? tr('Unknown product', 'Неизвестный товар', "Noma'lum mahsulot")}
+                          </p>
+                          <p className="text-xs text-slate-400 dark:text-white/35">
+                            {formatCurrency(m.deposit_delta_uzs ?? 0)}
+                            {m.actor ? ` · ${m.actor}` : ''}
+                            {m.order_id ? ` · #${m.order_id.slice(0, 8)}` : ''}
+                          </p>
+                          {m.note && <p className="text-sm text-slate-500 dark:text-white/60">{m.note}</p>}
                         </div>
-                        <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                          {m.product_name ?? tr('Unknown product', 'Неизвестный товар', "Noma'lum mahsulot")}
-                        </p>
-                        <p className="text-xs text-slate-400 dark:text-white/35">
-                          {formatCurrency(m.deposit_delta_uzs ?? 0)}
-                          {m.actor ? ` · ${m.actor}` : ''}
-                          {m.order_id ? ` · #${m.order_id.slice(0, 8)}` : ''}
-                        </p>
-                        {m.note && <p className="text-sm text-slate-500 dark:text-white/60">{m.note}</p>}
+                        <p className="shrink-0 text-xs text-slate-400 dark:text-white/30">{formatDate(m.created_at)}</p>
                       </div>
-                      <p className="shrink-0 text-xs text-slate-400 dark:text-white/30">{formatDate(m.created_at)}</p>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </Card>
-
+                    );
+                  })}
+                </div>
+              )}
+            </Card>
+          </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 };

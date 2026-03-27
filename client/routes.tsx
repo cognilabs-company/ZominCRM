@@ -1,7 +1,6 @@
 import React from 'react';
-import { Droplets, Package, ShoppingBag, ShoppingCart, UserRound } from 'lucide-react';
+import { Package, ShoppingBag, ShoppingCart, UserRound } from 'lucide-react';
 
-const ClientBottlesPage = React.lazy(() => import('./pages/ClientBottlesPage').then((module) => ({ default: module.ClientBottlesPage })));
 const ClientCartPage = React.lazy(() => import('./pages/ClientCartPage').then((module) => ({ default: module.ClientCartPage })));
 const ClientCheckoutPreviewPage = React.lazy(() => import('./pages/ClientCheckoutPreviewPage').then((module) => ({ default: module.ClientCheckoutPreviewPage })));
 const ClientHomePage = React.lazy(() => import('./pages/ClientHomePage').then((module) => ({ default: module.ClientHomePage })));
@@ -75,22 +74,6 @@ export const clientRouteDefinitions: ClientRouteDefinition[] = [
     icon: Package,
     showInNav: false,
     element: <ClientOrderDetailPage />,
-  },
-  {
-    id: 'bottles',
-    path: 'idishlar',
-    navLabelKey: 'nav.bottles',
-    icon: Droplets,
-    showInNav: false,
-    element: <ClientBottlesPage />,
-  },
-  {
-    id: 'bottles-legacy',
-    path: 'bottles',
-    navLabelKey: 'nav.bottles',
-    icon: Droplets,
-    showInNav: false,
-    element: <ClientBottlesPage />,
   },
   {
     id: 'profile',

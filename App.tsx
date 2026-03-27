@@ -1,5 +1,5 @@
 import React from 'react';
-import { HashRouter as Router, Navigate, Outlet, Route, Routes } from 'react-router-dom';
+import { HashRouter as Router, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { ClientAppProvider } from './client/bootstrap/ClientAppContext';
@@ -23,6 +23,7 @@ const Leads = React.lazy(() => import('./pages/Leads'));
 const Users = React.lazy(() => import('./pages/Users'));
 const AICredentials = React.lazy(() => import('./pages/AICredentials'));
 const AISettings = React.lazy(() => import('./pages/AISettings'));
+const ConversationAutomation = React.lazy(() => import('./pages/ConversationAutomation'));
 const Login = React.lazy(() => import('./pages/auth/Login'));
 const Forbidden = React.lazy(() => import('./pages/auth/Forbidden'));
 const Payments = React.lazy(() => import('./pages/Payments'));
@@ -120,6 +121,11 @@ const RouteFallback: React.FC = () => (
   </div>
 );
 
+const NavigatePreservingSearch: React.FC<{ to: string }> = ({ to }) => {
+  const location = useLocation();
+  return <Navigate to={`${to}${location.search}`} replace />;
+};
+
 const App: React.FC = () => {
   return (
     <ThemeProvider>
@@ -160,14 +166,15 @@ const App: React.FC = () => {
                           <Route path="/" element={<Navigate to="/admin-app" replace />} />
 
                           <Route path="/conversations" element={<Navigate to="/admin-app/conversations" replace />} />
-                          <Route path="/conversations/:conversationId/automation" element={<Navigate to="/admin-app/ai-settings" replace />} />
-                          <Route path="/orders" element={<Navigate to="/admin-app/orders" replace />} />
+                          <Route path="/conversations/:conversationId/automation" element={<RequirePermission permission="crm.access"><ConversationAutomation /></RequirePermission>} />
+                          <Route path="/orders" element={<NavigatePreservingSearch to="/admin-app/orders" />} />
                           <Route path="/products" element={<Navigate to="/admin-app/products" replace />} />
                           <Route path="/clients" element={<Navigate to="/admin-app/clients" replace />} />
                           <Route path="/bottles" element={<Navigate to="/admin-app/bottles" replace />} />
                           <Route path="/leads" element={<Navigate to="/admin-app/leads" replace />} />
                           <Route path="/payments" element={<Navigate to="/admin-app/payments" replace />} />
                           <Route path="/couriers" element={<Navigate to="/admin-app/couriers" replace />} />
+                          <Route path="/instagram-pages" element={<Navigate to="/admin-app" replace />} />
                           <Route path="/users" element={<Navigate to="/admin-app/users" replace />} />
                           <Route path="/ai-tools" element={<Navigate to="/admin-app/ai-tools" replace />} />
                           <Route path="/ai-credentials" element={<Navigate to="/admin-app/ai-credentials" replace />} />
@@ -177,14 +184,15 @@ const App: React.FC = () => {
 
                           <Route path="/admin-app" element={<RequirePermission permission="dashboard.access"><Dashboard /></RequirePermission>} />
                           <Route path="/admin-app/conversations" element={<RequirePermission permission="crm.access"><Conversations /></RequirePermission>} />
-                          <Route path="/admin-app/conversations/:conversationId/automation" element={<Navigate to="/admin-app/ai-settings" replace />} />
+                          <Route path="/admin-app/conversations/:conversationId/automation" element={<RequirePermission permission="crm.access"><ConversationAutomation /></RequirePermission>} />
                           <Route path="/admin-app/orders" element={<RequirePermission permission="orders.access"><Orders /></RequirePermission>} />
                           <Route path="/admin-app/products" element={<RequirePermission permission="products.access"><Products /></RequirePermission>} />
                           <Route path="/admin-app/clients" element={<RequirePermission permission="crm.access"><Clients /></RequirePermission>} />
-                          <Route path="/admin-app/bottles" element={<RequirePermission permission="crm.access"><BottleController /></RequirePermission>} />
+                          <Route path="/admin-app/bottles" element={<RequirePermission permission="bottles.access"><BottleController /></RequirePermission>} />
                           <Route path="/admin-app/leads" element={<RequireAdmin><Leads /></RequireAdmin>} />
                           <Route path="/admin-app/payments" element={<RequirePermission permission="payments.access"><Payments /></RequirePermission>} />
                           <Route path="/admin-app/couriers" element={<RequirePermission permission="couriers.access"><Couriers /></RequirePermission>} />
+                          <Route path="/admin-app/instagram-pages" element={<Navigate to="/admin-app" replace />} />
                           <Route path="/admin-app/users" element={<RequireAdmin><Users /></RequireAdmin>} />
                           <Route path="/admin-app/ai-tools" element={<RequirePermission permission="ai.access"><AITools /></RequirePermission>} />
                           <Route path="/admin-app/ai-credentials" element={<RequireAdmin><AICredentials /></RequireAdmin>} />

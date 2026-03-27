@@ -19,6 +19,7 @@ import {
 import { Badge } from '../components/ui/Badge';
 import { Card } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
+import { useActionConfirm } from '../components/ui/useActionConfirm';
 import { useLanguage } from '../context/LanguageContext';
 import { useToast } from '../context/ToastContext';
 import { ENDPOINTS, apiRequest, resolveAdminMediaUrl } from '../services/api';
@@ -622,6 +623,7 @@ const ImageUploadPanel: React.FC<{
 const Products: React.FC = () => {
   const { t, language } = useLanguage();
   const toast = useToast();
+  const { confirm, confirmationModal } = useActionConfirm();
   const tr = (en: string, ru: string, uz: string) =>
     language === 'ru' ? ru : language === 'uz' ? uz : en;
 
@@ -777,6 +779,21 @@ const Products: React.FC = () => {
 
   const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (editing) {
+      const confirmed = await confirm({
+        title: tr('Save product changes', 'Сохранить изменения товара', "Mahsulot o'zgarishlarini saqlash"),
+        message: tr(
+          `Save changes for "${editing.name}"?`,
+          `Сохранить изменения для "${editing.name}"?`,
+          `"${editing.name}" uchun o'zgarishlarni saqlaysizmi?`
+        ),
+        confirmLabel: tr('Save changes', 'Сохранить изменения', "O'zgarishlarni saqlash"),
+        cancelLabel: t('cancel'),
+        tone: 'primary',
+      });
+      if (!confirmed) return;
+    }
+
     try {
       setSaving(true); setError(null);
       const hasMedia = Boolean(uploadFiles.length || removeImage || removeImageIds.length || replaceGallery);
@@ -842,7 +859,18 @@ const Products: React.FC = () => {
   };
 
   const handleDeactivate = async (product: ApiProduct) => {
-    if (!window.confirm(tr(`Deactivate "${product.name}"?`, `Деактивировать "${product.name}"?`, `"${product.name}" nofaol qilinsinmi?`))) return;
+    const confirmed = await confirm({
+      title: tr('Deactivate product', 'Деактивировать товар', 'Mahsulotni nofaol qilish'),
+      message: tr(
+        `Deactivate "${product.name}"?`,
+        `Деактивировать "${product.name}"?`,
+        `"${product.name}" mahsulotini nofaol qilasizmi?`
+      ),
+      confirmLabel: tr('Deactivate', 'Деактивировать', 'Nofaol qilish'),
+      cancelLabel: t('cancel'),
+      tone: 'danger',
+    });
+    if (!confirmed) return;
     try {
       await apiRequest(ENDPOINTS.PRODUCTS.DETAIL(product.id), { method: 'PATCH', body: JSON.stringify({ is_active: false }) });
       await loadProducts();
@@ -1440,6 +1468,7 @@ const Products: React.FC = () => {
           </div>
         )}
       </Modal>
+      {confirmationModal}
     </div>
   );
 };

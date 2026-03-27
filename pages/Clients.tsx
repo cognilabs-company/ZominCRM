@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { Card } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
 import { Badge } from '../components/ui/Badge';
+import { useActionConfirm } from '../components/ui/useActionConfirm';
 import { useLanguage } from '../context/LanguageContext';
 import { useToast } from '../context/ToastContext';
 import { ApiError, ENDPOINTS, apiRequest } from '../services/api';
@@ -93,6 +94,7 @@ const ACTIVE_ORDER_STATUSES: OrderStatus[] = [
 const Clients: React.FC = () => {
   const { t, language } = useLanguage();
   const toast = useToast();
+  const { confirm, confirmationModal } = useActionConfirm();
   const tr = (en: string, ru: string, uz: string) => (language === 'ru' ? ru : language === 'uz' ? uz : en);
 
   const [clients, setClients] = useState<ClientRow[]>([]);
@@ -288,6 +290,21 @@ const Clients: React.FC = () => {
     const address = String(form.get('address') || '').trim() || null;
     const preferredLanguage = String(form.get('preferred_language') || '').trim() || null;
 
+    if (editing?.id) {
+      const confirmed = await confirm({
+        title: tr('Save client changes', 'Save client changes', "Mijoz o'zgarishlarini saqlash"),
+        message: tr(
+          `Save changes for "${editing.full_name || editing.username || editing.id}"?`,
+          `Save changes for "${editing.full_name || editing.username || editing.id}"?`,
+          `"${editing.full_name || editing.username || editing.id}" uchun o'zgarishlarni saqlaysizmi?`
+        ),
+        confirmLabel: tr('Save changes', 'Save changes', "O'zgarishlarni saqlash"),
+        cancelLabel: t('cancel'),
+        tone: 'primary',
+      });
+      if (!confirmed) return;
+    }
+
     try {
       setSaving(true);
       setError(null);
@@ -317,29 +334,27 @@ const Clients: React.FC = () => {
               full_name: fullName,
               phone,
               address,
+              preferred_language: preferredLanguage,
             }),
           });
         }
       } else {
-        const platform = String(form.get('platform') || 'telegram');
+        const platform = String(form.get('platform') || 'manual') as Platform;
         const platformUserId = String(form.get('platform_user_id') || '').trim();
-        if (!platformUserId) {
-          const message = tr('Platform user ID is required', 'Platform user ID is required', 'Platform user ID majburiy');
-          setError(message);
-          toast.error(message);
-          setSaving(false);
-          return;
+        const payload: Record<string, unknown> = {
+          platform,
+          username,
+          full_name: fullName,
+          phone,
+          address,
+          preferred_language: preferredLanguage,
+        };
+        if (platformUserId) {
+          payload.platform_user_id = platformUserId;
         }
         await apiRequest(ENDPOINTS.CLIENTS.UPSERT, {
           method: 'POST',
-          body: JSON.stringify({
-            platform,
-            platform_user_id: platformUserId,
-            username,
-            full_name: fullName,
-            phone,
-            address,
-          }),
+          body: JSON.stringify(payload),
         });
       }
       toast.success(editing ? tr('Client updated', 'Client updated', 'Mijoz yangilandi') : tr('Client created', 'Client created', 'Mijoz yaratildi'));
@@ -900,15 +915,13 @@ const Clients: React.FC = () => {
               <select
                 name="platform"
                 required
-                defaultValue={editing?.platform || 'telegram'}
+                defaultValue={editing?.platform || 'manual'}
                 disabled={!!editing}
                 className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white disabled:opacity-60"
               >
+                <option value="manual">{tr('Manual', 'Manual', "Qo'lda")}</option>
                 <option value="telegram">{tr('Telegram', 'Telegram', 'Telegram')}</option>
                 <option value="instagram">{tr('Instagram', 'Instagram', 'Instagram')}</option>
-                {editing?.platform === 'manual' ? (
-                  <option value="manual">{tr('Manual', 'Manual', "Qo'lda")}</option>
-                ) : null}
               </select>
             </div>
             <div>
@@ -937,9 +950,11 @@ const Clients: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tr('Platform User ID', 'Platform User ID', 'Platform User ID')}</label>
                 <input
                   name="platform_user_id"
-                  required
                   className="w-full bg-gray-50 dark:bg-navy-900 border border-light-border dark:border-navy-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-blue dark:text-white"
                 />
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  {tr('Optional. Manual clients do not need it, and Telegram or Instagram placeholders can be created without it.', 'Optional. Manual clients do not need it, and Telegram or Instagram placeholders can be created without it.', 'Ixtiyoriy. Qo‘lda yaratilgan mijozga bu shart emas, Telegram yoki Instagram placeholder mijoz ham usiz yaratiladi.')}
+                </p>
               </div>
             ) : null}
           </div>
@@ -989,6 +1004,7 @@ const Clients: React.FC = () => {
           </div>
         </form>
       </Modal>
+      {confirmationModal}
     </div>
   );
 };

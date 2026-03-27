@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Badge } from '../components/ui/Badge';
 import { Card } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
+import { useActionConfirm } from '../components/ui/useActionConfirm';
 import { ApiError, ENDPOINTS, apiRequest } from '../services/api';
 import { useLanguage } from '../context/LanguageContext';
 import { useToast } from '../context/ToastContext';
@@ -90,6 +91,7 @@ const emptyForm: FormState = {
 const Couriers: React.FC = () => {
   const { language } = useLanguage();
   const toast = useToast();
+  const { confirm, confirmationModal } = useActionConfirm();
   const tr = useCallback(
     (en: string, ru: string, uz: string) => (language === 'ru' ? ru : language === 'uz' ? uz : en),
     [language]
@@ -218,6 +220,21 @@ const Couriers: React.FC = () => {
       return;
     }
 
+    if (editingRow) {
+      const confirmed = await confirm({
+        title: tr('Save courier changes', 'Save courier changes', "Kuryer o'zgarishlarini saqlash"),
+        message: tr(
+          `Save changes for "${editingRow.full_name}"?`,
+          `Save changes for "${editingRow.full_name}"?`,
+          `"${editingRow.full_name}" uchun o'zgarishlarni saqlaysizmi?`
+        ),
+        confirmLabel: tr('Save changes', 'Save changes', "O'zgarishlarni saqlash"),
+        cancelLabel: tr('Cancel', 'Cancel', 'Bekor qilish'),
+        tone: 'primary',
+      });
+      if (!confirmed) return;
+    }
+
     try {
       setSaving(true);
       setError(null);
@@ -265,13 +282,17 @@ const Couriers: React.FC = () => {
   };
 
   const softDeleteCourier = async (row: CourierStats) => {
-    const ok = window.confirm(
-      tr(
+    const ok = await confirm({
+      title: tr('Deactivate courier', 'Deactivate courier', 'Kuryerni nofaol qilish'),
+      message: tr(
         `Deactivate courier "${row.full_name}"?`,
         `Deactivate courier "${row.full_name}"?`,
-        `"${row.full_name}" kuryerni nofaol qilishni xohlaysizmi?`
-      )
-    );
+        `"${row.full_name}" kuryerni nofaol qilasizmi?`
+      ),
+      confirmLabel: tr('Deactivate', 'Deactivate', 'Nofaol qilish'),
+      cancelLabel: tr('Cancel', 'Cancel', 'Bekor qilish'),
+      tone: 'danger',
+    });
     if (!ok) return;
 
     try {
@@ -684,9 +705,9 @@ const Couriers: React.FC = () => {
           </div>
         </form>
       </Modal>
+      {confirmationModal}
     </div>
   );
 };
 
 export default Couriers;
-

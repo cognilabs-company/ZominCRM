@@ -30,14 +30,16 @@ export type LeadStatus = 'NEW' | 'QUALIFIED' | 'CONVERTED' | 'LOST';
 export type OrderStatus =
   | 'NEW_LEAD'
   | 'INFO_COLLECTED'
-  | 'CONFIRMED'
+  | 'PAYMENT_PENDING'
+  | 'PAYMENT_CONFIRMED'
   | 'DISPATCHED'
+  | 'ASSIGNED'
   | 'OUT_FOR_DELIVERY'
   | 'DELIVERED'
-  | 'CANCELLED'
-  | 'PROBLEM';
+  | 'CANCELED'
+  | 'FAILED';
 
-export type PaymentMethod = 'UNKNOWN' | 'CASH' | 'PAYME' | 'CLICK' | 'UZCARD' | 'HUMO';
+export type PaymentMethod = 'UNKNOWN' | 'CASH' | 'TRANSFER';
 
 export type PaymentProvider = 'PAYME' | 'CLICK';
 
@@ -111,6 +113,9 @@ export interface Order {
   total_uzs: number;
   product_subtotal_uzs?: number;
   bottle_deposit_total_uzs?: number;
+  order_source?: 'LIVE' | 'MANUAL_OFFLINE';
+  is_offline_recorded?: boolean;
+  auto_dispatch_enabled?: boolean;
   delivery_address: string | null;
   delivery_lat: number | null;
   delivery_lng: number | null;

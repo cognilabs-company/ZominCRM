@@ -4,7 +4,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { Card } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
 import { useToast } from '../context/ToastContext';
-import { ShoppingBag, DollarSign, Clock, Truck, Download, RefreshCw, Calendar, Search, Languages, Phone, UserRound } from 'lucide-react';
+import { ShoppingBag, DollarSign, Clock, Truck, Download, RefreshCw, Calendar, Search, Languages, Phone, UserRound, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from 'recharts';
 import { ENDPOINTS, apiRequest, getHeaders } from '../services/api';
 
@@ -13,6 +13,12 @@ interface DashboardStatsResponse {
   date_to?: string;
   days?: number;
   total_orders?: number;
+  successful_orders?: number;
+  unsuccessful_orders?: number;
+  pending_orders?: number;
+  canceled_orders?: number;
+  failed_orders?: number;
+  order_status_counts?: Partial<Record<string, number>>;
   revenue_period?: number;
   revenue_today?: number;
   revenue_today_actual?: number;
@@ -256,6 +262,31 @@ const pickMetric = (source: DashboardStatsResponse, keys: string[]): number | nu
 
 const hasMetric = (source: DashboardStatsResponse, keys: string[]): boolean =>
   keys.some((key) => Object.prototype.hasOwnProperty.call(source, key));
+
+const ORDER_STATUS_BREAKDOWN_ORDER = [
+  'NEW_LEAD',
+  'INFO_COLLECTED',
+  'PAYMENT_PENDING',
+  'PAYMENT_CONFIRMED',
+  'DISPATCHED',
+  'ASSIGNED',
+  'OUT_FOR_DELIVERY',
+  'DELIVERED',
+  'CANCELED',
+  'FAILED',
+] as const;
+
+const PENDING_ORDER_STATUSES = [
+  'NEW_LEAD',
+  'INFO_COLLECTED',
+  'PAYMENT_PENDING',
+  'PAYMENT_CONFIRMED',
+  'DISPATCHED',
+  'ASSIGNED',
+  'OUT_FOR_DELIVERY',
+].join(',');
+
+const DELIVERY_RELATED_STATUSES = ['DISPATCHED', 'ASSIGNED', 'OUT_FOR_DELIVERY'].join(',');
 
 const Dashboard: React.FC = () => {
   const { t, language } = useLanguage();
@@ -527,44 +558,129 @@ const Dashboard: React.FC = () => {
   const depositsSummary = depositsData.summary;
   const depositRows = depositsData.results || [];
   const canLoadMoreDeposits = (depositsData.total || 0) > depositRows.length;
+  const statusCounts = stats.order_status_counts || {};
+  const successfulOrders = pickMetric(stats, ['successful_orders']) ?? toNumber(statusCounts.DELIVERED);
+  const canceledOrders = pickMetric(stats, ['canceled_orders']) ?? toNumber(statusCounts.CANCELED);
+  const failedOrders = pickMetric(stats, ['failed_orders']) ?? toNumber(statusCounts.FAILED);
+  const unsuccessfulOrders =
+    pickMetric(stats, ['unsuccessful_orders']) ?? canceledOrders + failedOrders;
+  const pendingOrders =
+    pickMetric(stats, ['pending_orders']) ??
+    Math.max(0, (stats.total_orders ?? 0) - successfulOrders - unsuccessfulOrders);
+
+  const orderStatusBreakdown = ORDER_STATUS_BREAKDOWN_ORDER
+    .map((status) => ({ status, count: toNumber(statusCounts[status]) }))
+    .filter((row) => row.count > 0);
+
+  const buildOrdersPath = useCallback((status?: string) => {
+    const params = new URLSearchParams();
+
+    if (status) {
+      params.set('status', status);
+    }
+
+    if (filterMode === 'date' && singleDate) {
+      params.set('date_from', singleDate);
+      params.set('date_to', singleDate);
+    } else if ((filterMode === 'range' || filterMode === 'weekly' || filterMode === 'monthly') && (stats.date_from || dateFrom)) {
+      params.set('date_from', stats.date_from || dateFrom);
+      params.set('date_to', stats.date_to || dateTo || stats.date_from || dateFrom);
+    }
+
+    const query = params.toString();
+    return query ? `/admin-app/orders?${query}` : '/admin-app/orders';
+  }, [dateFrom, dateTo, filterMode, singleDate, stats.date_from, stats.date_to]);
+
+  const getOrderStatusLabel = useCallback((status: string) => {
+    switch (status) {
+      case 'NEW_LEAD':
+        return tr('New lead', 'Новый лид', 'Yangi lid');
+      case 'INFO_COLLECTED':
+        return tr('Info collected', 'Информация собрана', "Ma'lumot yig'ilgan");
+      case 'PAYMENT_PENDING':
+        return tr('Payment pending', 'Ожидает оплату', "To'lov kutilmoqda");
+      case 'PAYMENT_CONFIRMED':
+        return tr('Payment confirmed', 'Оплата подтверждена', "To'lov tasdiqlangan");
+      case 'DISPATCHED':
+        return tr('Dispatched', 'Отправлен', 'Yuborilgan');
+      case 'ASSIGNED':
+        return tr('Assigned', 'Назначен', 'Biriktirilgan');
+      case 'OUT_FOR_DELIVERY':
+        return tr('Out for delivery', 'В доставке', 'Yetkazib berishda');
+      case 'DELIVERED':
+        return tr('Delivered', 'Доставлен', 'Yetkazildi');
+      case 'CANCELED':
+        return tr('Canceled', 'Отменён', 'Bekor qilingan');
+      case 'FAILED':
+        return tr('Failed', 'Неуспешный', 'Muvaffaqiyatsiz');
+      default:
+        return status;
+    }
+  }, [tr]);
+
+  const getOrderStatusChipClass = useCallback((status: string) => {
+    switch (status) {
+      case 'DELIVERED':
+        return 'border-green-200 bg-green-50 text-green-700 dark:border-green-500/20 dark:bg-green-500/10 dark:text-green-300';
+      case 'CANCELED':
+      case 'FAILED':
+        return 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300';
+      case 'PAYMENT_PENDING':
+      case 'INFO_COLLECTED':
+        return 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300';
+      case 'DISPATCHED':
+      case 'ASSIGNED':
+      case 'OUT_FOR_DELIVERY':
+        return 'border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300';
+      default:
+        return 'border-light-border bg-white text-gray-700 dark:border-navy-700 dark:bg-navy-900 dark:text-gray-200';
+    }
+  }, []);
 
   const kpiCards = [
     {
       title: t('total_orders'),
       value: String(stats.total_orders ?? 0),
-      sub: tr('Orders in selected period', 'Orders in selected period', 'Tanlangan davrdagi buyurtmalar'),
+      sub: tr('All orders in selected period', 'All orders in selected period', 'Tanlangan davrdagi barcha buyurtmalar'),
       icon: ShoppingBag,
       color: 'text-blue-500',
+      onClick: () => navigate(buildOrdersPath()),
     },
     {
-      title: tr('Product Revenue', 'Product Revenue', 'Mahsulot tushumi'),
-      value: `${revenuePeriodValue.toLocaleString()} UZS`,
+      title: tr('Successful Orders', 'Successful Orders', 'Muvaffaqiyatli buyurtmalar'),
+      value: String(successfulOrders),
       sub: tr(
-        `Selected period revenue. Actual today: ${(stats.revenue_today_actual ?? 0).toLocaleString()} UZS`,
-        `Vyruchka za vybrannyy period. Fakticheski segodnya: ${(stats.revenue_today_actual ?? 0).toLocaleString()} UZS`,
-        `Tanlangan davr tushumi. Haqiqiy bugun: ${(stats.revenue_today_actual ?? 0).toLocaleString()} UZS`
+        'Delivered orders count',
+        'Delivered orders count',
+        'Yetkazilgan buyurtmalar soni'
       ),
-      icon: DollarSign,
+      icon: CheckCircle2,
       color: 'text-green-500',
+      onClick: () => navigate(buildOrdersPath('DELIVERED')),
     },
     {
-      title: tr('Pending Amount', 'Pending Amount', "Kutilayotgan to\'lov summasi"),
-      value: `${(stats.pending_payments_amount ?? 0).toLocaleString()} UZS`,
+      title: tr('Pending Orders', 'Pending Orders', 'Kutilayotgan buyurtmalar'),
+      value: String(pendingOrders),
       sub: tr(
-        `${stats.pending_payments ?? 0} pending payment orders (tap to open)`,
-        `${stats.pending_payments ?? 0} zakazov s ozhidayushchey oplatoy (otkryt)`,
-        `${stats.pending_payments ?? 0} ta kutilayotgan to\'lov buyurtmasi (ochish)`
+        'Non-terminal orders still in progress',
+        'Non-terminal orders still in progress',
+        'Hali yakunlanmagan buyurtmalar'
       ),
       icon: Clock,
       color: 'text-orange-500',
-      onClick: () => navigate('/orders?status=PAYMENT_PENDING'),
+      onClick: () => navigate(buildOrdersPath(PENDING_ORDER_STATUSES)),
     },
     {
-      title: t('in_delivery'),
-      value: String(stats.in_delivery ?? 0),
-      sub: tr('Orders currently in delivery', 'Orders currently in delivery', 'Yetkazib berilayotgan buyurtmalar'),
-      icon: Truck,
-      color: 'text-purple-500',
+      title: tr('Unsuccessful Orders', 'Unsuccessful Orders', 'Muvaffaqiyatsiz buyurtmalar'),
+      value: String(unsuccessfulOrders),
+      sub: tr(
+        `${canceledOrders} canceled · ${failedOrders} failed`,
+        `${canceledOrders} canceled · ${failedOrders} failed`,
+        `${canceledOrders} bekor qilingan · ${failedOrders} failed`
+      ),
+      icon: AlertTriangle,
+      color: 'text-rose-500',
+      onClick: () => navigate(buildOrdersPath('CANCELED,FAILED')),
     },
   ];
 
@@ -679,8 +795,9 @@ const Dashboard: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {kpiCards.map((kpi, idx) => (
-          <Card key={idx} className={`relative overflow-hidden ${kpi.onClick ? 'cursor-pointer hover:shadow-md' : ''}`}>
-            <div className="flex justify-between items-start" onClick={kpi.onClick}>
+          <Card key={idx} className={`relative overflow-hidden transition ${kpi.onClick ? 'cursor-pointer hover:-translate-y-0.5 hover:shadow-md' : ''}`}>
+            <button type="button" className="w-full text-left" onClick={kpi.onClick}>
+            <div className="flex justify-between items-start">
               <div>
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{kpi.title}</p>
                 <h3 className="text-2xl font-bold text-light-text dark:text-white mt-2">{loading ? '...' : kpi.value}</h3>
@@ -690,9 +807,116 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
             <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">{kpi.sub}</div>
+            {kpi.onClick ? (
+              <div className="mt-3 text-[11px] font-medium uppercase tracking-[0.16em] text-primary-blue dark:text-blue-300">
+                {tr('Open orders', 'Open orders', 'Buyurtmalarni ochish')}
+              </div>
+            ) : null}
+            </button>
           </Card>
         ))}
       </div>
+
+      <Card
+        title={tr('Operational Snapshot', 'Operational Snapshot', 'Operatsion ko rinish')}
+        className="overflow-hidden"
+      >
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.05fr_0.95fr_0.9fr]">
+          <button
+            type="button"
+            onClick={() => navigate(buildOrdersPath())}
+            className="rounded-2xl border border-light-border bg-gray-50/80 p-5 text-left transition hover:-translate-y-0.5 hover:shadow-sm dark:border-navy-700 dark:bg-navy-900/40"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{tr('Product Revenue', 'Product Revenue', 'Mahsulot tushumi')}</p>
+                <h3 className="mt-2 text-3xl font-bold text-light-text dark:text-white">{loading ? '...' : `${revenuePeriodValue.toLocaleString()} UZS`}</h3>
+              </div>
+              <div className="rounded-2xl bg-green-50 p-3 text-green-500 dark:bg-green-500/10">
+                <DollarSign size={22} />
+              </div>
+            </div>
+            <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">
+              {tr(
+                `Selected period revenue. Actual today: ${(stats.revenue_today_actual ?? 0).toLocaleString()} UZS`,
+                `Selected period revenue. Actual today: ${(stats.revenue_today_actual ?? 0).toLocaleString()} UZS`,
+                `Tanlangan davr tushumi. Haqiqiy bugun: ${(stats.revenue_today_actual ?? 0).toLocaleString()} UZS`
+              )}
+            </p>
+            <div className="mt-3 text-[11px] font-medium uppercase tracking-[0.16em] text-primary-blue dark:text-blue-300">
+              {tr('Open orders', 'Open orders', 'Buyurtmalarni ochish')}
+            </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigate(buildOrdersPath('PAYMENT_PENDING'))}
+            className="rounded-2xl border border-light-border bg-gray-50/80 p-5 text-left transition hover:-translate-y-0.5 hover:shadow-sm dark:border-navy-700 dark:bg-navy-900/40"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{tr('Pending Payments', 'Pending Payments', 'Kutilayotgan tolovlar')}</p>
+                <h3 className="mt-2 text-3xl font-bold text-light-text dark:text-white">{loading ? '...' : `${(stats.pending_payments_amount ?? 0).toLocaleString()} UZS`}</h3>
+              </div>
+              <div className="rounded-2xl bg-orange-50 p-3 text-orange-500 dark:bg-orange-500/10">
+                <Clock size={22} />
+              </div>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <span className="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-medium text-gray-700 dark:bg-navy-800 dark:text-gray-200">
+                {stats.pending_payments ?? 0} {tr('orders', 'orders', 'buyurtma')}
+              </span>
+              <span className="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-medium text-gray-700 dark:bg-navy-800 dark:text-gray-200">
+                {tr('Tap to open', 'Tap to open', 'Ochish uchun bosing')}
+              </span>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigate(buildOrdersPath(DELIVERY_RELATED_STATUSES))}
+            className="rounded-2xl border border-light-border bg-gray-50/80 p-5 text-left transition hover:-translate-y-0.5 hover:shadow-sm dark:border-navy-700 dark:bg-navy-900/40"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{tr('In Delivery', 'In Delivery', 'Yetkazib berishda')}</p>
+                <h3 className="mt-2 text-3xl font-bold text-light-text dark:text-white">{loading ? '...' : String(stats.in_delivery_snapshot ?? stats.in_delivery ?? 0)}</h3>
+              </div>
+              <div className="rounded-2xl bg-purple-50 p-3 text-purple-500 dark:bg-purple-500/10">
+                <Truck size={22} />
+              </div>
+            </div>
+            <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">
+              {tr(
+                `Selected period: ${stats.in_delivery ?? 0}`,
+                `Selected period: ${stats.in_delivery ?? 0}`,
+                `Tanlangan davr: ${stats.in_delivery ?? 0}`
+              )}
+            </p>
+            <div className="mt-3 text-[11px] font-medium uppercase tracking-[0.16em] text-primary-blue dark:text-blue-300">
+              {tr('Open delivery orders', 'Open delivery orders', 'Yetkazish buyurtmalarini ochish')}
+            </div>
+          </button>
+        </div>
+
+        {orderStatusBreakdown.length ? (
+          <div className="mt-5 flex flex-wrap gap-2">
+            {orderStatusBreakdown.map((row) => (
+              <button
+                type="button"
+                key={row.status}
+                onClick={() => navigate(buildOrdersPath(row.status))}
+                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition hover:-translate-y-0.5 hover:shadow-sm ${getOrderStatusChipClass(row.status)}`}
+              >
+                <span>{getOrderStatusLabel(row.status)}</span>
+                <span className="rounded-full bg-white/80 px-2 py-0.5 text-[11px] font-semibold text-current dark:bg-black/10">
+                  {row.count}
+                </span>
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </Card>
 
       {showDepositCards ? (
         <Card

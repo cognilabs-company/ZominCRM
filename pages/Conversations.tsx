@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useActionConfirm } from '../components/ui/useActionConfirm';
 import { useToast } from '../context/ToastContext';
 import { Send, Paperclip, Bot, Instagram, MessageCircle, RefreshCw, ArchiveX, ChevronLeft, ChevronDown, Search, Check, CheckCheck, AlertCircle, X } from 'lucide-react';
 import { Conversation } from '../types';
@@ -222,7 +223,9 @@ const formatMessageDateLabel = (value?: string | null) => {
 
 const Conversations: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const toast = useToast();
+  const { confirm, confirmationModal } = useActionConfirm();
   const { language } = useLanguage();
   const { isAdmin } = useAuth();
   const tr = useCallback(
@@ -956,13 +959,17 @@ const Conversations: React.FC = () => {
   };
 
   const handleClearConversation = async (conversationId: string) => {
-    const ok = window.confirm(
-      tr(
-        'Clear this chat from active list? Messages will stay in database.',
+    const ok = await confirm({
+      title: tr('Clear conversation', 'Clear conversation', 'Suhbatni tozalash'),
+      message: tr(
+        'Clear this chat from the active list? Messages will stay in the database.',
         "Bu chat faol ro'yxatdan tozalansinmi? Xabarlar bazada saqlanadi.",
         "Bu chat faol ro'yxatdan tozalansinmi? Xabarlar bazada saqlanadi."
-      )
-    );
+      ),
+      confirmLabel: tr('Clear chat', 'Clear chat', 'Chatni tozalash'),
+      cancelLabel: tr('Cancel', 'Cancel', 'Bekor qilish'),
+      tone: 'warning',
+    });
     if (!ok) return;
 
     try {
@@ -1160,6 +1167,16 @@ const Conversations: React.FC = () => {
               )}
             </div>
             <div className="flex items-center gap-2 text-xs text-gray-500 flex-wrap">
+              {selectedConversation && (
+                <button
+                  onClick={() => navigate(`/admin-app/conversations/${selectedConversation.id}/automation`)}
+                  className="inline-flex items-center gap-1 rounded-full px-2.5 py-1.5 border border-light-border dark:border-navy-600 text-gray-600 dark:text-gray-300 hover:text-primary-blue hover:border-blue-300"
+                  title={tr('Automation', 'Automation', 'Avtomatika')}
+                >
+                  <Bot size={12} />
+                  <span className="hidden sm:inline">{tr('Automation', 'Automation', 'Avtomatika')}</span>
+                </button>
+              )}
               {selectedConversation && (
                 <button
                   onClick={() => handleClearConversation(selectedConversation.id)}
@@ -1477,13 +1494,12 @@ const Conversations: React.FC = () => {
           />
         </div>
       )}
+      {confirmationModal}
     </div>
   );
 };
 
 export default Conversations;
-
-
 
 
 
