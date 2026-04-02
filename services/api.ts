@@ -103,6 +103,7 @@ export const ENDPOINTS = {
   PRODUCTS: {
     LIST_CREATE: `${API_BASE_URL}/products/`,
     LOW_STOCK: `${API_BASE_URL}/products/low-stock/`,
+    MOVEMENTS: `${API_BASE_URL}/products/movements/`,
     DETAIL: (id: string) => `${API_BASE_URL}/products/${id}/`,
     STOCK_ADJUST: (id: string) => `${API_BASE_URL}/products/${id}/stock/adjust/`,
     STOCK_SET: (id: string) => `${API_BASE_URL}/products/${id}/stock/set/`,
@@ -135,6 +136,10 @@ export const ENDPOINTS = {
       `${API_BASE_URL}/conversations/${conversationId}/automation/follow-ups/${followUpId}/`,
     OPEN: `${API_BASE_URL}/conversations/open/`,
     ATTACH_ORDER: `${API_BASE_URL}/conversations/attach-order/`,
+  },
+  TELEGRAM_BROADCASTS: {
+    LIST_CREATE: `${API_BASE_URL}/telegram-broadcasts/`,
+    DETAIL: (id: string) => `${API_BASE_URL}/telegram-broadcasts/${id}/`,
   },
   AUTOMATION: {
     SETTINGS: `${API_BASE_URL}/automation/settings/`,

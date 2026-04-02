@@ -2,6 +2,7 @@
 import {
   LayoutDashboard,
   MessageSquare,
+  Megaphone,
   Users,
   Droplets,
   UserPlus,
@@ -16,6 +17,7 @@ import {
 export const TRANSLATIONS: Translation = {
   nav_dashboard: { en: 'Dashboard', ru: 'Панель управления', uz: 'Bosh sahifa' },
   nav_conversations: { en: 'Conversations', ru: 'Диалоги', uz: 'Suhbatlar' },
+  nav_telegram_broadcasts: { en: 'Telegram Broadcasts', ru: 'Telegram-рассылки', uz: 'Telegram xabarnomalar' },
   nav_clients: { en: 'Clients', ru: 'Клиенты', uz: 'Mijozlar' },
   nav_bottles_control: { en: 'Bottle Control', ru: 'Учет бутылей', uz: 'Idish nazorati' },
   nav_leads: { en: 'Leads', ru: 'Лиды', uz: 'Lidlar' },
@@ -77,6 +79,7 @@ export const TRANSLATIONS: Translation = {
 export const NAV_ITEMS: NavItem[] = [
   { id: 'dashboard', icon: LayoutDashboard, path: '/', labelKey: 'nav_dashboard' },
   { id: 'conversations', icon: MessageSquare, path: '/conversations', labelKey: 'nav_conversations' },
+  { id: 'telegram_broadcasts', icon: Megaphone, path: '/telegram-broadcasts', labelKey: 'nav_telegram_broadcasts' },
   { id: 'clients', icon: Users, path: '/clients', labelKey: 'nav_clients' },
   { id: 'leads', icon: UserPlus, path: '/leads', labelKey: 'nav_leads' },
   { id: 'orders', icon: ShoppingCart, path: '/orders', labelKey: 'nav_orders' },

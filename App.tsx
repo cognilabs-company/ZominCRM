@@ -13,6 +13,7 @@ import { clientRouteDefinitions } from './client/routes';
 
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const Conversations = React.lazy(() => import('./pages/Conversations'));
+const TelegramBroadcasts = React.lazy(() => import('./pages/TelegramBroadcasts'));
 const Orders = React.lazy(() => import('./pages/Orders'));
 const Settings = React.lazy(() => import('./pages/Settings'));
 const AITools = React.lazy(() => import('./pages/AITools'));
@@ -166,6 +167,7 @@ const App: React.FC = () => {
                           <Route path="/" element={<Navigate to="/admin-app" replace />} />
 
                           <Route path="/conversations" element={<Navigate to="/admin-app/conversations" replace />} />
+                          <Route path="/telegram-broadcasts" element={<Navigate to="/admin-app/telegram-broadcasts" replace />} />
                           <Route path="/conversations/:conversationId/automation" element={<RequirePermission permission="crm.access"><ConversationAutomation /></RequirePermission>} />
                           <Route path="/orders" element={<NavigatePreservingSearch to="/admin-app/orders" />} />
                           <Route path="/products" element={<Navigate to="/admin-app/products" replace />} />
@@ -184,6 +186,7 @@ const App: React.FC = () => {
 
                           <Route path="/admin-app" element={<RequirePermission permission="dashboard.access"><Dashboard /></RequirePermission>} />
                           <Route path="/admin-app/conversations" element={<RequirePermission permission="crm.access"><Conversations /></RequirePermission>} />
+                          <Route path="/admin-app/telegram-broadcasts" element={<RequirePermission permission="crm.access"><TelegramBroadcasts /></RequirePermission>} />
                           <Route path="/admin-app/conversations/:conversationId/automation" element={<RequirePermission permission="crm.access"><ConversationAutomation /></RequirePermission>} />
                           <Route path="/admin-app/orders" element={<RequirePermission permission="orders.access"><Orders /></RequirePermission>} />
                           <Route path="/admin-app/products" element={<RequirePermission permission="products.access"><Products /></RequirePermission>} />

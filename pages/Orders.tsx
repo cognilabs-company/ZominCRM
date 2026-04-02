@@ -238,6 +238,7 @@ const Orders: React.FC = () => {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const [editLoading, setEditLoading] = useState(false);
+  const [dismissedTargetOrderId, setDismissedTargetOrderId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || '');
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [dateFrom, setDateFrom] = useState(searchParams.get('date_from') || '');
@@ -451,12 +452,19 @@ const Orders: React.FC = () => {
   }, [dateFrom, dateTo, paymentMethodFilter, searchParams, searchQuery, setSearchParams, statusFilter]);
 
   useEffect(() => {
+    if (!targetOrderId && dismissedTargetOrderId) {
+      setDismissedTargetOrderId(null);
+    }
+  }, [dismissedTargetOrderId, targetOrderId]);
+
+  useEffect(() => {
     if (!targetOrderId || !orders.length) return;
+    if (dismissedTargetOrderId === targetOrderId) return;
     const match = orders.find((order) => order.id === targetOrderId);
     if (match && selectedOrder?.id !== match.id) {
       setSelectedOrder(match);
     }
-  }, [orders, selectedOrder?.id, targetOrderId]);
+  }, [dismissedTargetOrderId, orders, selectedOrder?.id, targetOrderId]);
 
   const previewLines = useMemo<LinePreview[]>(() => {
     const coverageLeft: Record<string, number> = {};
@@ -906,6 +914,9 @@ const Orders: React.FC = () => {
   const openOrderDetails = (order: UiOrder) => setSelectedOrder(order);
 
   const closeOrderDetails = useCallback(() => {
+    if (targetOrderId) {
+      setDismissedTargetOrderId(targetOrderId);
+    }
     setSelectedOrder(null);
     if (!targetOrderId) return;
     const nextParams = new URLSearchParams(searchParams);

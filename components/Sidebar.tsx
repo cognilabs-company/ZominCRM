@@ -21,6 +21,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onCloseMob
     switch (id) {
       case 'dashboard': return hasPermission('dashboard.access');
       case 'conversations':
+      case 'telegram_broadcasts':
       case 'clients': return hasPermission('crm.access');
       case 'bottles': return hasPermission('bottles.access');
       case 'leads': return isAdmin;
